@@ -1,0 +1,22 @@
+project_name: synthetic_ts_contrastive
+
+
+
+# Data settings
+total_steps: 5000          # length of the underlying synthetic time-series
+sequence_length: 32     # window length L
+batch_size: 64
+
+# Training settings
+num_epochs: 50
+num_probe_epochs: 30
+learning_rate_supervised: 0.001
+learning_rate_contrastive: 0.001
+learning_rate_probe: 0.001   # linear probe on top of contrastive encoder
+temperature: 0.1
+log_interval: 50
+
+# Forecasting / evaluation
+future_steps: 64            # number of steps to roll out into the future
+start_index: 100            # where to start the forecasting window in the series
+
