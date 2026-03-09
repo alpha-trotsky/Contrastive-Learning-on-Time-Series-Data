@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-
+import math
 import yaml
 import torch
 import torch.nn as nn
@@ -19,6 +19,7 @@ class SyntheticTimeSeriesDataset(Dataset):
     """
     Generates a single long synthetic 1D time-series (sine waves + noise)
     and returns sliding pairs of windows (x_t, x_{t+1}).
+    Used for the supervised MLP and for evaluation/forecasting.
     """
 
     def __init__(self, total_steps: int, sequence_length: int):
@@ -52,6 +53,39 @@ class SyntheticTimeSeriesDataset(Dataset):
         x_t1 = self.series[idx + 1 : idx + L + 1]
         return x_t, x_t1
 
+
+class ContrastiveABDataset(Dataset):
+    """
+    Generates independent short signals for contrastive learning.
+    Fully randomizes frequency and phase to eliminate false negatives,
+    and uses 2*L points to ensure x_t and x_{t+1} are strictly non-overlapping.
+    """
+    def __init__(self, num_samples: int, sequence_length: int):
+        super().__init__()
+        self.num_samples = num_samples
+        self.sequence_length = sequence_length
+
+    def __len__(self) -> int:
+        return self.num_samples
+
+    def __getitem__(self, idx: int):
+        L = self.sequence_length
+
+        # Generate 2*L points so windows do not overlap
+        t = torch.linspace(0.0, 1.0, steps=2 * L)
+
+        # Fully continuous random frequency and phase
+        freq = 1.0 + torch.rand(1).item() * 10.0
+        phase = torch.rand(1).item() * 2.0 * math.pi
+
+        clean = torch.sin(2.0 * math.pi * freq * t + phase)
+        noise = 0.1 * torch.randn_like(clean)
+        series = clean + noise
+
+        # Strictly non-overlapping windows
+        x_t = series[:L]
+        x_t1 = series[L:]
+        return x_t, x_t1
 
 class SupervisedMLP(nn.Module):
     """
@@ -97,17 +131,21 @@ class TimeSeriesEncoder(nn.Module):
 
 class LinearProbe(nn.Module):
     """
-    Simple linear head on top of frozen encoder embeddings to predict
+    Two-layer MLP head on top of frozen encoder embeddings to predict
     the next scalar value (last point in the next window).
     """
 
-    def __init__(self, embed_dim: int):
+    def __init__(self, embed_dim: int, hidden_dim: int = 64):
         super().__init__()
-        self.fc = nn.Linear(embed_dim, 1)
+        self.net = nn.Sequential(
+            nn.Linear(embed_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1),
+        )
 
     def forward(self, z):
         # z: (batch, D)
-        return self.fc(z).squeeze(-1)
+        return self.net(z).squeeze(-1)
 
 
 def contrastive_loss(z_t, z_t1, temperature: float):
@@ -133,11 +171,26 @@ def load_config():
 def train_supervised_and_contrastive(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    dataset = SyntheticTimeSeriesDataset(
+    # Supervised dataset: single long series
+    supervised_dataset = SyntheticTimeSeriesDataset(
         total_steps=cfg["total_steps"], sequence_length=cfg["sequence_length"]
     )
-    dataloader = DataLoader(
-        dataset, batch_size=cfg["batch_size"], shuffle=True, drop_last=True
+    supervised_loader = DataLoader(
+        supervised_dataset,
+        batch_size=cfg["batch_size"],
+        shuffle=True,
+        drop_last=True,
+    )
+
+    # Contrastive dataset: independent A/B waves
+    contrastive_dataset = ContrastiveABDataset(
+        num_samples=len(supervised_dataset), sequence_length=cfg["sequence_length"]
+    )
+    contrastive_loader = DataLoader(
+        contrastive_dataset,
+        batch_size=cfg["batch_size"],
+        shuffle=True,
+        drop_last=True,
     )
 
     sequence_length = cfg["sequence_length"]
@@ -163,21 +216,25 @@ def train_supervised_and_contrastive(cfg):
 
     global_step = 0
     for epoch in range(cfg["num_epochs"]):
-        for batch_idx, (x_t, x_t1) in enumerate(dataloader):
-            x_t = x_t.to(device)
-            x_t1 = x_t1.to(device)
+        for batch_idx, ((x_sup_t, x_sup_t1), (x_con_t, x_con_t1)) in enumerate(
+            zip(supervised_loader, contrastive_loader)
+        ):
+            x_sup_t = x_sup_t.to(device)
+            x_sup_t1 = x_sup_t1.to(device)
+            x_con_t = x_con_t.to(device)
+            x_con_t1 = x_con_t1.to(device)
 
             # Supervised baseline: x_t -> x̂_{t+1}
             supervised_opt.zero_grad()
-            pred_next = supervised_model(x_t)
-            sup_loss = mse_loss(pred_next, x_t1)
+            pred_next = supervised_model(x_sup_t)
+            sup_loss = mse_loss(pred_next, x_sup_t1)
             sup_loss.backward()
             supervised_opt.step()
 
             # Contrastive encoder: maximize similarity between z_t and z_{t+1}
             contrastive_opt.zero_grad()
-            z_t = encoder(x_t)
-            z_t1 = encoder(x_t1)
+            z_t = encoder(x_con_t)
+            z_t1 = encoder(x_con_t1)
             cont_loss = contrastive_loss(z_t, z_t1, temperature=cfg["temperature"])
             cont_loss.backward()
             contrastive_opt.step()
@@ -199,10 +256,10 @@ def train_supervised_and_contrastive(cfg):
                     }
                 )
 
-    return dataset, supervised_model, encoder, device
+    return supervised_dataset, contrastive_dataset, supervised_model, encoder, device
 
 
-def train_linear_probe(cfg, dataset, encoder, device):
+def train_linear_probe(cfg, contrastive_dataset, encoder, device):
     """
     Train a small linear head on top of the frozen encoder embeddings
     to predict the next scalar value. This gives us a 'contrastive model'
@@ -218,7 +275,10 @@ def train_linear_probe(cfg, dataset, encoder, device):
     mse_loss = nn.MSELoss()
 
     dataloader = DataLoader(
-        dataset, batch_size=cfg["batch_size"], shuffle=True, drop_last=True
+        contrastive_dataset,
+        batch_size=cfg["batch_size"],
+        shuffle=True,
+        drop_last=True,
     )
 
     num_probe_epochs = cfg["num_probe_epochs"]
@@ -245,7 +305,7 @@ def train_linear_probe(cfg, dataset, encoder, device):
     return probe
 
 
-def roll_out_forecast(cfg, dataset, supervised_model, encoder, probe, device):
+def roll_out_forecast(cfg, supervised_dataset, supervised_model, encoder, probe, device):
     """
     Roll out n-step forecasts for:
       - supervised window predictor
@@ -260,8 +320,8 @@ def roll_out_forecast(cfg, dataset, supervised_model, encoder, probe, device):
     future_steps = cfg["future_steps"]
     start_idx = cfg["start_index"]
 
-    series = dataset.series.to(device)
-    clean_series = dataset.clean_series.to(device)
+    series = supervised_dataset.series.to(device)
+    clean_series = supervised_dataset.clean_series.to(device)
 
     # Initial window x_t
     x_window = series[start_idx : start_idx + L].clone().unsqueeze(0)  # (1, L)
@@ -326,14 +386,15 @@ def roll_out_forecast(cfg, dataset, supervised_model, encoder, probe, device):
 def main():
     cfg = load_config()
 
-    # Main training: supervised MLP and contrastive encoder
-    dataset, supervised_model, encoder, device = train_supervised_and_contrastive(cfg)
+    # Main training: supervised MLP on long series, contrastive encoder on A/B waves
+    supervised_dataset, contrastive_dataset, supervised_model, encoder, device = (
+        train_supervised_and_contrastive(cfg)
+    )
+    # Train the probe on the SUPERVISED dataset (the target domain)
+    probe = train_linear_probe(cfg, supervised_dataset, encoder, device)
 
-    # Train a simple linear probe on top of the contrastive encoder
-    probe = train_linear_probe(cfg, dataset, encoder, device)
-
-    # Roll out forecasts and visualize
-    roll_out_forecast(cfg, dataset, supervised_model, encoder, probe, device)
+    # Roll out forecasts and visualize (on the long supervised series)
+    roll_out_forecast(cfg, supervised_dataset, supervised_model, encoder, probe, device)
 
 
 if __name__ == "__main__":
@@ -347,3 +408,4 @@ if __name__ == "__main__":
            python synthetic_experiment.py
     """
     main()
+
