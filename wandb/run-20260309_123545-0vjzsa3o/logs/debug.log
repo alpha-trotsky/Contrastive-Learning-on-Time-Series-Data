@@ -1,0 +1,21 @@
+2026-03-09 12:35:45,538 INFO    MainThread:32652 [wandb_setup.py:_flush():80] Current SDK version is 0.21.1
+2026-03-09 12:35:45,539 INFO    MainThread:32652 [wandb_setup.py:_flush():80] Configure stats pid to 32652
+2026-03-09 12:35:45,539 INFO    MainThread:32652 [wandb_setup.py:_flush():80] Loading settings from C:\Users\Belia\.config\wandb\settings
+2026-03-09 12:35:45,540 INFO    MainThread:32652 [wandb_setup.py:_flush():80] Loading settings from c:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\wandb\settings
+2026-03-09 12:35:45,540 INFO    MainThread:32652 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2026-03-09 12:35:45,541 INFO    MainThread:32652 [wandb_init.py:setup_run_log_directory():703] Logging user logs to c:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\wandb\run-20260309_123545-0vjzsa3o\logs\debug.log
+2026-03-09 12:35:45,543 INFO    MainThread:32652 [wandb_init.py:setup_run_log_directory():704] Logging internal logs to c:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\wandb\run-20260309_123545-0vjzsa3o\logs\debug-internal.log
+2026-03-09 12:35:45,544 INFO    MainThread:32652 [wandb_init.py:init():830] calling init triggers
+2026-03-09 12:35:45,544 INFO    MainThread:32652 [wandb_init.py:init():835] wandb.init called with sweep_config: {}
+config: {'project_name': 'synthetic_ts_contrastive', 'total_steps': 5000, 'sequence_length': 8, 'batch_size': 64, 'num_epochs': 20, 'learning_rate_supervised': 0.001, 'learning_rate_contrastive': 0.001, 'learning_rate_probe': 0.001, 'temperature': 0.1, 'log_interval': 50, 'future_steps': 64, 'start_index': 100, '_wandb': {}}
+2026-03-09 12:35:45,544 INFO    MainThread:32652 [wandb_init.py:init():871] starting backend
+2026-03-09 12:35:46,758 INFO    MainThread:32652 [wandb_init.py:init():874] sending inform_init request
+2026-03-09 12:35:46,992 INFO    MainThread:32652 [wandb_init.py:init():882] backend started and connected
+2026-03-09 12:35:46,996 INFO    MainThread:32652 [wandb_init.py:init():953] updated telemetry
+2026-03-09 12:35:47,148 INFO    MainThread:32652 [wandb_init.py:init():977] communicating run to backend with 90.0 second timeout
+2026-03-09 12:35:49,646 INFO    MainThread:32652 [wandb_init.py:init():1029] starting run threads in backend
+2026-03-09 12:35:52,659 INFO    MainThread:32652 [wandb_run.py:_console_start():2494] atexit reg
+2026-03-09 12:35:52,661 INFO    MainThread:32652 [wandb_run.py:_redirect():2342] redirect: wrap_raw
+2026-03-09 12:35:52,662 INFO    MainThread:32652 [wandb_run.py:_redirect():2411] Wrapping output streams.
+2026-03-09 12:35:52,662 INFO    MainThread:32652 [wandb_run.py:_redirect():2434] Redirects installed.
+2026-03-09 12:35:52,697 INFO    MainThread:32652 [wandb_init.py:init():1075] run started, returning control to user process

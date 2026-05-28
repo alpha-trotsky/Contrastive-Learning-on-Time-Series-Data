@@ -1,0 +1,77 @@
+_wandb:
+    value:
+        cli_version: 0.21.1
+        e:
+            4p7uu4lgx64v1g6gfhqqv7r39oyycl6r:
+                codePath: Synthetic_Proof_of_Concept\synthetic_experiment.py
+                codePathLocal: Synthetic_Proof_of_Concept\synthetic_experiment.py
+                cpu_count: 4
+                cpu_count_logical: 8
+                cudaVersion: "13.0"
+                disk:
+                    /:
+                        total: "510811697152"
+                        used: "326987345920"
+                email: aleksandr.beliaev@mail.utoronto.ca
+                executable: C:\Users\Belia\anaconda3\python.exe
+                git:
+                    commit: 207b0ec1bc3c66f3b0e0a8f159744705cc51808e
+                    remote: https://github.com/alpha-trotsky/Contrastive-Learning-on-Time-Series-Data
+                gpu: NVIDIA GeForce GTX 1650 with Max-Q Design
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Turing
+                      cudaCores: 896
+                      memoryTotal: "4294967296"
+                      name: NVIDIA GeForce GTX 1650 with Max-Q Design
+                      uuid: GPU-18b2a80a-0e43-d7fc-4a69-7b4a10623363
+                host: Trotskystan69
+                memory:
+                    total: "16917716992"
+                os: Windows-11-10.0.26200-SP0
+                program: c:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\Synthetic_Proof_of_Concept\synthetic_experiment.py
+                python: CPython 3.13.5
+                root: c:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data
+                startedAt: "2026-04-03T14:28:19.047211Z"
+                writerId: 4p7uu4lgx64v1g6gfhqqv7r39oyycl6r
+        m: []
+        python_version: 3.13.5
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 16
+            "4": 3.13.5
+            "5": 0.21.1
+            "8":
+                - 3
+            "12": 0.21.1
+            "13": windows-amd64
+batch_size:
+    value: 64
+future_steps:
+    value: 64
+learning_rate_contrastive:
+    value: 0.001
+learning_rate_probe:
+    value: 0.001
+learning_rate_supervised:
+    value: 0.001
+log_interval:
+    value: 50
+num_epochs:
+    value: 50
+num_probe_epochs:
+    value: 30
+project_name:
+    value: synthetic_ts_contrastive
+sequence_length:
+    value: 32
+start_index:
+    value: 100
+temperature:
+    value: 0.1
+total_steps:
+    value: 5000

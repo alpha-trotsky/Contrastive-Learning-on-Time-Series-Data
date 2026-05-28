@@ -1,0 +1,53 @@
+# config.yaml
+
+experiment:
+  name: phase1_gp_conditional_baseline
+  output_dir: results/phase1_gp_conditional_baseline
+  seed: 42
+
+signal:
+  type: gaussian_process_1d
+  alpha: 2
+  tau: 3.0
+  dim_true: 1000
+  zero_mean: true
+
+#modality:
+  #type: field_coeff
+  # u_index: which of the 1000 grid points form u
+  # Use evenly-spaced indices spanning the domain.
+  #u_index: [41, 124, 207, 290, 373, 457, 540, 623, 706, 789, 872, 955]
+  #dim_coeff: 5
+  #sigma: 0.05
+
+
+modality:
+    type: PastFuture
+    past_len: 50
+    future_len: 20
+    start: 0
+    sigma_u: 0.05
+    sigma_v: 0.0 
+
+model:
+  type: linear_clip
+  embed_dim: 20
+  bias: false
+  init_logit_scale: 2.659   # log(1/0.07), the CLIP default
+
+loss:
+  type: conditional         # 'conditional' | 'joint' | 'one_sided_u' | 'one_sided_v'
+  inner_product: true       # true = cosine tilting; false = L^2 tilting
+  lambda_u: 0.5
+  lambda_v: 0.5
+
+training:
+  batch_size: 1024
+  num_steps: 10000
+  lr: 1.0e-4
+  optimizer: adam
+
+logging:
+  log_every: 100
+  theory_match_every: 500
+  forecast_every: 500

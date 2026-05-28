@@ -1,6 +1,9 @@
 import os
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("TkAgg")
 import yaml
 import torch
 import torch.nn as nn
@@ -43,13 +46,13 @@ class SyntheticTimeSeriesDataset(Dataset):
         # For each index i we build:
         # x_t     = series[i : i + L]
         # x_{t+1} = series[i + 1 : i + L + 1]
-        # so the last valid i is len(series) - L - 1
-        return self.series.numel() - self.sequence_length - 1
+        # so the last valid i is len(series) - 2*L
+        return self.series.numel() - 2*self.sequence_length
 
     def __getitem__(self, idx: int):
         L = self.sequence_length
         x_t = self.series[idx : idx + L]
-        x_t1 = self.series[idx + 1 : idx + L + 1]
+        x_t1 = self.series[idx + L : idx + 2*L]
         return x_t, x_t1
 
 

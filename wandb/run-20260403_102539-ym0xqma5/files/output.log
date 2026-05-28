@@ -1,0 +1,130 @@
+Epoch 000 | Batch 0000 | Supervised MSE: 0.680335 | Contrastive loss: 5.467185
+Epoch 000 | Batch 0050 | Supervised MSE: 0.229507 | Contrastive loss: 3.719572
+Epoch 001 | Batch 0000 | Supervised MSE: 0.181167 | Contrastive loss: 3.175184
+Epoch 001 | Batch 0050 | Supervised MSE: 0.145061 | Contrastive loss: 2.691944
+Epoch 002 | Batch 0000 | Supervised MSE: 0.116595 | Contrastive loss: 2.615936
+Epoch 002 | Batch 0050 | Supervised MSE: 0.098033 | Contrastive loss: 2.428874
+Epoch 003 | Batch 0000 | Supervised MSE: 0.098364 | Contrastive loss: 2.413130
+Epoch 003 | Batch 0050 | Supervised MSE: 0.081144 | Contrastive loss: 2.176877
+Epoch 004 | Batch 0000 | Supervised MSE: 0.063348 | Contrastive loss: 2.201512
+Epoch 004 | Batch 0050 | Supervised MSE: 0.049605 | Contrastive loss: 1.958268
+Epoch 005 | Batch 0000 | Supervised MSE: 0.045215 | Contrastive loss: 2.043239
+Epoch 005 | Batch 0050 | Supervised MSE: 0.035832 | Contrastive loss: 1.741537
+Epoch 006 | Batch 0000 | Supervised MSE: 0.034154 | Contrastive loss: 1.647257
+Epoch 006 | Batch 0050 | Supervised MSE: 0.027134 | Contrastive loss: 1.708568
+Epoch 007 | Batch 0000 | Supervised MSE: 0.030790 | Contrastive loss: 1.543692
+Epoch 007 | Batch 0050 | Supervised MSE: 0.026161 | Contrastive loss: 1.625465
+Epoch 008 | Batch 0000 | Supervised MSE: 0.028485 | Contrastive loss: 1.499286
+Epoch 008 | Batch 0050 | Supervised MSE: 0.023232 | Contrastive loss: 1.567202
+Epoch 009 | Batch 0000 | Supervised MSE: 0.022094 | Contrastive loss: 1.486833
+Epoch 009 | Batch 0050 | Supervised MSE: 0.020010 | Contrastive loss: 1.431368
+Epoch 010 | Batch 0000 | Supervised MSE: 0.022641 | Contrastive loss: 1.323829
+Epoch 010 | Batch 0050 | Supervised MSE: 0.017924 | Contrastive loss: 1.483467
+Epoch 011 | Batch 0000 | Supervised MSE: 0.018028 | Contrastive loss: 1.349084
+Epoch 011 | Batch 0050 | Supervised MSE: 0.018984 | Contrastive loss: 1.340092
+Epoch 012 | Batch 0000 | Supervised MSE: 0.019088 | Contrastive loss: 1.284889
+Epoch 012 | Batch 0050 | Supervised MSE: 0.018048 | Contrastive loss: 1.312163
+Epoch 013 | Batch 0000 | Supervised MSE: 0.018761 | Contrastive loss: 1.352293
+Epoch 013 | Batch 0050 | Supervised MSE: 0.018482 | Contrastive loss: 1.423216
+Epoch 014 | Batch 0000 | Supervised MSE: 0.018903 | Contrastive loss: 1.325947
+Epoch 014 | Batch 0050 | Supervised MSE: 0.017173 | Contrastive loss: 1.354668
+Epoch 015 | Batch 0000 | Supervised MSE: 0.017774 | Contrastive loss: 1.315395
+Epoch 015 | Batch 0050 | Supervised MSE: 0.019211 | Contrastive loss: 1.338050
+Epoch 016 | Batch 0000 | Supervised MSE: 0.016566 | Contrastive loss: 1.317892
+Epoch 016 | Batch 0050 | Supervised MSE: 0.016741 | Contrastive loss: 1.395089
+Epoch 017 | Batch 0000 | Supervised MSE: 0.017893 | Contrastive loss: 1.290626
+Epoch 017 | Batch 0050 | Supervised MSE: 0.016568 | Contrastive loss: 1.312821
+Epoch 018 | Batch 0000 | Supervised MSE: 0.017415 | Contrastive loss: 1.309561
+Epoch 018 | Batch 0050 | Supervised MSE: 0.015604 | Contrastive loss: 1.251745
+Epoch 019 | Batch 0000 | Supervised MSE: 0.018335 | Contrastive loss: 1.219182
+Epoch 019 | Batch 0050 | Supervised MSE: 0.014789 | Contrastive loss: 1.223217
+Epoch 020 | Batch 0000 | Supervised MSE: 0.017187 | Contrastive loss: 1.402545
+Epoch 020 | Batch 0050 | Supervised MSE: 0.016289 | Contrastive loss: 1.238364
+Epoch 021 | Batch 0000 | Supervised MSE: 0.016758 | Contrastive loss: 1.206511
+Epoch 021 | Batch 0050 | Supervised MSE: 0.016164 | Contrastive loss: 1.323491
+Epoch 022 | Batch 0000 | Supervised MSE: 0.015912 | Contrastive loss: 1.262529
+Epoch 022 | Batch 0050 | Supervised MSE: 0.020465 | Contrastive loss: 1.308070
+Epoch 023 | Batch 0000 | Supervised MSE: 0.018226 | Contrastive loss: 1.319101
+Epoch 023 | Batch 0050 | Supervised MSE: 0.016054 | Contrastive loss: 1.432158
+Epoch 024 | Batch 0000 | Supervised MSE: 0.015680 | Contrastive loss: 1.362555
+Epoch 024 | Batch 0050 | Supervised MSE: 0.014795 | Contrastive loss: 1.162888
+Epoch 025 | Batch 0000 | Supervised MSE: 0.013683 | Contrastive loss: 1.310764
+Epoch 025 | Batch 0050 | Supervised MSE: 0.015321 | Contrastive loss: 1.209926
+Epoch 026 | Batch 0000 | Supervised MSE: 0.015790 | Contrastive loss: 1.188549
+Epoch 026 | Batch 0050 | Supervised MSE: 0.018021 | Contrastive loss: 1.301809
+Epoch 027 | Batch 0000 | Supervised MSE: 0.017836 | Contrastive loss: 1.345490
+Epoch 027 | Batch 0050 | Supervised MSE: 0.016857 | Contrastive loss: 1.272787
+Epoch 028 | Batch 0000 | Supervised MSE: 0.014637 | Contrastive loss: 1.232377
+Epoch 028 | Batch 0050 | Supervised MSE: 0.014055 | Contrastive loss: 1.260216
+Epoch 029 | Batch 0000 | Supervised MSE: 0.015994 | Contrastive loss: 1.147888
+Epoch 029 | Batch 0050 | Supervised MSE: 0.018834 | Contrastive loss: 1.306010
+Epoch 030 | Batch 0000 | Supervised MSE: 0.015357 | Contrastive loss: 1.277151
+Epoch 030 | Batch 0050 | Supervised MSE: 0.014219 | Contrastive loss: 1.212727
+Epoch 031 | Batch 0000 | Supervised MSE: 0.014281 | Contrastive loss: 1.250265
+Epoch 031 | Batch 0050 | Supervised MSE: 0.015537 | Contrastive loss: 1.234753
+Epoch 032 | Batch 0000 | Supervised MSE: 0.013281 | Contrastive loss: 1.234185
+Epoch 032 | Batch 0050 | Supervised MSE: 0.015506 | Contrastive loss: 1.227971
+Epoch 033 | Batch 0000 | Supervised MSE: 0.015350 | Contrastive loss: 1.187732
+Epoch 033 | Batch 0050 | Supervised MSE: 0.016930 | Contrastive loss: 1.243976
+Epoch 034 | Batch 0000 | Supervised MSE: 0.014798 | Contrastive loss: 1.209584
+Epoch 034 | Batch 0050 | Supervised MSE: 0.014689 | Contrastive loss: 1.277751
+Epoch 035 | Batch 0000 | Supervised MSE: 0.015224 | Contrastive loss: 1.246262
+Epoch 035 | Batch 0050 | Supervised MSE: 0.014163 | Contrastive loss: 1.155869
+Epoch 036 | Batch 0000 | Supervised MSE: 0.015527 | Contrastive loss: 1.234317
+Epoch 036 | Batch 0050 | Supervised MSE: 0.014654 | Contrastive loss: 1.257429
+Epoch 037 | Batch 0000 | Supervised MSE: 0.014740 | Contrastive loss: 1.312816
+Epoch 037 | Batch 0050 | Supervised MSE: 0.014280 | Contrastive loss: 1.227248
+Epoch 038 | Batch 0000 | Supervised MSE: 0.015941 | Contrastive loss: 1.306969
+Epoch 038 | Batch 0050 | Supervised MSE: 0.013548 | Contrastive loss: 1.151761
+Epoch 039 | Batch 0000 | Supervised MSE: 0.013707 | Contrastive loss: 1.253752
+Epoch 039 | Batch 0050 | Supervised MSE: 0.014846 | Contrastive loss: 1.257356
+Epoch 040 | Batch 0000 | Supervised MSE: 0.015969 | Contrastive loss: 1.274517
+Epoch 040 | Batch 0050 | Supervised MSE: 0.014822 | Contrastive loss: 1.288143
+Epoch 041 | Batch 0000 | Supervised MSE: 0.014078 | Contrastive loss: 1.220170
+Epoch 041 | Batch 0050 | Supervised MSE: 0.016059 | Contrastive loss: 1.217118
+Epoch 042 | Batch 0000 | Supervised MSE: 0.013470 | Contrastive loss: 1.170052
+Epoch 042 | Batch 0050 | Supervised MSE: 0.013195 | Contrastive loss: 1.168910
+Epoch 043 | Batch 0000 | Supervised MSE: 0.013574 | Contrastive loss: 1.172500
+Epoch 043 | Batch 0050 | Supervised MSE: 0.014861 | Contrastive loss: 1.199948
+Epoch 044 | Batch 0000 | Supervised MSE: 0.012931 | Contrastive loss: 1.249530
+Epoch 044 | Batch 0050 | Supervised MSE: 0.014581 | Contrastive loss: 1.224550
+Epoch 045 | Batch 0000 | Supervised MSE: 0.013863 | Contrastive loss: 1.122886
+Epoch 045 | Batch 0050 | Supervised MSE: 0.013473 | Contrastive loss: 1.224558
+Epoch 046 | Batch 0000 | Supervised MSE: 0.014098 | Contrastive loss: 1.248714
+Epoch 046 | Batch 0050 | Supervised MSE: 0.014965 | Contrastive loss: 1.160126
+Epoch 047 | Batch 0000 | Supervised MSE: 0.013124 | Contrastive loss: 1.114253
+Epoch 047 | Batch 0050 | Supervised MSE: 0.014977 | Contrastive loss: 1.190744
+Epoch 048 | Batch 0000 | Supervised MSE: 0.013595 | Contrastive loss: 1.207872
+Epoch 048 | Batch 0050 | Supervised MSE: 0.013234 | Contrastive loss: 1.186192
+Epoch 049 | Batch 0000 | Supervised MSE: 0.013682 | Contrastive loss: 1.268283
+Epoch 049 | Batch 0050 | Supervised MSE: 0.013574 | Contrastive loss: 1.313972
+[Probe] Epoch 0 | MSE: 0.919435
+[Probe] Epoch 1 | MSE: 0.623644
+[Probe] Epoch 2 | MSE: 0.710519
+[Probe] Epoch 3 | MSE: 0.723949
+[Probe] Epoch 4 | MSE: 0.631309
+[Probe] Epoch 5 | MSE: 0.557478
+[Probe] Epoch 6 | MSE: 0.611009
+[Probe] Epoch 7 | MSE: 0.614700
+[Probe] Epoch 8 | MSE: 0.580815
+[Probe] Epoch 9 | MSE: 0.564556
+[Probe] Epoch 10 | MSE: 0.677180
+[Probe] Epoch 11 | MSE: 0.875035
+[Probe] Epoch 12 | MSE: 0.683120
+[Probe] Epoch 13 | MSE: 0.551268
+[Probe] Epoch 14 | MSE: 0.711490
+[Probe] Epoch 15 | MSE: 0.814978
+[Probe] Epoch 16 | MSE: 0.759391
+[Probe] Epoch 17 | MSE: 0.579745
+[Probe] Epoch 18 | MSE: 0.610043
+[Probe] Epoch 19 | MSE: 0.681196
+[Probe] Epoch 20 | MSE: 0.732374
+[Probe] Epoch 21 | MSE: 0.764341
+[Probe] Epoch 22 | MSE: 0.689761
+[Probe] Epoch 23 | MSE: 0.647037
+[Probe] Epoch 24 | MSE: 0.682299
+[Probe] Epoch 25 | MSE: 0.701228
+[Probe] Epoch 26 | MSE: 0.448903
+[Probe] Epoch 27 | MSE: 0.646832
+[Probe] Epoch 28 | MSE: 0.655225
+[Probe] Epoch 29 | MSE: 0.701300
