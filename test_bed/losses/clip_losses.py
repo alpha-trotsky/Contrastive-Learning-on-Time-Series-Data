@@ -58,7 +58,7 @@ class CLIPConditionalLoss(CLIPLoss):
         self.lambda_u = lambda_u
         self.lambda_v = lambda_v
 
-    def forward(self, image_features, text_features, logit_scale) -> torch.Tensor:
+    def forward(self, image_features, text_features, logit_scale, u, v) -> torch.Tensor:
         device = image_features.device
         logits_per_image, logits_per_text = self.get_logits(
             image_features, text_features, logit_scale
@@ -83,7 +83,7 @@ class CLIPJointLoss(CLIPLoss):
     def __init__(self, inner_product: bool = True):
         super().__init__(inner_product=inner_product)
 
-    def forward(self, image_features, text_features, logit_scale) -> torch.Tensor:
+    def forward(self, image_features, text_features, logit_scale, u, v) -> torch.Tensor:
         logits_per_image, _ = self.get_logits(image_features, text_features, logit_scale)
         n = logits_per_image.shape[0]
         positive_mask = torch.eye(n, dtype=torch.bool, device=logits_per_image.device)
@@ -94,3 +94,18 @@ class CLIPJointLoss(CLIPLoss):
             - torch.log(torch.tensor(1.0 / n, device=logits_per_image.device))
         )
         return -total_loss
+
+
+class MSEloss(nn.Module):
+
+    "Mean Squared Error loss computated with logits. Serves as a baseline for timeseries estimation."
+
+    def __init__(self, v_encoder: nn.Linear):
+        super().__init__()
+        self.v_encoder = v_encoder
+        
+    def forward(self, u_features, v_features, logit_scale, u, v) -> torch.Tensor:
+        H = self.v_encoder.weight
+        v_pred = u_features @ H
+        loss = ((v_pred - v)**2).mean()
+        return loss

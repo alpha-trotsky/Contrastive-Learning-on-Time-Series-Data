@@ -14,8 +14,8 @@ signal:
 
 #modality:
   #type: field_coeff
-  # u_index: which of the 1000 grid points form u
-  # Use evenly-spaced indices spanning the domain.
+  #   u_index: which of the 1000 grid points form u
+  #   Use evenly-spaced indices spanning the domain.
   #u_index: [41, 124, 207, 290, 373, 457, 540, 623, 706, 789, 872, 955]
   #dim_coeff: 5
   #sigma: 0.05
@@ -24,10 +24,10 @@ signal:
 modality:
     type: PastFuture
     past_len: 50
-    future_len: 20
+    future_len: 50
     start: 0
     sigma_u: 0.05
-    sigma_v: 0.0 
+    sigma_v: 0.05
 
 model:
   type: linear_clip

@@ -12,9 +12,10 @@ from modalities.past_future import PastFutureModality
 from signals.gaussian_process import GaussianProcess1D
 from modalities.field_coeff import FieldCoeffModality
 from models.linear_clip import LinearCLIP
-from losses.clip_losses import CLIPConditionalLoss, CLIPJointLoss
+from losses.clip_losses import CLIPConditionalLoss, CLIPJointLoss, MSEloss
 from evaluation.theory_match import theory_match_error
 from evaluation.forecast import forecast_mse
+import wandb
 
 
 # ---------------------------------------------------------------------------
@@ -66,7 +67,7 @@ def build_model(cfg, modality):
     raise ValueError(f"Unknown model type: {cfg['type']}")
 
 
-def build_loss(cfg):
+def build_loss(cfg, model=None):
     inner_product = cfg['inner_product']
     if cfg['type'] == 'conditional':
         return CLIPConditionalLoss(
@@ -80,6 +81,8 @@ def build_loss(cfg):
         return CLIPConditionalLoss(lambda_u=1.0, lambda_v=0.0, inner_product=inner_product)
     elif cfg['type'] == 'one_sided_v':
         return CLIPConditionalLoss(lambda_u=0.0, lambda_v=1.0, inner_product=inner_product)
+    elif cfg['type'] == 'mse':
+        return MSEloss(v_encoder = model.v_encoder)
     else:
         raise ValueError(f"Unknown loss type: {cfg['type']}")
 
@@ -90,6 +93,12 @@ def build_loss(cfg):
 
 def run(cfg):
     torch.manual_seed(cfg['experiment']['seed'])
+
+    wandb.init(
+        project='contrastive-ts',
+        name=cfg['experiment']['name'],
+        config=cfg,
+    )
 
     # Build everything
     gen = build_signal(cfg['signal'])
@@ -117,7 +126,7 @@ def run(cfg):
     for step in range(cfg['training']['num_steps']):
         u, v = modality.sample_pair(cfg['training']['batch_size'])
         u_features, v_features, logit_scale = model(u.float(), v.float())
-        loss = loss_fn(u_features, v_features, logit_scale)
+        loss = loss_fn(u_features, v_features, logit_scale, u, v)
 
         optimizer.zero_grad()
         loss.backward()
@@ -127,27 +136,32 @@ def run(cfg):
         if step % cfg['logging']['log_every'] == 0:
             history['step'].append(step)
             history['loss'].append(loss.item())
+            wandb.log({'loss': loss.item()}, step=step)
 
         # Log theory match error
         if step % cfg['logging']['theory_match_every'] == 0:
             err = theory_match_error(model, modality, theory_loss_type)
             history['theory_err_steps'].append(step)
             history['theory_err'].append(err.item())
+            wandb.log({'theory_err': err.item()}, step=step)
             print(f"step {step:6d} | loss {loss.item():.4f} | theory_err {err.item():.4f}")
+            print(f"  logit_scale={model.logit_scale.exp().item():.4f} |weight_product_norm={(model.u_encoder.weight.T @ model.v_encoder.weight).norm().item():.4f}")
 
         # Log forecast MSE
         if step % cfg['logging']['forecast_every'] == 0:
             mse = forecast_mse(model, modality, n_samples=500)
             history['forecast_steps'].append(step)
             history['forecast_mse'].append(mse.item())
+            wandb.log({'forecast_mse': mse.item()}, step=step)
 
+    wandb.finish()
     return model, history
 
 
 # ---------------------------------------------------------------------------
 # Plotting
 # ---------------------------------------------------------------------------
-
+# WILL BE REPLACED BY WANDB ONCE I GET MY HANDS TO THAT 
 def plot_results(history, output_dir):
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
 

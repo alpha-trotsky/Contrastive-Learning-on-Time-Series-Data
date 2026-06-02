@@ -1,0 +1,4 @@
+step      0 | loss 6.9230 | theory_err 2.0000
+  logit_scale=14.2834 |weight_product_norm=1.4961
+step    500 | loss 6.4431 | theory_err 1.9837
+  logit_scale=14.4959 |weight_product_norm=1.5729
