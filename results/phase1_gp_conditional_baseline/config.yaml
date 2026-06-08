@@ -3,7 +3,6 @@ experiment:
   output_dir: results/phase1_gp_conditional_baseline
   seed: 42
 logging:
-  forecast_every: 500
   log_every: 100
   theory_match_every: 500
 loss:
@@ -30,7 +29,7 @@ signal:
   type: gaussian_process_1d
   zero_mean: true
 training:
-  batch_size: 1024
-  lr: 0.0001
-  num_steps: 10000
+  batch_size: 256
+  lr: 0.005
+  num_steps: 100000
   optimizer: adam

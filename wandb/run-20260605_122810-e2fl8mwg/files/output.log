@@ -1,0 +1,52 @@
+tensor([[ 0.4212, -0.1053,  0.6159,  ...,  0.0455,  0.4474, -0.5596],
+        [ 0.0275,  0.1364, -0.6232,  ..., -0.4356,  0.0083, -0.7650],
+        [-0.0387, -0.2201, -0.2375,  ...,  0.0131, -0.9320, -0.2453],
+        ...,
+        [-0.0318, -0.3473, -0.1919,  ...,  0.2143, -0.3500, -0.0207],
+        [-0.2953,  0.0093, -0.0539,  ..., -0.0548, -0.6118, -0.1721],
+        [-0.1173,  0.4224,  0.7765,  ..., -0.2074,  0.3481, -0.2136]])
+pre-training | forecast_mse 0.0669 | cov_error 126.0443
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+step      0 | loss 5.5402 | theory_err 1.9789
+  logit_scale=14.2108 | weight_product_norm=1.5113
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+step    500 | loss 5.0964 | theory_err 1.3982
+  logit_scale=12.2413 | weight_product_norm=1.2646
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+step   1000 | loss 5.0842 | theory_err 1.1618
+  logit_scale=10.9740 | weight_product_norm=1.1450
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+step   1500 | loss 5.0802 | theory_err 1.0009
+  logit_scale=10.1183 | weight_product_norm=1.3841
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+A_hat A_norm | A_entry_00 A_entry_00 | A - K A_minus_K
+Traceback (most recent call last):
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 240, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 229, in main
+    model, history = run(cfg)
+                     ~~~^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 136, in run
+    u, v = modality.sample_pair(cfg['training']['batch_size'])
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\modalities\past_future.py", line 23, in sample_pair
+    xi = self.gen.sample_coefficients(N)               # (N, dim_true)
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\signals\gaussian_process.py", line 96, in sample_coefficients
+    return torch.randn(N, self.dim_true, dtype=torch.float64)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

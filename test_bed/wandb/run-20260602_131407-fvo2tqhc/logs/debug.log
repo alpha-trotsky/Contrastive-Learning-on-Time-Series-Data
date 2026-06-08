@@ -19,3 +19,10 @@ config: {'experiment': {'name': 'phase1_gp_conditional_baseline', 'output_dir': 
 2026-06-02 13:14:09,336 INFO    MainThread:19300 [wandb_run.py:_redirect():2411] Wrapping output streams.
 2026-06-02 13:14:09,336 INFO    MainThread:19300 [wandb_run.py:_redirect():2434] Redirects installed.
 2026-06-02 13:14:09,340 INFO    MainThread:19300 [wandb_init.py:init():1075] run started, returning control to user process
+2026-06-02 13:27:38,760 INFO    MainThread:19300 [wandb_run.py:_finish():2260] finishing run alpha_trotsky-university-of-toronto/contrastive-ts/fvo2tqhc
+2026-06-02 13:27:38,760 INFO    MainThread:19300 [wandb_run.py:_atexit_cleanup():2459] got exitcode: 0
+2026-06-02 13:27:38,761 INFO    MainThread:19300 [wandb_run.py:_restore():2441] restore
+2026-06-02 13:27:38,761 INFO    MainThread:19300 [wandb_run.py:_restore():2447] restore done
+2026-06-02 13:27:39,621 INFO    MainThread:19300 [wandb_run.py:_footer_history_summary_info():3895] rendering history
+2026-06-02 13:27:39,622 INFO    MainThread:19300 [wandb_run.py:_footer_history_summary_info():3927] rendering summary
+2026-06-02 13:27:39,623 INFO    MainThread:19300 [wandb_run.py:_footer_sync_info():3856] logging synced files

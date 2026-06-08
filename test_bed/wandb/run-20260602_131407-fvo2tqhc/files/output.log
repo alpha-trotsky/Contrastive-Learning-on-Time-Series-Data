@@ -2,3 +2,39 @@ step      0 | loss 6.9230 | theory_err 2.0000
   logit_scale=14.2834 |weight_product_norm=1.4961
 step    500 | loss 6.4431 | theory_err 1.9837
   logit_scale=14.4959 |weight_product_norm=1.5729
+step   1000 | loss 6.4364 | theory_err 1.9092
+  logit_scale=14.4187 |weight_product_norm=1.5143
+step   1500 | loss 6.4326 | theory_err 1.8618
+  logit_scale=14.3665 |weight_product_norm=1.4782
+step   2000 | loss 6.4689 | theory_err 1.8273
+  logit_scale=14.3259 |weight_product_norm=1.4499
+step   2500 | loss 6.4389 | theory_err 1.7987
+  logit_scale=14.2957 |weight_product_norm=1.4279
+step   3000 | loss 6.4640 | theory_err 1.7708
+  logit_scale=14.2666 |weight_product_norm=1.4047
+step   3500 | loss 6.4291 | theory_err 1.7441
+  logit_scale=14.2426 |weight_product_norm=1.3846
+step   4000 | loss 6.4362 | theory_err 1.7174
+  logit_scale=14.2153 |weight_product_norm=1.3606
+step   4500 | loss 6.4475 | theory_err 1.6927
+  logit_scale=14.1922 |weight_product_norm=1.3391
+step   5000 | loss 6.4380 | theory_err 1.6666
+  logit_scale=14.1710 |weight_product_norm=1.3187
+step   5500 | loss 6.4341 | theory_err 1.6430
+  logit_scale=14.1516 |weight_product_norm=1.3009
+step   6000 | loss 6.4422 | theory_err 1.6211
+  logit_scale=14.1391 |weight_product_norm=1.2893
+step   6500 | loss 6.4528 | theory_err 1.5969
+  logit_scale=14.1135 |weight_product_norm=1.2655
+step   7000 | loss 6.4646 | theory_err 1.5759
+  logit_scale=14.0937 |weight_product_norm=1.2477
+step   7500 | loss 6.4605 | theory_err 1.5541
+  logit_scale=14.0738 |weight_product_norm=1.2297
+step   8000 | loss 6.4352 | theory_err 1.5345
+  logit_scale=14.0548 |weight_product_norm=1.2130
+step   8500 | loss 6.4606 | theory_err 1.5165
+  logit_scale=14.0425 |weight_product_norm=1.2019
+step   9000 | loss 6.4234 | theory_err 1.4994
+  logit_scale=14.0283 |weight_product_norm=1.1896
+step   9500 | loss 6.4420 | theory_err 1.4810
+  logit_scale=14.0073 |weight_product_norm=1.1702

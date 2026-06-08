@@ -42,12 +42,11 @@ loss:
   lambda_v: 0.5
 
 training:
-  batch_size: 1024
-  num_steps: 10000
-  lr: 1.0e-4
+  batch_size: 256
+  num_steps: 50000
+  lr: 5.0e-4
   optimizer: adam
 
 logging:
   log_every: 100
   theory_match_every: 500
-  forecast_every: 500

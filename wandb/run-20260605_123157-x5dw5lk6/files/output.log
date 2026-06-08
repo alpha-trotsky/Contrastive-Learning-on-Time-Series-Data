@@ -1,0 +1,71 @@
+tensor([[ 0.4212, -0.1053,  0.6159,  ...,  0.0455,  0.4474, -0.5596],
+        [ 0.0275,  0.1364, -0.6232,  ..., -0.4356,  0.0083, -0.7650],
+        [-0.0387, -0.2201, -0.2375,  ...,  0.0131, -0.9320, -0.2453],
+        ...,
+        [-0.0318, -0.3473, -0.1919,  ...,  0.2143, -0.3500, -0.0207],
+        [-0.2953,  0.0093, -0.0539,  ..., -0.0548, -0.6118, -0.1721],
+        [-0.1173,  0.4224,  0.7765,  ..., -0.2074,  0.3481, -0.2136]])
+pre-training | forecast_mse 0.0669 | cov_error 126.0443
+A_hat = 21.476293563842773 | A_entry_00 = 0.46204158663749695 | A - K = 21.42764663696289
+step      0 | loss 5.5402 | theory_err 1.9789
+  logit_scale=14.2108 | weight_product_norm=1.5113
+A_hat = 19.99010467529297 | A_entry_00 = 0.5108664631843567 | A - K = 19.695751190185547
+A_hat = 18.36962890625 | A_entry_00 = 0.43005990982055664 | A - K = 18.026790618896484
+A_hat = 17.037193298339844 | A_entry_00 = 0.44417938590049744 | A - K = 16.697298049926758
+A_hat = 15.830220222473145 | A_entry_00 = 0.517198920249939 | A - K = 15.543304443359375
+A_hat = 15.479985237121582 | A_entry_00 = 0.4830644428730011 | A - K = 15.133115768432617
+step    500 | loss 5.0964 | theory_err 1.3982
+  logit_scale=12.2413 | weight_product_norm=1.2646
+A_hat = 15.390029907226562 | A_entry_00 = 0.497467577457428 | A - K = 15.00159740447998
+A_hat = 14.233404159545898 | A_entry_00 = 0.5848674774169922 | A - K = 13.856045722961426
+A_hat = 13.81737232208252 | A_entry_00 = 0.5661769509315491 | A - K = 13.383861541748047
+A_hat = 13.938441276550293 | A_entry_00 = 0.46139222383499146 | A - K = 13.497846603393555
+A_hat = 12.565262794494629 | A_entry_00 = 0.25223496556282043 | A - K = 12.220841407775879
+step   1000 | loss 5.0842 | theory_err 1.1618
+  logit_scale=10.9740 | weight_product_norm=1.1450
+A_hat = 12.777732849121094 | A_entry_00 = 0.07968541234731674 | A - K = 12.357632637023926
+A_hat = 12.80781364440918 | A_entry_00 = 0.22919946908950806 | A - K = 12.36197566986084
+A_hat = 12.724039077758789 | A_entry_00 = 0.4086042642593384 | A - K = 12.323339462280273
+A_hat = 13.547396659851074 | A_entry_00 = 0.5953863263130188 | A - K = 13.060160636901855
+A_hat = 14.005173683166504 | A_entry_00 = 0.6971436738967896 | A - K = 13.52490520477295
+step   1500 | loss 5.0802 | theory_err 1.0009
+  logit_scale=10.1183 | weight_product_norm=1.3841
+A_hat = 13.12653923034668 | A_entry_00 = 0.8572790622711182 | A - K = 12.690547943115234
+A_hat = 13.749862670898438 | A_entry_00 = 0.7675429582595825 | A - K = 13.301912307739258
+A_hat = 14.037832260131836 | A_entry_00 = 0.5219143033027649 | A - K = 13.623351097106934
+A_hat = 13.831634521484375 | A_entry_00 = 0.333068311214447 | A - K = 13.41414737701416
+A_hat = 14.897581100463867 | A_entry_00 = 0.5354251265525818 | A - K = 14.465335845947266
+step   2000 | loss 5.0812 | theory_err 0.8935
+  logit_scale=9.3990 | weight_product_norm=1.5850
+A_hat = 13.015403747558594 | A_entry_00 = 0.4929977357387543 | A - K = 12.580944061279297
+A_hat = 13.111205101013184 | A_entry_00 = 0.5074713230133057 | A - K = 12.667875289916992
+A_hat = 13.291987419128418 | A_entry_00 = 0.43142834305763245 | A - K = 12.83978271484375
+A_hat = 14.371726989746094 | A_entry_00 = 0.3932676315307617 | A - K = 13.955821990966797
+A_hat = 13.539803504943848 | A_entry_00 = 0.4279467463493347 | A - K = 13.145069122314453
+step   2500 | loss 5.0677 | theory_err 0.8296
+  logit_scale=8.5714 | weight_product_norm=1.5796
+A_hat = 12.798776626586914 | A_entry_00 = 0.4304928481578827 | A - K = 12.373910903930664
+A_hat = 13.932107925415039 | A_entry_00 = 0.42149630188941956 | A - K = 13.518932342529297
+A_hat = 14.346170425415039 | A_entry_00 = 0.45174384117126465 | A - K = 13.925789833068848
+A_hat = 14.062411308288574 | A_entry_00 = 0.4016316831111908 | A - K = 13.650813102722168
+A_hat = 13.549942970275879 | A_entry_00 = 0.4080272912979126 | A - K = 13.100878715515137
+step   3000 | loss 5.0402 | theory_err 0.8451
+  logit_scale=8.1108 | weight_product_norm=1.6706
+A_hat = 12.31604290008545 | A_entry_00 = 0.26356229186058044 | A - K = 11.890953063964844
+A_hat = 12.491917610168457 | A_entry_00 = 0.2354487180709839 | A - K = 12.01943302154541
+Traceback (most recent call last):
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 240, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 229, in main
+    model, history = run(cfg)
+                     ~~~^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 136, in run
+    u, v = modality.sample_pair(cfg['training']['batch_size'])
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\modalities\past_future.py", line 23, in sample_pair
+    xi = self.gen.sample_coefficients(N)               # (N, dim_true)
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\signals\gaussian_process.py", line 96, in sample_coefficients
+    return torch.randn(N, self.dim_true, dtype=torch.float64)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

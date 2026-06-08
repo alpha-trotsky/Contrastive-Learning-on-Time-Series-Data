@@ -10,18 +10,21 @@ def cosine_similarity(v_i, v_j):
 
 
 @torch.no_grad()
-def compute_similarities(model, modality, n_samples=500):
+def compute_similarities(model, modality, n_samples=25):
+    device = next(model.parameters()).device
     u, v = modality.sample_pair(1)
-    u_features = model.encode_u(u.float()).squeeze(0)
-    H = model.v_encoder.weights
-    v_pred = u_features @ H
+    u_features = model.encode_u(u.float().to(device)).squeeze(0)   # [embed_dim]
+    H = model.v_encoder.weight
+    v_pred = u_features @ H                                         # [v_dim]
+    v = v.squeeze(0).float().to(device)                             # [v_dim]
 
     self_sim = cosine_similarity(v_pred, v)
-    
-    _, v_random = modality.sample_pair(n_samples) 
-    random_sims = torch.stack(
-       cosine_similarity(v_pred, v_random[i].float)
-       for i in range(n_samples)
-    )
+
+    _, v_random = modality.sample_pair(n_samples)
+    v_random = v_random.float().to(device)
+    random_sims = torch.stack([
+        cosine_similarity(v_pred, v_random[i])
+        for i in range(n_samples)
+    ])
     
     return self_sim, random_sims.mean()

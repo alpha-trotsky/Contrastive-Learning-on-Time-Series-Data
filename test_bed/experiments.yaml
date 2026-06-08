@@ -1,0 +1,36 @@
+# Research runs — update lr and batch_size from hyperparam search before running.
+# 6 dimensionality runs (conditional loss) + 7 loss variants for 50x50 = 13 runs total.
+
+base_config: config.yaml
+
+runs:
+  # --- Loss variant sweep (50x50 only) ---
+  - name: loss_conditional_l2
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: conditional, inner_product: false, lambda_u: 0.5, lambda_v: 0.5}
+
+  - name: loss_joint_dot
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: joint, inner_product: true}
+
+  - name: loss_joint_l2
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: joint, inner_product: false}
+
+  - name: loss_one_sided_v_dot
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: one_sided_v, inner_product: true, lambda_u: 0.0, lambda_v: 1.0}
+
+  - name: loss_one_sided_v_l2
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: one_sided_v, inner_product: false, lambda_u: 0.0, lambda_v: 1.0}
+
+  - name: loss_mse
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: mse}

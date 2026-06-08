@@ -1,0 +1,33 @@
+base_config: config.yaml
+
+runs:
+# --- Dimensionality sweep (conditional, inner_product: true) ---
+  #- name: dim_10x10
+   # overrides:
+    #  modality: {past_len: 10, future_len: 10}
+     # loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}
+
+ # - name: dim_10x50
+  #  overrides:
+   #   modality: {past_len: 10, future_len: 50}
+    #  loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}
+
+  #- name: dim_10x100
+   # overrides:
+    #  modality: {past_len: 10, future_len: 100}
+     # loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}
+
+  #- name: dim_50x50
+   # overrides:
+    #  modality: {past_len: 50, future_len: 50}
+     # loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}
+
+  #- name: dim_50x100
+   # overrides:
+    #  modality: {past_len: 50, future_len: 100}
+     # loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}
+
+  #- name: dim_100x100
+   # overrides:
+    #  modality: {past_len: 100, future_len: 100}
+     # loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}

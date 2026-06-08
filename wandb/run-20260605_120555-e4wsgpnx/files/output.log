@@ -1,0 +1,48 @@
+tensor([[ 0.4212, -0.1053,  0.6159,  ...,  0.0455,  0.4474, -0.5596],
+        [ 0.0275,  0.1364, -0.6232,  ..., -0.4356,  0.0083, -0.7650],
+        [-0.0387, -0.2201, -0.2375,  ...,  0.0131, -0.9320, -0.2453],
+        ...,
+        [-0.0318, -0.3473, -0.1919,  ...,  0.2143, -0.3500, -0.0207],
+        [-0.2953,  0.0093, -0.0539,  ..., -0.0548, -0.6118, -0.1721],
+        [-0.1173,  0.4224,  0.7765,  ..., -0.2074,  0.3481, -0.2136]])
+pre-training | forecast_mse 0.0669 | cov_error 126.0443
+step      0 | loss 6.9303 | theory_err 1.9997
+  logit_scale=14.2806 | weight_product_norm=1.4960
+step    500 | loss 6.4630 | theory_err 1.9841
+  logit_scale=14.4935 | weight_product_norm=1.5735
+step   1000 | loss 6.4830 | theory_err 1.9086
+  logit_scale=14.4151 | weight_product_norm=1.5149
+step   1500 | loss 6.4476 | theory_err 1.8596
+  logit_scale=14.3557 | weight_product_norm=1.4743
+step   2000 | loss 6.4294 | theory_err 1.8264
+  logit_scale=14.3215 | weight_product_norm=1.4509
+step   2500 | loss 6.4357 | theory_err 1.7963
+  logit_scale=14.2818 | weight_product_norm=1.4220
+step   3000 | loss 6.4247 | theory_err 1.7704
+  logit_scale=14.2619 | weight_product_norm=1.4058
+step   3500 | loss 6.4323 | theory_err 1.7446
+  logit_scale=14.2390 | weight_product_norm=1.3861
+step   4000 | loss 6.4527 | theory_err 1.7182
+  logit_scale=14.2108 | weight_product_norm=1.3610
+step   4500 | loss 6.4265 | theory_err 1.6932
+  logit_scale=14.1889 | weight_product_norm=1.3407
+step   5000 | loss 6.4488 | theory_err 1.6699
+  logit_scale=14.1710 | weight_product_norm=1.3242
+step   5500 | loss 6.4525 | theory_err 1.6450
+  logit_scale=14.1526 | weight_product_norm=1.3068
+step   6000 | loss 6.4513 | theory_err 1.6228
+  logit_scale=14.1307 | weight_product_norm=1.2861
+Traceback (most recent call last):
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 234, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 223, in main
+    model, history = run(cfg)
+                     ~~~^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 134, in run
+    u, v = modality.sample_pair(cfg['training']['batch_size'])
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\modalities\past_future.py", line 28, in sample_pair
+    u = u + self.sigma_u * torch.randn_like(u)
+                           ~~~~~~~~~~~~~~~~^^^
+KeyboardInterrupt

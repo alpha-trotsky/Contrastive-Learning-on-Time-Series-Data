@@ -18,9 +18,10 @@ def theory_match_error(model, modality, loss_type='conditional'):
     -------
     scalar tensor — ||G^T H - A*|| / ||A*||
     """
-    C_uu = modality.C_uu()
-    C_vv = modality.C_vv()
-    C_uv = modality.C_uv()
+    device = next(model.parameters()).device
+    C_uu = modality.C_uu().to(device)
+    C_vv = modality.C_vv().to(device)
+    C_uv = modality.C_uv().to(device)
     if loss_type == 'conditional':
         A_star = predicted_A_conditional(C_uu, C_uv, C_vv)
     elif loss_type == 'joint':

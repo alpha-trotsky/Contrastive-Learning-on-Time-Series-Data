@@ -1,0 +1,19 @@
+tensor([[ 0.4212, -0.1053,  0.6159,  ...,  0.0455,  0.4474, -0.5596],
+        [ 0.0275,  0.1364, -0.6232,  ..., -0.4356,  0.0083, -0.7650],
+        [-0.0387, -0.2201, -0.2375,  ...,  0.0131, -0.9320, -0.2453],
+        ...,
+        [-0.0318, -0.3473, -0.1919,  ...,  0.2143, -0.3500, -0.0207],
+        [-0.2953,  0.0093, -0.0539,  ..., -0.0548, -0.6118, -0.1721],
+        [-0.1173,  0.4224,  0.7765,  ..., -0.2074,  0.3481, -0.2136]])
+pre-training | forecast_mse 0.0669 | cov_error 126.0443
+Traceback (most recent call last):
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 238, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 227, in main
+    model, history = run(cfg)
+                     ~~~^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 147, in run
+    history['A_hat'].append(A_norm)
+    ~~~~~~~^^^^^^^^^
+KeyError: 'A_hat'

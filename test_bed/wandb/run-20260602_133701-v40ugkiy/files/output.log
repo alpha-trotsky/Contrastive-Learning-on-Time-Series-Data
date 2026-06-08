@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 230, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 219, in main
+    model, history = run(cfg)
+                     ~~~^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 150, in run
+    self_sim, rand_sim = compute_similarities(model, modality)
+                         ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Belia\anaconda3\Lib\site-packages\torch\utils\_contextlib.py", line 124, in decorate_context
+    return func(*args, **kwargs)
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\evaluation\similarity.py", line 19, in compute_similarities
+    self_sim = cosine_similarity(v_pred, v)
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\evaluation\similarity.py", line 9, in cosine_similarity
+    return (v_i @ v_j) / (torch.dot(v_i, v_i).sqrt() * torch.dot(v_j, v_j).sqrt())
+            ~~~~^~~~~
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (1x50 and 1x50)
