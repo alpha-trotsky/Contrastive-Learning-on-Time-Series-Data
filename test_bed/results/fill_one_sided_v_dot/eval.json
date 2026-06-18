@@ -1,0 +1,12 @@
+{
+  "eval/self_sim_mean": 0.48533564805984497,
+  "eval/self_sim_std": 0.30697178840637207,
+  "eval/rand_sim_mean": 0.01606670394539833,
+  "eval/margin": 0.46926894783973694,
+  "eval/recall@1_u2v": 0.001953125,
+  "eval/recall@1_v2u": 0.00390625,
+  "eval/recall@5_u2v": 0.025390625,
+  "eval/recall@5_v2u": 0.025390625,
+  "eval/recall@10_u2v": 0.044921875,
+  "eval/recall@10_v2u": 0.05078125
+}

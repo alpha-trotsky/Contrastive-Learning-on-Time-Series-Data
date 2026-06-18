@@ -31,7 +31,7 @@ modality:
 
 model:
   type: linear_clip
-  embed_dim: 20
+  embed_dim: 100
   bias: false
   init_logit_scale: 2.659   # log(1/0.07), the CLIP default
 

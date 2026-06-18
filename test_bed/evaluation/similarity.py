@@ -10,7 +10,7 @@ def cosine_similarity(v_i, v_j):
 
 
 @torch.no_grad()
-def compute_similarities(model, modality, n_samples=25):
+def compute_similarities(model, modality, n_samples=500):
     device = next(model.parameters()).device
     u, v = modality.sample_pair(1)
     u_features = model.encode_u(u.float().to(device)).squeeze(0)   # [embed_dim]

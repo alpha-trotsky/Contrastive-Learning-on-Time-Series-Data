@@ -16,9 +16,10 @@ from signals.gaussian_process import GaussianProcess1D
 from modalities.field_coeff import FieldCoeffModality
 from models.linear_clip import LinearCLIP
 from losses.clip_losses import CLIPConditionalLoss, CLIPJointLoss, MSEloss
-from evaluation.theory_match import theory_match_error
-from evaluation.forecast import forecast_mse, residual_cov_error, debug_Ahat
+from evaluation.theory_match import theory_match_error, theory_match_dir_error
+from evaluation.forecast import forecast_mse, residual_cov_error, model_cov_error, debug_Ahat
 from evaluation.similarity import compute_similarities
+from evaluation.retrieval import evaluate_encoders
 import wandb
 
 
@@ -69,6 +70,52 @@ def build_model(cfg, modality):
             init_logit_scale=cfg['init_logit_scale'],
         )
     raise ValueError(f"Unknown model type: {cfg['type']}")
+
+
+def resolve_mean_family(loss_cfg):
+    """Which model conditional-mean formula applies, given the loss/tilting.
+
+    The forecast prediction head is set by the *tilting* (the model form ν),
+    not by conditional-vs-joint:
+      - cosine tilting  (inner_product=True)  -> eq (41): E[v|u] = C_vv A^T u
+      - L2 tilting      (inner_product=False) -> eq (48): E[v|u] = (C+C_vv^-1)^-1 A^T u
+      - mse baseline    -> plain regression head  E[v|u] = (W_u^T W_v)^T u
+    """
+    if loss_cfg['type'] == 'mse':
+        return 'mse'
+    return 'cosine' if loss_cfg.get('inner_product', True) else 'quadratic'
+
+
+def resolve_theory_target(loss_cfg):
+    """Which analytical A* `theory_match_error` should compare against.
+
+    Mirrors `resolve_mean_family` but at the level of the closed-form optimum:
+      - cosine conditional / one-sided -> Thm 5.1   ('cosine_conditional')
+      - cosine joint                   -> Thm 5.6   ('cosine_joint')
+      - L2 one-sided v / u             -> Thm 5.3   ('quadratic_v' / 'quadratic_u')
+      - mse                            -> K          ('mse')
+      - two-sided L2 / L2 joint        -> no closed form ('none')
+    """
+    t = loss_cfg['type']
+    if t == 'mse':
+        return 'mse'
+    inner_product = loss_cfg.get('inner_product', True)
+    if t == 'joint':
+        return 'cosine_joint' if inner_product else 'none'   # L2 joint: no formula
+    if inner_product:
+        return 'cosine_conditional'                          # cosine: any lambda -> Thm 5.1
+    # L2 (quadratic) tilting: closed form only for the one-sided cases.
+    # NB: here lambda_u weights the p(v|u) cross-entropy (CE on logits_per_image),
+    # which constrains C and matches the v|u conditional; lambda_v weights p(u|v),
+    # constrains B and matches u|v.  A *pure* one-sided match needs the OTHER
+    # weight to be 0.  (This is the opposite of the paper's lambda subscripts.)
+    lambda_u = loss_cfg.get('lambda_u', 0.5)
+    lambda_v = loss_cfg.get('lambda_v', 0.5)
+    if t == 'one_sided_u' or lambda_v == 0.0:                 # only p(v|u): matches v|u
+        return 'quadratic_v'
+    if t == 'one_sided_v' or lambda_u == 0.0:                 # only p(u|v): matches u|v
+        return 'quadratic_u'
+    return 'none'                                             # two-sided L2: no formula
 
 
 def build_loss(cfg, model=None):
@@ -124,14 +171,14 @@ def run(cfg):
         #A_entry_00' : [],
     }
 
-    # Resolve loss type label for theory_match
-    theory_loss_type = (
-        'joint' if cfg['loss']['type'] == 'joint' else 'conditional'
-    )
+    # Resolve which analytical A* theory_match compares against
+    theory_target = resolve_theory_target(cfg['loss'])
+    # Resolve which model conditional-mean head the forecast metrics should use
+    mean_family = resolve_mean_family(cfg['loss'])
 
     # Pre-training forecast baseline
-    pre_mse = forecast_mse(model, modality, n_samples=500)
-    pre_cov_err = residual_cov_error(model, modality, n_samples=1000)
+    pre_mse = forecast_mse(model, modality, mean_family, n_samples=500)
+    pre_cov_err = residual_cov_error(model, modality, mean_family, n_samples=1000)
     wandb.log({'forecast_mse_pre': pre_mse.item(), 'cov_error_pre': pre_cov_err.item()}, step=0)
     print(f"pre-training | forecast_mse {pre_mse.item():.4f} | cov_error {pre_cov_err.item():.4f}")
 
@@ -158,12 +205,17 @@ def run(cfg):
 
         # Log theory match error
         if step % cfg['logging']['theory_match_every'] == 0:
-            err = theory_match_error(model, modality, theory_loss_type)
+            err = theory_match_error(model, modality, theory_target)
+            err_val = err.item() if err is not None else float('nan')
+            dir_err, scale = theory_match_dir_error(model, modality, theory_target)
+            dir_err_val = dir_err.item() if dir_err is not None else float('nan')
+            scale_val = scale.item() if scale is not None else float('nan')
             history['theory_err_steps'].append(step)
-            history['theory_err'].append(err.item())
+            history['theory_err'].append(err_val)
             self_sim, rand_sim = compute_similarities(model, modality)
-            res_cov_error = residual_cov_error(model, modality, n_samples = 1000)
-            fore_mse = forecast_mse(model, modality, n_samples=500)
+            res_cov_error = residual_cov_error(model, modality, mean_family, n_samples = 1000)
+            fore_mse = forecast_mse(model, modality, mean_family, n_samples=500)
+            mdl_cov_err = model_cov_error(model, modality, mean_family)  # None for mse
             history['forecast_mse'].append(fore_mse)
             history['res_cov_error'].append(res_cov_error)
             logit_scale = model.logit_scale.exp().item()
@@ -175,7 +227,9 @@ def run(cfg):
             v_mean = v.mean(dim=0).norm()
             v_std = v.std(dim=0).mean()
             wandb.log({
-                'theory_err': err.item(),
+                'theory_err': err_val,
+                'theory_err_dir': dir_err_val,
+                'theory_err_scale': scale_val,
                 'similarity_ratio': (self_sim / rand_sim).item(),
                 'self_sim': self_sim.item(),
                 'rand_sim': rand_sim.item(),
@@ -183,20 +237,29 @@ def run(cfg):
                 'weight_product_norm': wp_norm,
                 'forecast_mse': fore_mse,
                 'res_cov_error': res_cov_error,
+                'model_cov_error': mdl_cov_err.item() if mdl_cov_err is not None else float('nan'),
                 #'v_mean': v_mean,
                 #v_std': v_std,
-                #'v_pred_mean': v_pred_mean, 
+                #'v_pred_mean': v_pred_mean,
                 #'v_pred_std': v_pred_std,
             }, step=step)
-            print(f"step {step:6d} | loss {loss.item():.4f} | theory_err {err.item():.4f}")
+            print(f"step {step:6d} | loss {loss.item():.4f} | theory_err {err_val:.4f} | E_dir {dir_err_val:.4f} | scale {scale_val:.4f}")
             print(f"  logit_scale={logit_scale:.4f} | weight_product_norm={wp_norm:.4f} ")
 
     # Post-training forecast
-    post_mse = forecast_mse(model, modality, n_samples=500)
-    post_cov_err = residual_cov_error(model, modality, n_samples=1000)
+    post_mse = forecast_mse(model, modality, mean_family, n_samples=500)
+    post_cov_err = residual_cov_error(model, modality, mean_family, n_samples=1000)
     final_step = cfg['training']['num_steps'] - 1
     wandb.log({'forecast_mse_post': post_mse.item(), 'cov_error_post': post_cov_err.item()}, step=final_step)
     print(f"post-training | forecast_mse {post_mse.item():.4f} | cov_error {post_cov_err.item():.4f}")
+
+    # Post-training retrieval / similarity eval on a fixed test batch
+    eval_metrics = evaluate_encoders(model, modality, n_eval=512, seed=1234)
+    wandb.log(eval_metrics, step=final_step)
+    history['eval'] = eval_metrics
+    print("eval | " + " | ".join(
+        f"{k.split('/')[-1]} {v:.4f}" for k, v in eval_metrics.items()
+    ))
 
     wandb.finish()
     return model, history

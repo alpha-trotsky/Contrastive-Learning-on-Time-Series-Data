@@ -1,0 +1,22 @@
+device: cpu
+pre-training | forecast_mse 0.0027 | cov_error 7.5845
+step      0 | loss 5.8366 | theory_err nan
+  logit_scale=14.2749 | weight_product_norm=3.3194
+step    500 | loss 3.9555 | theory_err nan
+  logit_scale=15.1585 | weight_product_norm=10.8822
+Traceback (most recent call last):
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\run_experiments.py", line 56, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\run_experiments.py", line 47, in main
+    run(cfg)
+    ~~~^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\experiment.py", line 182, in run
+    u, v = modality.sample_pair(cfg['training']['batch_size'])
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\modalities\past_future.py", line 23, in sample_pair
+    xi = self.gen.sample_coefficients(N)               # (N, dim_true)
+  File "C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\signals\gaussian_process.py", line 96, in sample_coefficients
+    return torch.randn(N, self.dim_true, dtype=torch.float64)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

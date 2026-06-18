@@ -1,10 +1,15 @@
 # Research runs — update lr and batch_size from hyperparam search before running.
-# 6 dimensionality runs (conditional loss) + 7 loss variants for 50x50 = 13 runs total.
+# Loss-variant sweep at 50x50: 7 runs (cosine/L2 x conditional/joint/one-sided + MSE).
 
 base_config: config.yaml
 
 runs:
   # --- Loss variant sweep (50x50 only) ---
+  - name: loss_conditional_dot         # canonical two-sided cosine conditional (Thm 5.1)
+    overrides:
+      modality: {past_len: 50, future_len: 50}
+      loss: {type: conditional, inner_product: true, lambda_u: 0.5, lambda_v: 0.5}
+
   - name: loss_conditional_l2
     overrides:
       modality: {past_len: 50, future_len: 50}

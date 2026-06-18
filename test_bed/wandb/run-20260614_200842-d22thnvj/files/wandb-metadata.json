@@ -1,0 +1,44 @@
+{
+  "os":  "Windows-11-10.0.26200-SP0",
+  "python":  "CPython 3.13.5",
+  "startedAt":  "2026-06-15T00:08:42.744750Z",
+  "args":  [
+    "--sweep",
+    "experiments.yaml"
+  ],
+  "program":  "C:\\Users\\Belia\\OneDrive\\Documents\\GitHub\\Contrastive-Learning-on-Time-Series-Data\\test_bed\\run_experiments.py",
+  "codePath":  "test_bed\\run_experiments.py",
+  "codePathLocal":  "run_experiments.py",
+  "git":  {
+    "remote":  "https://github.com/alpha-trotsky/Contrastive-Learning-on-Time-Series-Data",
+    "commit":  "7252f57aca29b52dc26500e0ae689e3f94f9204f"
+  },
+  "email":  "aleksandr.beliaev@mail.utoronto.ca",
+  "root":  "C:\\Users\\Belia\\OneDrive\\Documents\\GitHub\\Contrastive-Learning-on-Time-Series-Data\\test_bed",
+  "host":  "Trotskystan69",
+  "executable":  "C:\\Users\\Belia\\anaconda3\\python.exe",
+  "cpu_count":  4,
+  "cpu_count_logical":  8,
+  "gpu":  "NVIDIA GeForce GTX 1650 with Max-Q Design",
+  "gpu_count":  1,
+  "disk":  {
+    "/":  {
+      "total":  "510744588288",
+      "used":  "372253548544"
+    }
+  },
+  "memory":  {
+    "total":  "16917716992"
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "NVIDIA GeForce GTX 1650 with Max-Q Design",
+      "memoryTotal":  "4294967296",
+      "cudaCores":  896,
+      "architecture":  "Turing",
+      "uuid":  "GPU-18b2a80a-0e43-d7fc-4a69-7b4a10623363"
+    }
+  ],
+  "cudaVersion":  "13.1",
+  "writerId":  "v24cdfrqyhwgtp9gb6cedkvokokqbhc5"
+}

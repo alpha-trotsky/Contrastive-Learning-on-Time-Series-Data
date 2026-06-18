@@ -1,0 +1,27 @@
+2026-06-16 20:25:24,862 INFO    MainThread:12428 [wandb_setup.py:_flush():80] Current SDK version is 0.21.1
+2026-06-16 20:25:24,863 INFO    MainThread:12428 [wandb_setup.py:_flush():80] Configure stats pid to 12428
+2026-06-16 20:25:24,863 INFO    MainThread:12428 [wandb_setup.py:_flush():80] Loading settings from C:\Users\Belia\.config\wandb\settings
+2026-06-16 20:25:24,863 INFO    MainThread:12428 [wandb_setup.py:_flush():80] Loading settings from C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\wandb\settings
+2026-06-16 20:25:24,863 INFO    MainThread:12428 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2026-06-16 20:25:24,863 INFO    MainThread:12428 [wandb_init.py:setup_run_log_directory():703] Logging user logs to C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\wandb\offline-run-20260616_202524-ssfz4g9j\logs\debug.log
+2026-06-16 20:25:24,863 INFO    MainThread:12428 [wandb_init.py:setup_run_log_directory():704] Logging internal logs to C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\wandb\offline-run-20260616_202524-ssfz4g9j\logs\debug-internal.log
+2026-06-16 20:25:24,864 INFO    MainThread:12428 [wandb_init.py:init():830] calling init triggers
+2026-06-16 20:25:24,864 INFO    MainThread:12428 [wandb_init.py:init():835] wandb.init called with sweep_config: {}
+config: {'experiment': {'name': 'fill_one_sided_v_dot', 'output_dir': 'results\\fill_one_sided_v_dot', 'seed': 42}, 'signal': {'type': 'gaussian_process_1d', 'alpha': 2, 'tau': 3.0, 'dim_true': 1000, 'zero_mean': True}, 'modality': {'type': 'PastFuture', 'past_len': 50, 'future_len': 50, 'start': 0, 'sigma_u': 0.05, 'sigma_v': 0.05}, 'model': {'type': 'linear_clip', 'embed_dim': 100, 'bias': False, 'init_logit_scale': 2.659}, 'loss': {'type': 'one_sided_v', 'inner_product': True, 'lambda_u': 0.0, 'lambda_v': 1.0}, 'training': {'batch_size': 256, 'num_steps': 20000, 'lr': 0.0005, 'optimizer': 'adam'}, 'logging': {'log_every': 100, 'theory_match_every': 500}, '_wandb': {}}
+2026-06-16 20:25:24,864 INFO    MainThread:12428 [wandb_init.py:init():871] starting backend
+2026-06-16 20:25:25,316 INFO    MainThread:12428 [wandb_init.py:init():874] sending inform_init request
+2026-06-16 20:25:25,380 INFO    MainThread:12428 [wandb_init.py:init():882] backend started and connected
+2026-06-16 20:25:25,383 INFO    MainThread:12428 [wandb_init.py:init():953] updated telemetry
+2026-06-16 20:25:25,456 INFO    MainThread:12428 [wandb_init.py:init():977] communicating run to backend with 90.0 second timeout
+2026-06-16 20:25:26,183 INFO    MainThread:12428 [wandb_init.py:init():1029] starting run threads in backend
+2026-06-16 20:25:27,284 INFO    MainThread:12428 [wandb_run.py:_console_start():2494] atexit reg
+2026-06-16 20:25:27,284 INFO    MainThread:12428 [wandb_run.py:_redirect():2342] redirect: wrap_raw
+2026-06-16 20:25:27,284 INFO    MainThread:12428 [wandb_run.py:_redirect():2411] Wrapping output streams.
+2026-06-16 20:25:27,284 INFO    MainThread:12428 [wandb_run.py:_redirect():2434] Redirects installed.
+2026-06-16 20:25:27,289 INFO    MainThread:12428 [wandb_init.py:init():1075] run started, returning control to user process
+2026-06-16 20:31:16,957 INFO    MainThread:12428 [wandb_run.py:_finish():2260] finishing run contrastive-ts/ssfz4g9j
+2026-06-16 20:31:16,957 INFO    MainThread:12428 [wandb_run.py:_atexit_cleanup():2459] got exitcode: 0
+2026-06-16 20:31:16,958 INFO    MainThread:12428 [wandb_run.py:_restore():2441] restore
+2026-06-16 20:31:16,958 INFO    MainThread:12428 [wandb_run.py:_restore():2447] restore done
+2026-06-16 20:31:16,964 INFO    MainThread:12428 [wandb_run.py:_footer_history_summary_info():3895] rendering history
+2026-06-16 20:31:16,966 INFO    MainThread:12428 [wandb_run.py:_footer_history_summary_info():3927] rendering summary

@@ -1,0 +1,35 @@
+experiment:
+  name: fill_one_sided_v_dot
+  output_dir: results\fill_one_sided_v_dot
+  seed: 42
+logging:
+  log_every: 100
+  theory_match_every: 500
+loss:
+  inner_product: true
+  lambda_u: 0.0
+  lambda_v: 1.0
+  type: one_sided_v
+modality:
+  future_len: 50
+  past_len: 50
+  sigma_u: 0.05
+  sigma_v: 0.05
+  start: 0
+  type: PastFuture
+model:
+  bias: false
+  embed_dim: 100
+  init_logit_scale: 2.659
+  type: linear_clip
+signal:
+  alpha: 2
+  dim_true: 1000
+  tau: 3.0
+  type: gaussian_process_1d
+  zero_mean: true
+training:
+  batch_size: 256
+  lr: 0.0005
+  num_steps: 20000
+  optimizer: adam
