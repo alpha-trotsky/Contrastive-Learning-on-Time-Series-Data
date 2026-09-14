@@ -165,11 +165,23 @@ def run(cfg):
         'loss': [],
         'theory_err_steps': [],
         'theory_err': [],
+        'theory_err_dir': [],
+        'theory_err_scale': [],
         'forecast_mse': [],
         'res_cov_error': [],
-        #'A_hat' : [], 
+        'model_cov_error': [],
+        'logit_scale': [],
+        'similarity_ratio': [],
+        #'A_hat' : [],
         #A_entry_00' : [],
     }
+
+    # Optional mid-training checkpoints (config keys are opt-in; omit to disable)
+    checkpoint_dir = Path(cfg['experiment']['output_dir']) / 'checkpoints'
+    checkpoint_every = cfg['logging'].get('checkpoint_every')
+    checkpoint_steps = set(cfg['logging'].get('checkpoint_steps', []))
+    if checkpoint_every or checkpoint_steps:
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
     # Resolve which analytical A* theory_match compares against
     theory_target = resolve_theory_target(cfg['loss'])
@@ -216,10 +228,17 @@ def run(cfg):
             res_cov_error = residual_cov_error(model, modality, mean_family, n_samples = 1000)
             fore_mse = forecast_mse(model, modality, mean_family, n_samples=500)
             mdl_cov_err = model_cov_error(model, modality, mean_family)  # None for mse
-            history['forecast_mse'].append(fore_mse)
-            history['res_cov_error'].append(res_cov_error)
+            mdl_cov_err_val = mdl_cov_err.item() if mdl_cov_err is not None else float('nan')
+            similarity_ratio_val = (self_sim / rand_sim).item()
             logit_scale = model.logit_scale.exp().item()
             wp_norm = (model.u_encoder.weight.T @ model.v_encoder.weight).norm().item()
+            history['forecast_mse'].append(fore_mse)
+            history['res_cov_error'].append(res_cov_error)
+            history['theory_err_dir'].append(dir_err_val)
+            history['theory_err_scale'].append(scale_val)
+            history['model_cov_error'].append(mdl_cov_err_val)
+            history['logit_scale'].append(logit_scale)
+            history['similarity_ratio'].append(similarity_ratio_val)
             H = model.v_encoder.weight
             v_pred = u_features @ H
             v_pred_mean = v_pred.mean(dim=0).norm()
@@ -230,14 +249,14 @@ def run(cfg):
                 'theory_err': err_val,
                 'theory_err_dir': dir_err_val,
                 'theory_err_scale': scale_val,
-                'similarity_ratio': (self_sim / rand_sim).item(),
+                'similarity_ratio': similarity_ratio_val,
                 'self_sim': self_sim.item(),
                 'rand_sim': rand_sim.item(),
                 'logit_scale': logit_scale,
                 'weight_product_norm': wp_norm,
                 'forecast_mse': fore_mse,
                 'res_cov_error': res_cov_error,
-                'model_cov_error': mdl_cov_err.item() if mdl_cov_err is not None else float('nan'),
+                'model_cov_error': mdl_cov_err_val,
                 #'v_mean': v_mean,
                 #v_std': v_std,
                 #'v_pred_mean': v_pred_mean,
@@ -245,6 +264,10 @@ def run(cfg):
             }, step=step)
             print(f"step {step:6d} | loss {loss.item():.4f} | theory_err {err_val:.4f} | E_dir {dir_err_val:.4f} | scale {scale_val:.4f}")
             print(f"  logit_scale={logit_scale:.4f} | weight_product_norm={wp_norm:.4f} ")
+
+        # Optional mid-training checkpoint
+        if (checkpoint_every and step % checkpoint_every == 0) or step in checkpoint_steps:
+            torch.save(model.state_dict(), checkpoint_dir / f'step_{step}.pt')
 
     # Post-training forecast
     post_mse = forecast_mse(model, modality, mean_family, n_samples=500)

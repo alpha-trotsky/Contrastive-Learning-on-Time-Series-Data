@@ -1,0 +1,27 @@
+2026-09-14 14:21:02,132 INFO    MainThread:34160 [wandb_setup.py:_flush():80] Current SDK version is 0.21.1
+2026-09-14 14:21:02,132 INFO    MainThread:34160 [wandb_setup.py:_flush():80] Configure stats pid to 34160
+2026-09-14 14:21:02,133 INFO    MainThread:34160 [wandb_setup.py:_flush():80] Loading settings from C:\Users\Belia\.config\wandb\settings
+2026-09-14 14:21:02,133 INFO    MainThread:34160 [wandb_setup.py:_flush():80] Loading settings from C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\wandb\settings
+2026-09-14 14:21:02,133 INFO    MainThread:34160 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2026-09-14 14:21:02,134 INFO    MainThread:34160 [wandb_init.py:setup_run_log_directory():703] Logging user logs to C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\wandb\offline-run-20260914_142102-9lwvlsa8\logs\debug.log
+2026-09-14 14:21:02,135 INFO    MainThread:34160 [wandb_init.py:setup_run_log_directory():704] Logging internal logs to C:\Users\Belia\OneDrive\Documents\GitHub\Contrastive-Learning-on-Time-Series-Data\test_bed\wandb\offline-run-20260914_142102-9lwvlsa8\logs\debug-internal.log
+2026-09-14 14:21:02,135 INFO    MainThread:34160 [wandb_init.py:init():830] calling init triggers
+2026-09-14 14:21:02,136 INFO    MainThread:34160 [wandb_init.py:init():835] wandb.init called with sweep_config: {}
+config: {'experiment': {'name': 'smoke_test', 'output_dir': 'C:/Users/Belia/AppData/Local/Temp/claude/C--Users-Belia-OneDrive-Documents-GitHub-Contrastive-Learning-on-Time-Series-Data/0d6cc004-586b-468e-9d35-9f57c0c13fb6/scratchpad/smoke_out', 'seed': 42}, 'signal': {'type': 'gaussian_process_1d', 'alpha': 2, 'tau': 3.0, 'dim_true': 200, 'zero_mean': True}, 'modality': {'type': 'PastFuture', 'past_len': 10, 'future_len': 10, 'start': 0, 'sigma_u': 0.05, 'sigma_v': 0.05}, 'model': {'type': 'linear_clip', 'embed_dim': 10, 'bias': False, 'init_logit_scale': 2.659}, 'loss': {'type': 'conditional', 'inner_product': True, 'lambda_u': 0.5, 'lambda_v': 0.5}, 'training': {'batch_size': 64, 'num_steps': 60, 'lr': 0.0005, 'optimizer': 'adam'}, 'logging': {'log_every': 10, 'theory_match_every': 20, 'checkpoint_every': 20, 'checkpoint_steps': [5]}, '_wandb': {}}
+2026-09-14 14:21:02,136 INFO    MainThread:34160 [wandb_init.py:init():871] starting backend
+2026-09-14 14:21:02,838 INFO    MainThread:34160 [wandb_init.py:init():874] sending inform_init request
+2026-09-14 14:21:02,971 INFO    MainThread:34160 [wandb_init.py:init():882] backend started and connected
+2026-09-14 14:21:02,974 INFO    MainThread:34160 [wandb_init.py:init():953] updated telemetry
+2026-09-14 14:21:03,070 INFO    MainThread:34160 [wandb_init.py:init():977] communicating run to backend with 90.0 second timeout
+2026-09-14 14:21:03,469 INFO    MainThread:34160 [wandb_init.py:init():1029] starting run threads in backend
+2026-09-14 14:21:05,853 INFO    MainThread:34160 [wandb_run.py:_console_start():2494] atexit reg
+2026-09-14 14:21:05,853 INFO    MainThread:34160 [wandb_run.py:_redirect():2342] redirect: wrap_raw
+2026-09-14 14:21:05,853 INFO    MainThread:34160 [wandb_run.py:_redirect():2411] Wrapping output streams.
+2026-09-14 14:21:05,854 INFO    MainThread:34160 [wandb_run.py:_redirect():2434] Redirects installed.
+2026-09-14 14:21:05,867 INFO    MainThread:34160 [wandb_init.py:init():1075] run started, returning control to user process
+2026-09-14 14:21:17,356 INFO    MainThread:34160 [wandb_run.py:_finish():2260] finishing run contrastive-ts/9lwvlsa8
+2026-09-14 14:21:17,357 INFO    MainThread:34160 [wandb_run.py:_atexit_cleanup():2459] got exitcode: 0
+2026-09-14 14:21:17,357 INFO    MainThread:34160 [wandb_run.py:_restore():2441] restore
+2026-09-14 14:21:17,358 INFO    MainThread:34160 [wandb_run.py:_restore():2447] restore done
+2026-09-14 14:21:17,376 INFO    MainThread:34160 [wandb_run.py:_footer_history_summary_info():3895] rendering history
+2026-09-14 14:21:17,379 INFO    MainThread:34160 [wandb_run.py:_footer_history_summary_info():3927] rendering summary
