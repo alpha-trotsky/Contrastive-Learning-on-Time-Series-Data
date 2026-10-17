@@ -1,0 +1,1 @@
+t_inf_ncos_mlp_s0: energy model 0.2533 oracle 0.2523 clim 0.3575 | cov90 0.892 by-spread [0.89, 0.89, 0.89] | {'final_loss': 3.7334632873535156, 'logit_scale': 67.67919921875, 'ess_median': 5186.472412520813, 'ess_min': 213.3353684110133, 'ess_p05': 1320.1045528763789}
