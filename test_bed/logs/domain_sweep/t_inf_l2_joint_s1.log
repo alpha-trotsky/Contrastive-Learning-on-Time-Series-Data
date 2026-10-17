@@ -1,0 +1,1 @@
+t_inf_l2_joint_s1: energy model 0.2566 oracle 0.2563 clim 0.3568 | cov90 0.890 by-spread [0.89, 0.89, 0.89] | {'final_loss': 3.9612836837768555, 'logit_scale': 6.535159587860107, 'ess_median': 11328.036660242455, 'ess_min': 24.25325457855058, 'whitened_theory_err': None}

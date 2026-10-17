@@ -8,7 +8,7 @@ run() { python -m analysis.domain_sweep --domain "$1" --dial "$2" --model "$3" -
 export -f run
 for seed in 0 1; do
   for spec in "t inf" "t 10" "t 3" "warp 0" "warp 0.5" "warp 1" "dwell 0" "dwell 1" "dwell 1.5"; do
-    for model in cosine l2 mse; do
+    for model in ${MODELS:-cosine l2 mse}; do
       echo "$spec $model $seed"
     done
   done

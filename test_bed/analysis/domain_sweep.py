@@ -29,6 +29,11 @@ LOSSES = {
     'cosine': {'type': 'conditional', 'inner_product': True, 'lambda_u': 0.5, 'lambda_v': 0.5},
     'l2':     {'type': 'one_sided_u', 'inner_product': False, 'lambda_u': 1.0, 'lambda_v': 0.0},
     'mse':    {'type': 'mse'},
+    # completing the grid: {cosine, L2} x {one-sided past->future, two-sided, joint}
+    'cosine_1s':    {'type': 'one_sided_u', 'inner_product': True, 'lambda_u': 1.0, 'lambda_v': 0.0},
+    'cosine_joint': {'type': 'joint', 'inner_product': True},
+    'l2_2s':        {'type': 'conditional', 'inner_product': False, 'lambda_u': 0.5, 'lambda_v': 0.5},
+    'l2_joint':     {'type': 'joint', 'inner_product': False},
 }
 
 

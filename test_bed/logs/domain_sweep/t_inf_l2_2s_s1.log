@@ -1,0 +1,1 @@
+t_inf_l2_2s_s1: energy model 0.2565 oracle 0.2563 clim 0.3568 | cov90 0.889 by-spread [0.89, 0.89, 0.89] | {'final_loss': 3.8339200019836426, 'logit_scale': 7.112351894378662, 'ess_median': 11221.405998773673, 'ess_min': 24.60463307276854, 'whitened_theory_err': None}
