@@ -119,6 +119,10 @@ def main():
     p.add_argument('--n_test', type=int, default=500)
     p.add_argument('--M', type=int, default=300)
     p.add_argument('--bank', type=int, default=50000)
+    p.add_argument('--bank_source', choices=['heldout', 'train'], default='heldout',
+                   help='futures to resample from: fresh held-out pairs (default) or the first '
+                        '--bank training pairs (goal-1 runs).  A flexible encoder can memorise '
+                        'training pairs, which makes an in-training bank over-confident.')
     p.add_argument('--seed', type=int, default=0)
     p.add_argument('--out', default='results/domain_sweep')
     a = p.parse_args()
@@ -133,6 +137,8 @@ def main():
     u_te, y = make_data(mod, a.n_test)
     oracle = mod.oracle_samples(u_te, a.M)
     spread = mod.oracle_spread(u_te)
+    # drawn after train/test/oracle so those stay identical to the goal-1 runs
+    u_bk, v_bk = make_data(mod, a.bank) if a.bank_source == 'heldout' else (u_tr[:a.bank], v_tr[:a.bank])
 
     torch.manual_seed(a.seed)
     if a.encoder == 'mlp':
@@ -162,7 +168,7 @@ def main():
         opt.step()
     model.eval()
 
-    bank = v_tr[:a.bank]
+    bank = v_bk
     S = {'oracle': oracle, 'climatology': climatology_samples(bank, a.n_test, a.M)}
     extra = {'final_loss': loss.item()}
     if not regressor:
@@ -170,14 +176,14 @@ def main():
     if a.model == 'mse' and regressor:
         with torch.no_grad():
             pred = model.predict(u_te).double()
-            r = v_tr[:a.bank] - model.predict(u_tr[:a.bank]).double()
+            r = v_bk - model.predict(u_bk).double()
         S['model_point'] = point_samples(pred)
         S['model'] = gaussian_samples(pred, r.T @ r / a.bank, a.M)
     elif a.model == 'gauss':
         with torch.no_grad():
             mu, sd = (x.double() for x in model.predict(u_te))
-            mu_b, sd_b = (x.double() for x in model.predict(u_tr[:a.bank]))
-        z = (v_tr[:a.bank] - mu_b) / sd_b          # standardised residuals
+            mu_b, sd_b = (x.double() for x in model.predict(u_bk))
+        z = (v_bk - mu_b) / sd_b          # standardised residuals
         R = torch.corrcoef(z.T)                    # residual correlation across steps
         S['model'] = mu[:, None, :] + sd[:, None, :] * gaussian_samples(torch.zeros_like(mu), R, a.M)
         S['model_point'] = point_samples(mu)
@@ -185,7 +191,7 @@ def main():
         W = (model.u_encoder.weight.T @ model.v_encoder.weight).double().detach()
         pred = u_te @ W
         S['model_point'] = point_samples(pred)
-        r = v_tr[:a.bank] - u_tr[:a.bank] @ W
+        r = v_bk - u_bk @ W
         S['model'] = gaussian_samples(pred, r.T @ r / a.bank, a.M)
     else:
         L = LOSSES[a.model]
