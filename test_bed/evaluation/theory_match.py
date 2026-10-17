@@ -6,6 +6,7 @@ from theory.gaussian_predictions import (
     predicted_A_joint,
     predicted_A_quadratic_u,
     predicted_A_quadratic_v,
+    matrix_sqrt,
 )
 
 
@@ -77,3 +78,27 @@ def theory_match_dir_error(model, modality, target):
 
     scale = norm_A / norm_Astar
     return E_dir, scale
+
+
+@torch.no_grad()
+def theory_match_whitened_error(model, modality, target):
+    """Relative error in whitened (canonical) coordinates:
+
+        ||C_uu^{1/2} (A - A*) C_vv^{1/2}||_F / ||C_uu^{1/2} A* C_vv^{1/2}||_F
+
+    The raw Frobenius error weights every direction of A equally, so it is
+    dominated by noise-floor directions (tiny eigenvalues of C_uu, C_vv) that
+    barely affect the loss or any prediction.  Whitening measures A in the units
+    the model distribution actually depends on (for the cosine conditional
+    target, C_uu^{1/2} A* C_vv^{1/2} is the whitened cross-covariance M).
+    Returns None if no closed form exists.
+    """
+    result = _get_matrices(model, modality, target)
+    if result is None:
+        return None
+    A_learned, A_star = result
+    device = A_learned.device
+    Su = matrix_sqrt(modality.C_uu().double().to(device))
+    Sv = matrix_sqrt(modality.C_vv().double().to(device))
+    diff = Su @ (A_learned - A_star) @ Sv
+    return torch.norm(diff, p='fro') / torch.norm(Su @ A_star @ Sv, p='fro')
