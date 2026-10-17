@@ -12,17 +12,24 @@ class CLIPLoss(nn.Module):
     ----------
     inner_product : bool — if True use cosine (dot-product) logits;
                           if False use L²-distance tilting
+    normalize     : bool — L2-normalise both embeddings before the dot product
+                          (real CLIP's cosine similarity; bounded score).
+                          Only used with inner_product=True.
     """
 
-    def __init__(self, inner_product: bool = True):
+    def __init__(self, inner_product: bool = True, normalize: bool = False):
         super().__init__()
         self.inner_product = inner_product
+        self.normalize = normalize
 
     def get_ground_truth(self, device, num_logits) -> torch.Tensor:
         return torch.arange(num_logits, device=device, dtype=torch.long)
 
     def get_logits(self, image_features, text_features, logit_scale):
         if self.inner_product:
+            if self.normalize:
+                image_features = F.normalize(image_features, dim=-1)
+                text_features = F.normalize(text_features, dim=-1)
             logits_per_image = logit_scale * image_features @ text_features.T
         else:
             logits_per_image = (
@@ -53,8 +60,9 @@ class CLIPConditionalLoss(CLIPLoss):
         lambda_u: float = 0.5,
         lambda_v: float = 0.5,
         inner_product: bool = True,
+        normalize: bool = False,
     ):
-        super().__init__(inner_product=inner_product)
+        super().__init__(inner_product=inner_product, normalize=normalize)
         self.lambda_u = lambda_u
         self.lambda_v = lambda_v
 
@@ -80,8 +88,8 @@ class CLIPJointLoss(CLIPLoss):
     inner_product : bool — passed to CLIPLoss base
     """
 
-    def __init__(self, inner_product: bool = True):
-        super().__init__(inner_product=inner_product)
+    def __init__(self, inner_product: bool = True, normalize: bool = False):
+        super().__init__(inner_product=inner_product, normalize=normalize)
 
     def forward(self, image_features, text_features, logit_scale, u, v) -> torch.Tensor:
         logits_per_image, _ = self.get_logits(image_features, text_features, logit_scale)

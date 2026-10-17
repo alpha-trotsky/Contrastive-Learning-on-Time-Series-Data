@@ -15,6 +15,7 @@ from modalities.past_future import PastFutureModality
 from signals.gaussian_process import GaussianProcess1D
 from modalities.field_coeff import FieldCoeffModality
 from models.linear_clip import LinearCLIP
+from models.mlp_clip import MLPCLIP
 from losses.clip_losses import CLIPConditionalLoss, CLIPJointLoss, MSEloss
 from evaluation.theory_match import theory_match_error, theory_match_dir_error
 from evaluation.forecast import forecast_mse, residual_cov_error, model_cov_error, debug_Ahat
@@ -69,6 +70,16 @@ def build_model(cfg, modality):
             bias=cfg['bias'],
             init_logit_scale=cfg['init_logit_scale'],
         )
+    if cfg['type'] == 'mlp_clip':
+        return MLPCLIP(
+            embed_dim=cfg['embed_dim'],
+            u_dimension=modality.dim_u,
+            v_dimension=modality.dim_v,
+            hidden=cfg.get('hidden', 256),
+            depth=cfg.get('depth', 2),
+            skip=cfg.get('skip', True),
+            init_logit_scale=cfg['init_logit_scale'],
+        )
     raise ValueError(f"Unknown model type: {cfg['type']}")
 
 
@@ -119,18 +130,22 @@ def resolve_theory_target(loss_cfg):
 
 
 def build_loss(cfg, model=None):
+    normalize = cfg.get('normalize', False)
     if cfg['type'] == 'conditional':
         return CLIPConditionalLoss(
             lambda_u=cfg['lambda_u'],
             lambda_v=cfg['lambda_v'],
             inner_product=cfg['inner_product'],
+            normalize=normalize,
         )
     elif cfg['type'] == 'joint':
-        return CLIPJointLoss(inner_product=cfg['inner_product'])
+        return CLIPJointLoss(inner_product=cfg['inner_product'], normalize=normalize)
     elif cfg['type'] == 'one_sided_u':
-        return CLIPConditionalLoss(lambda_u=1.0, lambda_v=0.0, inner_product=cfg['inner_product'])
+        return CLIPConditionalLoss(lambda_u=1.0, lambda_v=0.0, inner_product=cfg['inner_product'],
+                                   normalize=normalize)
     elif cfg['type'] == 'one_sided_v':
-        return CLIPConditionalLoss(lambda_u=0.0, lambda_v=1.0, inner_product=cfg['inner_product'])
+        return CLIPConditionalLoss(lambda_u=0.0, lambda_v=1.0, inner_product=cfg['inner_product'],
+                                   normalize=normalize)
     elif cfg['type'] == 'mse':
         return MSEloss(v_encoder=model.v_encoder)
     else:
