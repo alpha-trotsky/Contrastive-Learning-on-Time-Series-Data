@@ -1,0 +1,116 @@
+# Handoff: Goal 3 — a real dataset
+
+Goal 2 is on branch `alpha-trotsky/relaxed-sagan-tkz0me`, draft PR #5 (stacked on
+#4). Read first, in order:
+1. `docs/goal2_results.md`: what nonlinear encoders achieved and which scores to carry forward.
+2. `docs/goal1_results.md`: the linear baseline and why L² beats Gaussian models.
+3. `docs/goal1_nonlinear_domain_strategy.md` §1: the scoring metric (energy score etc.) and why it works without an oracle.
+
+## Ground rules from the user
+* **Do not change the synthetic field setup** in `test_bed/config.yaml` and do not
+  edit `modalities/past_future.py`. Real data gets its own modality class.
+* **No attribution lines** in commits or PR text (no Co-Authored-By, no session link,
+  no "Generated with" footer).
+* Explain results plainly; avoid notation-heavy write-ups.
+* Run the full grid of losses when comparing: {cosine, L²} × {one-sided, two-sided,
+  joint} + MSE. Goal 2 added normalised cosine and a Gaussian-NLL MLP; keep both.
+
+## Where things stand (one paragraph)
+A trained contrastive model is a forecaster: resample real futures with weights
+∝ exp(score). With **MLP encoders**, **L² joint** and **normalised cosine** are within
+~1% of the perfect forecaster on heavy-tailed, bent and bimodal synthetic series, with
+calibrated bands. Unnormalised cosine still breaks on heavy tails. A Gaussian-NLL MLP
+(mean + past-dependent width) is strong on single-peaked data but loses on bimodal
+futures. The question for goal 3: **does this hold on a real series, where there
+is no oracle?**
+
+## What exists (reuse, don't rebuild)
+* `models/mlp_clip.py` (`MLPCLIP`, `type: mlp_clip`) and `models/linear_clip.py`.
+  MLP encoders standardise inputs from fixed stats: call `model.set_input_stats(u_tr, v_tr)`.
+* `models/mlp_regressor.py`: `MeanRegressor` (MSE) and `GaussianRegressor`
+  (Gaussian NLL). Each has `.loss(u, v)` and `.predict(u)`. `depth=0` gives the linear version.
+* `losses/clip_losses.py`: all losses; `normalize=True` gives normalised cosine.
+  `experiment.build_loss` reads `normalize` from the loss config.
+* `evaluation/predictors.py`: `sir_samples(clip_score_fn(model, inner_product, normalize), u, bank, M)`
+  returns forecast samples and per-query effective sample size (ESS).
+  Also `climatology_samples`, `gaussian_samples`, `point_samples`.
+* `evaluation/scoring.py`: `score_forecast(samples, y)` gives energy, CRPS (per
+  horizon), variogram, coverage/width at 50/80/90/95%, and mean error. `add_skills`
+  adds skill vs climatology. **None of this needs an oracle.**
+* `analysis/domain_sweep.py`: the reference training + evaluation loop. It contains
+  the full model/loss registry (`LOSSES`), the regressor branch, the Gaussian-NLL
+  sampling (per-step widths + residual correlation), and `cond_coverage`. The
+  simplest path is a sibling script `analysis/real_sweep.py` that copies this
+  structure and swaps the data source and the oracle-based parts.
+* `analysis/summarize_domain_sweep.py`, `run_domain_sweep.sh`: the pattern for the
+  summary tables and the 4-way parallel runner.
+
+## What to build
+1. **Data:** `modalities/real_series.py`. It should load a CSV and produce (past
+   window, future window) pairs.
+   * Suggested dataset: **ETTh1** (hourly electricity transformer temperature,
+     17,420 rows, 7 columns). Issue #1 suggested ETT / Weather. It downloads from
+     here: `https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv`
+     (checked, HTTP 200).
+   * Start **univariate** (target column `OT`). Past and future lengths are
+     the user's call. A natural start is past 96 / future 24, or keep 50/50 to mirror
+     the synthetic setup.
+   * **Chronological split** (e.g. 60/20/20 train/val/test), with a gap of at least
+     past+future steps between splits so windows don't overlap across them.
+     Standardise with **train statistics only**.
+2. **Bank:** forecasts are built by resampling futures, so the bank must contain only
+   futures the model could know. Use the training-split futures (all of them, or a
+   strided subset). Goal 2 found MLPs can become over-confident, and a bank that
+   overlaps training pairs could hide that. Option: hold the last chunk of
+   the training period out of training and use it as the bank. Report which
+   choice you made.
+3. **No oracle, so different reference points:**
+   * climatology (random training futures, ignores the past);
+   * a seasonal-naive / persistence point forecast;
+   * Gaussian-NLL MLP and MSE MLP (+ residual noise).
+
+   Headline = energy **skill vs climatology** plus band coverage. Drop the
+   oracle-based parts of `domain_sweep.py` (oracle samples, `oracle_spread`
+   terciles, latent recovery, whitened theory error). For conditional coverage
+   without an oracle, bin by a proxy such as the Gaussian-NLL model's predicted width,
+   or by the past window's volatility.
+4. **Early stopping on a validation energy score.** Goal 2's main open issue: MLPs
+   got over-confident when trained too long (30k steps worse than 15k). Evaluate
+   validation energy (SIR with a small bank, e.g. 5k futures, 200 queries) every
+   ~1k steps and keep the best checkpoint. Apply the same rule to every model.
+
+## Experiments
+* Models: full grid {cosine, L²} × {one-sided, two-sided, joint} + normalised cosine
+  + MSE + Gaussian NLL, for **both** `linear` and `mlp` encoders, ≥ 2 seeds.
+* Report per model:
+  * energy skill vs climatology;
+  * CRPS by horizon step (a curve);
+  * 50/90% coverage and width;
+  * conditional coverage (proxy bins);
+  * mean error;
+  * ESS median / min (collapse check);
+  * the step chosen by early stopping.
+* If time allows, a second dataset (Weather, or ETTm1) or the multivariate version
+  (all 7 columns in u, OT in v).
+
+## Hypotheses to test (from goals 1–2)
+* L² joint and normalised cosine (MLP) beat MSE + noise and match or beat the
+  Gaussian-NLL MLP on energy, with calibrated bands.
+* Unnormalised cosine has the widest or least reliable forecasts. Watch ESS min → 1
+  if the series has spikes.
+* MLP > linear for the contrastive scores. Linear normalised cosine should be
+  poor (it discards the level of the past).
+* Contrastive forecasts keep real-data shape (skew, daily cycles) that Gaussian
+  baselines miss. Check PIT / coverage by horizon.
+
+## Practical notes
+* CPU only, 4 cores: `torch.set_num_threads(1)` per job, 4 jobs in parallel. A
+  synthetic MLP run at 15k steps took ~3–4 min.
+* `export WANDB_MODE=disabled PYTHONDONTWRITEBYTECODE=1`. The repo tracks some
+  `__pycache__` files, and running Python without the second variable modifies them.
+* Long sweeps: launch detached (`setsid nohup bash script.sh &`). Background tool
+  calls are capped at 2 hours.
+* Don't `pkill -f <pattern>` with a pattern that appears in your own command line.
+* Install: `pip install torch --index-url https://download.pytorch.org/whl/cpu` and
+  `numpy scipy pyyaml matplotlib wandb pandas`.
+* Keep downloaded CSVs out of git, or commit only if small. ETTh1 is 2.6 MB.
