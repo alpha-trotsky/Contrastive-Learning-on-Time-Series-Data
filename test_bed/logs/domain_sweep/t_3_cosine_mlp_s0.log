@@ -1,0 +1,1 @@
+t_3_cosine_mlp_s0: energy model 0.2567 oracle 0.2005 clim 0.2980 | cov90 0.889 by-spread [0.91, 0.9, 0.86] | {'final_loss': 3.1111197471618652, 'logit_scale': 0.7759326696395874, 'ess_median': 3058.2074204432693, 'ess_min': 1.0000000000000395, 'ess_p05': 140.57822395691642}

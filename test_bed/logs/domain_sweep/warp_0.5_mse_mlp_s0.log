@@ -1,0 +1,1 @@
+warp_0.5_mse_mlp_s0: energy model 0.2562 oracle 0.2495 clim 0.3451 | cov90 0.901 by-spread [0.97, 0.93, 0.81] | {'final_loss': 0.47048380970954895}

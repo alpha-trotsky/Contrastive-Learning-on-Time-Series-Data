@@ -1,0 +1,1 @@
+t_10_gauss_mlp_s1: energy model 0.2515 oracle 0.2497 clim 0.3495 | cov90 0.886 by-spread [0.89, 0.89, 0.87] | {'final_loss': 0.051297396421432495}

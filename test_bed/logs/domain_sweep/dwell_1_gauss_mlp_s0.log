@@ -1,0 +1,1 @@
+dwell_1_gauss_mlp_s0: energy model 1.9105 oracle 1.7955 clim 3.4650 | cov90 0.915 by-spread [0.91, 0.94, 0.9] | {'final_loss': -0.26180076599121094}
