@@ -39,9 +39,9 @@ is noise. This confirms the "modest σ" reading of §1 in issue #3, which was re
 | saved phase-1 baseline (cosine, embed 20, 100k) | 0.340 | 0.326 | 1.05 | — |
 | cosine cond K=64, 40k | 1.050 | 0.77 | 1.35 | 0.067 |
 | cosine cond K=256, 30k | 0.705 | 0.62 | 1.12 | 0.051 |
-| cosine cond K=1024, 15k | 0.649 | 0.59 | 1.07 | 0.060 |
+| cosine cond K=1024, 20k | 0.506 | 0.48 | 1.05 | 0.050 |
 | L² v\|u K=64, 40k | 0.106 | 0.10 | 1.02 | 0.018 |
-| L² v\|u K=1024, 9k | 0.067 | 0.07 | 0.99 | 0.010 |
+| L² v\|u K=1024, 15k | 0.064 | 0.06 | 1.01 | 0.011 |
 
 * The raw error is a **direction** error (E_dir ≈ raw, scale ≈ 1), so it is not the "scale lags, fix s" story.
 * New metric `theory_match_whitened_error` = ‖C_uu^½(A−A*)C_vv^½‖/‖C_uu^½A*C_vv^½‖
@@ -53,8 +53,8 @@ is noise. This confirms the "modest σ" reading of §1 in issue #3, which was re
   slowly. That is the "0.62 floor".
 * My hypothesis was that the bilinear critic cannot represent the Gaussian PMI's
   v-only quadratic term, so its finite-K optimum should depend on batch size.
-  This is **not supported** at this resolution: whitened error is 0.05–0.07 for
-  K ∈ {64, 256, 1024} with no trend. Cosine's whitened error stays ~4× L²'s,
+  This is **not supported** at this resolution: whitened error is 0.067 / 0.051 / 0.050 for
+  K = 64 / 256 / 1024, with no clear trend. Cosine's whitened error stays ~4× L²'s,
   which looks like an SGD-noise floor and not a bias. Worth revisiting
   with lr decay if it matters.
 
