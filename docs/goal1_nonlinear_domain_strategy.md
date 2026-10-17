@@ -209,7 +209,34 @@ Oracle calibration and the **Gaussian gap**: ES(best linear-Gaussian fit on
 empirical moments) − ES(oracle), i.e. how much non-Gaussian structure there is to
 capture.
 
-GAUSSIAN_GAP_TABLE
+| domain / knob | oracle ES | lin-Gauss ES | Gaussian gap (rel.) | oracle cov90 | lin-Gauss cov90 |
+|---|---|---|---|---|---|
+| t df=inf | 0.2516 | 0.2518 | +0.0001 (+0.1%) | 0.897 | 0.897 |
+| t df=30 | 0.2503 | 0.2510 | +0.0007 (+0.3%) | 0.899 | 0.897 |
+| t df=10 | 0.2418 | 0.2451 | +0.0033 (+1.4%) | 0.894 | 0.903 |
+| t df=5 | 0.2318 | 0.2395 | +0.0077 (+3.3%) | 0.897 | 0.911 |
+| t df=3 | 0.1937 | 0.2095 | +0.0158 (+8.2%) | 0.900 | 0.933 |
+| warp k=0.0 | 0.2504 | 0.2507 | +0.0003 (+0.1%) | 0.897 | 0.897 |
+| warp k=0.25 | 0.2534 | 0.2540 | +0.0006 (+0.3%) | 0.892 | 0.893 |
+| warp k=0.5 | 0.2459 | 0.2500 | +0.0041 (+1.7%) | 0.890 | 0.906 |
+| warp k=0.75 | 0.2351 | 0.2482 | +0.0131 (+5.6%) | 0.895 | 0.917 |
+| warp k=1.0 | 0.2233 | 0.2490 | +0.0257 (+11.5%) | 0.892 | 0.923 |
+| dwell lam=0.0 | 2.1352 | 2.1267 | -0.0085 (-0.4%) | 0.887 | 0.888 |
+| dwell lam=0.5 | 2.4230 | 2.4836 | +0.0606 (+2.5%) | 0.893 | 0.897 |
+| dwell lam=1.0 | 1.6847 | 1.8854 | +0.2007 (+11.9%) | 0.917 | 0.916 |
+| dwell lam=1.5 | 1.1201 | 1.2850 | +0.1650 (+14.7%) | 0.896 | 0.945 |
+
+* The oracles are calibrated everywhere (cov90 0.887–0.917, mostly within MC error of
+  0.90). The gap is ≈ 0 at every Gaussian end. The double-well λ=0 value of −0.4% is
+  Monte-Carlo noise at N=200.
+* All three knobs open a gap monotonically (double-well peaks at λ=1). The best
+  linear-Gaussian predictor also becomes mis-calibrated as the gap opens. That is
+  the room goal 1 measures and goal 2 must close.
+* **The fixed field setup mutes the warp tier.** At full strength the gap is
+  11%, vs 128% in an earlier test on a strided, low-noise layout. The observation
+  noise (σ=0.05 > field std 0.039) lives in the latent and dominates what the warp
+  acts on. The double-well tier (+12–15%) is not tied to the GP field, so it is
+  the strongest nonlinear signal available under the fixed setup.
 
 ### Runs (per tier × knob value)
 
