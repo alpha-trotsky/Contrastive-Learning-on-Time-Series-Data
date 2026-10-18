@@ -1,0 +1,65 @@
+device: cpu
+step      0 | loss 437.4785 | energy skill 0.056 | cov90 0.168 | ESS min 1.0
+step    250 | loss 4.8100 | energy skill 0.643 | cov90 0.875 | ESS min 11.7
+step    500 | loss 3.2754 | energy skill 0.661 | cov90 0.898 | ESS min 48.0
+step    750 | loss 3.0292 | energy skill 0.654 | cov90 0.870 | ESS min 43.1
+step   1000 | loss 2.8230 | energy skill 0.665 | cov90 0.883 | ESS min 38.9
+step   1250 | loss 2.6233 | energy skill 0.667 | cov90 0.880 | ESS min 36.8
+step   1500 | loss 2.4753 | energy skill 0.650 | cov90 0.878 | ESS min 29.7
+step   1750 | loss 2.3425 | energy skill 0.679 | cov90 0.891 | ESS min 31.3
+step   2000 | loss 2.1785 | energy skill 0.680 | cov90 0.876 | ESS min 30.3
+step   2250 | loss 2.3125 | energy skill 0.665 | cov90 0.871 | ESS min 29.4
+step   2500 | loss 2.2720 | energy skill 0.672 | cov90 0.881 | ESS min 28.1
+step   2750 | loss 2.3349 | energy skill 0.672 | cov90 0.873 | ESS min 26.2
+step   3000 | loss 2.3158 | energy skill 0.656 | cov90 0.859 | ESS min 27.3
+step   3250 | loss 2.1774 | energy skill 0.667 | cov90 0.860 | ESS min 20.8
+step   3500 | loss 2.2596 | energy skill 0.655 | cov90 0.846 | ESS min 19.6
+step   3750 | loss 2.3482 | energy skill 0.660 | cov90 0.859 | ESS min 12.6
+step   4000 | loss 2.0613 | energy skill 0.660 | cov90 0.848 | ESS min 25.7
+step   4250 | loss 2.0220 | energy skill 0.662 | cov90 0.874 | ESS min 27.0
+step   4500 | loss 1.9962 | energy skill 0.670 | cov90 0.869 | ESS min 17.0
+step   4750 | loss 1.9773 | energy skill 0.656 | cov90 0.843 | ESS min 22.6
+step   5000 | loss 1.9727 | energy skill 0.667 | cov90 0.845 | ESS min 19.1
+step   5250 | loss 2.0956 | energy skill 0.670 | cov90 0.857 | ESS min 17.3
+step   5500 | loss 1.8583 | energy skill 0.640 | cov90 0.845 | ESS min 21.2
+step   5750 | loss 1.7245 | energy skill 0.672 | cov90 0.855 | ESS min 16.7
+step   6000 | loss 1.9935 | energy skill 0.663 | cov90 0.844 | ESS min 23.7
+step   6250 | loss 1.8859 | energy skill 0.661 | cov90 0.863 | ESS min 17.2
+step   6500 | loss 1.7927 | energy skill 0.669 | cov90 0.858 | ESS min 18.1
+step   6750 | loss 1.8982 | energy skill 0.661 | cov90 0.846 | ESS min 7.4
+step   7000 | loss 1.8115 | energy skill 0.663 | cov90 0.849 | ESS min 18.1
+step   7250 | loss 1.7348 | energy skill 0.666 | cov90 0.855 | ESS min 7.4
+step   7500 | loss 1.8087 | energy skill 0.663 | cov90 0.847 | ESS min 18.7
+step   7750 | loss 1.8440 | energy skill 0.669 | cov90 0.858 | ESS min 16.7
+step   8000 | loss 1.8417 | energy skill 0.679 | cov90 0.873 | ESS min 20.2
+step   8250 | loss 1.9471 | energy skill 0.671 | cov90 0.847 | ESS min 9.1
+step   8500 | loss 1.9775 | energy skill 0.671 | cov90 0.862 | ESS min 19.2
+step   8750 | loss 1.9033 | energy skill 0.688 | cov90 0.867 | ESS min 21.7
+step   9000 | loss 1.9782 | energy skill 0.654 | cov90 0.845 | ESS min 7.8
+step   9250 | loss 2.0498 | energy skill 0.683 | cov90 0.883 | ESS min 20.0
+step   9500 | loss 1.7333 | energy skill 0.672 | cov90 0.852 | ESS min 23.8
+step   9750 | loss 2.0798 | energy skill 0.669 | cov90 0.870 | ESS min 18.9
+step  10000 | loss 1.7532 | energy skill 0.667 | cov90 0.852 | ESS min 17.6
+step  10250 | loss 1.8300 | energy skill 0.674 | cov90 0.860 | ESS min 17.4
+step  10500 | loss 1.8212 | energy skill 0.664 | cov90 0.849 | ESS min 14.2
+step  10750 | loss 2.1663 | energy skill 0.675 | cov90 0.865 | ESS min 11.5
+step  11000 | loss 1.6262 | energy skill 0.680 | cov90 0.866 | ESS min 19.3
+step  11250 | loss 1.6827 | energy skill 0.653 | cov90 0.836 | ESS min 16.0
+step  11500 | loss 1.7776 | energy skill 0.669 | cov90 0.860 | ESS min 22.3
+step  11750 | loss 1.7112 | energy skill 0.662 | cov90 0.841 | ESS min 13.8
+step  12000 | loss 1.8366 | energy skill 0.670 | cov90 0.867 | ESS min 17.2
+step  12250 | loss 1.6027 | energy skill 0.675 | cov90 0.867 | ESS min 19.4
+step  12500 | loss 1.9579 | energy skill 0.680 | cov90 0.871 | ESS min 6.8
+step  12750 | loss 1.8488 | energy skill 0.676 | cov90 0.862 | ESS min 19.4
+step  13000 | loss 1.8199 | energy skill 0.675 | cov90 0.860 | ESS min 17.8
+step  13250 | loss 1.7164 | energy skill 0.664 | cov90 0.853 | ESS min 13.3
+step  13500 | loss 1.8714 | energy skill 0.663 | cov90 0.835 | ESS min 13.5
+step  13750 | loss 1.4472 | energy skill 0.680 | cov90 0.868 | ESS min 16.2
+step  14000 | loss 1.5863 | energy skill 0.677 | cov90 0.877 | ESS min 17.8
+step  14250 | loss 1.9012 | energy skill 0.679 | cov90 0.862 | ESS min 13.8
+step  14500 | loss 1.6708 | energy skill 0.664 | cov90 0.839 | ESS min 15.5
+step  14750 | loss 1.8272 | energy skill 0.667 | cov90 0.863 | ESS min 16.1
+early stopping | best validation energy 0.8364 at step 8750
+blackbox | energy 0.7429 | energy_skill 0.8135 | crps 0.1070 | mse_mean 0.0379 | cov50 0.5165 | cov90 0.8848 | width90 0.5811 | cal_err 0.0153 | ess_median 112.5215 | ess_min 7.6034 | ref_persistence_energy_skill 0.7019 | ref_seasonal_naive_energy_skill 0.5262
+
+Done. Results in results/weather/A-wind_l2_joint_linear_s1/

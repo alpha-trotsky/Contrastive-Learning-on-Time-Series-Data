@@ -1,0 +1,47 @@
+experiment:
+  name: weather_A-wind_gauss_linear_s1
+  output_dir: results/weather/A-wind_gauss_linear_s1
+  seed: 1
+modality:
+  type: weather
+  u_groups:
+  - temperature
+  - moisture
+  - pressure
+  - radiation
+  - rain
+  v_groups:
+  - temperature
+  past_len: 144
+  past_stride: 3
+  future_len: 36
+  fractions:
+  - 0.7
+  - 0.1
+  - 0.2
+  bank: heldout
+  bank_block: 1008
+  bank_every: 4
+  v_relative: false
+model:
+  type: gaussian_regressor
+  hidden: 256
+  depth: 0
+  skip: true
+loss:
+  type: regression
+training:
+  batch_size: 256
+  num_steps: 15000
+  lr: 0.001
+  optimizer: adam
+  early_stopping: true
+logging:
+  log_every: 100
+  theory_match_every: 500
+  blackbox_every: 250
+blackbox:
+  n_test: 300
+  n_test_final: 1000
+  bank: 20000
+  M: 300
