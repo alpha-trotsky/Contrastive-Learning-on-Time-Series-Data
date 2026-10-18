@@ -13,6 +13,13 @@ Reference forecasters:
 
 The evaluation data are drawn under a fixed seed inside torch.random.fork_rng,
 so calling this never changes the training run's random stream.
+
+Real data: test queries and bank must not come from the training period.  A
+modality that has held-out periods exposes  split(name) -> PairSampler  for
+name in {'val', 'test', 'bank'}; experiment.run() then evaluates on 'val'
+during training and on 'test' at the end, resampling futures from 'bank'.
+Without split(), everything is drawn from the modality itself (synthetic data,
+where every draw is fresh).
 """
 import torch
 
@@ -47,15 +54,20 @@ class BlackBoxEval:
     bank       : number of futures the forecast resamples from (fresh pairs,
                  not training data)
     M          : forecast samples per query
+    test_sampler / bank_sampler : PairSamplers for the test queries / bank
+                 (default: the modality itself)
     """
 
-    def __init__(self, modality, loss_cfg, n_test=500, bank=20000, M=300, seed=4321):
+    def __init__(self, modality, loss_cfg, n_test=500, bank=20000, M=300, seed=4321,
+                 test_sampler=None, bank_sampler=None):
         self.loss_cfg, self.M = loss_cfg, M
+        test_sampler = test_sampler or modality
+        bank_sampler = bank_sampler or modality
         with torch.random.fork_rng():
             torch.manual_seed(seed)
-            self.u, self.y = _sample(modality, n_test)
-            self.u_bank, self.v_bank = _sample(modality, bank)
-            self.oracle = oracle_samples(modality, self.u, M)
+            self.u, self.y = _sample(test_sampler, n_test)
+            self.u_bank, self.v_bank = _sample(bank_sampler, bank)
+            self.oracle = oracle_samples(test_sampler, self.u, M)
             self.clim = climatology_samples(self.v_bank, n_test, M)
         ref = {'climatology': score_forecast(self.clim, self.y)}
         if self.oracle is not None:

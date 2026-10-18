@@ -24,26 +24,51 @@ calibrated bands. Unnormalised cosine still breaks on heavy tails. A Gaussian-NL
 futures. The question for goal 3: **does this hold on a real series, where there
 is no oracle?**
 
-## What exists (reuse, don't rebuild)
-* `models/mlp_clip.py` (`MLPCLIP`, `type: mlp_clip`) and `models/linear_clip.py`.
-  MLP encoders standardise inputs from fixed stats: call `model.set_input_stats(u_tr, v_tr)`.
+## Work inside the user's framework: `test_bed/experiment.py`
+`python experiment.py --config <config>` is the user's main entry point, and goal 3 should
+run through it. As of goal 2 it works for any encoder:
+* `model.type: linear_clip` or `mlp_clip` (see `config_mlp.yaml`, which has the same
+  field setup as `config.yaml` but MLP encoders and L² joint loss).
+* The user's linear-only metrics (theory match, closed-form forecast, similarity,
+  retrieval) still run for linear models, unchanged. **Black-box forecast metrics**
+  (`evaluation/blackbox.py`) run for every model:
+  * energy score and skill vs climatology;
+  * CRPS, coverage and width;
+  * ESS;
+  * excess over the oracle when the data has one.
+
+  They are logged to wandb as `bb/*` every `logging.blackbox_every` steps, and once
+  more at the end.
+* **Hook for real data:** give the modality a `split(name)` method returning a
+  `PairSampler` for `'val'`, `'test'` and `'bank'`. `run()` then evaluates on the
+  validation period during training, on the test period at the end, and builds
+  forecasts by resampling futures from the bank. Without `split()`, everything comes
+  from the modality itself, which is right for synthetic data. This was tested
+  with a dummy split modality.
+* So the real-data work is mostly a new modality class plus a config. `run()` samples a
+  fresh training batch with `modality.sample_pair(batch_size)` every step; for real data
+  that means "random windows from the training period", which is cheap.
+* **Not in `run()` yet** (add if needed, keep linear behaviour unchanged):
+  * **early stopping:** keep the checkpoint with the best validation `bb/energy`;
+  * **the MLP regression baselines** (`models/mlp_regressor.py`). They have their own
+    `.loss` / `.predict`, see the regressor branch in `analysis/domain_sweep.py`.
+    Loss `mse` in `run()` is the user's linear head only, and gives a clear error for
+    MLPs.
+
+## Other pieces to reuse (don't rebuild)
+* `models/mlp_clip.py` (`MLPCLIP`) and `models/linear_clip.py`. MLP encoders
+  standardise inputs from fixed stats, which `run()` sets automatically from a modality sample.
 * `models/mlp_regressor.py`: `MeanRegressor` (MSE) and `GaussianRegressor`
   (Gaussian NLL). Each has `.loss(u, v)` and `.predict(u)`. `depth=0` gives the linear version.
-* `losses/clip_losses.py`: all losses; `normalize=True` gives normalised cosine.
-  `experiment.build_loss` reads `normalize` from the loss config.
-* `evaluation/predictors.py`: `sir_samples(clip_score_fn(model, inner_product, normalize), u, bank, M)`
-  returns forecast samples and per-query effective sample size (ESS).
-  Also `climatology_samples`, `gaussian_samples`, `point_samples`.
-* `evaluation/scoring.py`: `score_forecast(samples, y)` gives energy, CRPS (per
-  horizon), variogram, coverage/width at 50/80/90/95%, and mean error. `add_skills`
-  adds skill vs climatology. **None of this needs an oracle.**
-* `analysis/domain_sweep.py`: the reference training + evaluation loop. It contains
-  the full model/loss registry (`LOSSES`), the regressor branch, the Gaussian-NLL
-  sampling (per-step widths + residual correlation), and `cond_coverage`. The
-  simplest path is a sibling script `analysis/real_sweep.py` that copies this
-  structure and swaps the data source and the oracle-based parts.
-* `analysis/summarize_domain_sweep.py`, `run_domain_sweep.sh`: the pattern for the
-  summary tables and the 4-way parallel runner.
+* `losses/clip_losses.py`: all losses; `normalize: true` gives normalised cosine.
+* `evaluation/predictors.py` (`sir_samples`, `clip_score_fn`, `climatology_samples`,
+  `gaussian_samples`) and `evaluation/scoring.py` (`score_forecast`, `add_skills`).
+  None of the scoring needs an oracle.
+* `analysis/domain_sweep.py`: the goal 1–2 sweep script, with a pre-generated training
+  set and the regressor baselines. Use it as the reference for the Gaussian-NLL
+  sampling (per-step widths + residual correlation) and `cond_coverage`.
+  `summarize_domain_sweep.py` / `run_domain_sweep.sh` show the summary-table and
+  4-way-parallel patterns.
 
 ## What to build
 1. **Data: the Weather dataset, with several modalities.** The user wants
@@ -107,15 +132,15 @@ is no oracle?**
    * a seasonal-naive / persistence point forecast;
    * Gaussian-NLL MLP and MSE MLP (+ residual noise).
 
-   Headline = energy **skill vs climatology** plus band coverage. Drop the
-   oracle-based parts of `domain_sweep.py` (oracle samples, `oracle_spread`
-   terciles, latent recovery, whitened theory error). For conditional coverage
+   Headline = energy **skill vs climatology** plus band coverage (`bb/energy_skill`,
+   `bb/cov90` from `run()`; with no oracle the `vs oracle` entries are simply absent). For conditional coverage
    without an oracle, bin by a proxy such as the Gaussian-NLL model's predicted width,
    or by the past window's volatility.
 4. **Early stopping on a validation energy score.** Goal 2's main open issue: MLPs
-   got over-confident when trained too long (30k steps worse than 15k). Evaluate
-   validation energy (SIR with a small bank, e.g. 5k futures, 200 queries) every
-   ~1k steps and keep the best checkpoint. Apply the same rule to every model.
+   got over-confident when trained too long (30k steps worse than 15k). `run()`
+   already logs validation `bb/energy` every `blackbox_every` steps. Add "keep the
+   best checkpoint" on top (a small validation set is enough, e.g.
+   `blackbox: {n_test: 200, bank: 5000}`). Apply the same rule to every model.
 
 ## Experiments
 * Models: full grid {cosine, L²} × {one-sided, two-sided, joint} + normalised cosine

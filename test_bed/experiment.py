@@ -220,10 +220,19 @@ def run(cfg):
     # Black-box forecast evaluation (any encoder): energy score, coverage, ESS on a
     # fixed held-out set.  Optional config section `blackbox: {n_test, bank, M}`;
     # `logging.blackbox_every` (default: theory_match_every, 0 = final eval only).
+    # Modalities with held-out periods (real data) provide split('val'|'test'|'bank'):
+    # validation period during training, test period at the end.
     bb_cfg = cfg.get('blackbox', {})
     bb_every = cfg['logging'].get('blackbox_every', cfg['logging']['theory_match_every'])
-    blackbox = BlackBoxEval(modality, cfg['loss'], n_test=bb_cfg.get('n_test', 500),
-                            bank=bb_cfg.get('bank', 20000), M=bb_cfg.get('M', 300))
+    bb_kw = dict(n_test=bb_cfg.get('n_test', 500), bank=bb_cfg.get('bank', 20000), M=bb_cfg.get('M', 300))
+    split = getattr(modality, 'split', None)
+    if split is not None:
+        blackbox = BlackBoxEval(modality, cfg['loss'], test_sampler=split('val'),
+                                bank_sampler=split('bank'), **bb_kw)
+        blackbox_final = BlackBoxEval(modality, cfg['loss'], test_sampler=split('test'),
+                                      bank_sampler=split('bank'), **bb_kw)
+    else:
+        blackbox = blackbox_final = BlackBoxEval(modality, cfg['loss'], **bb_kw)
 
     # Pre-training forecast baseline
     if linear:
@@ -334,8 +343,8 @@ def run(cfg):
             f"{k.split('/')[-1]} {v:.4f}" for k, v in eval_metrics.items()
         ))
 
-    # Final black-box forecast evaluation (any encoder)
-    bb = blackbox(model)
+    # Final black-box forecast evaluation (any encoder; test period for real data)
+    bb = blackbox_final(model)
     history['blackbox_final'] = bb
     wandb.log({f'{k}_final': v for k, v in bb.items()}, step=final_step)
     print("blackbox | " + " | ".join(f"{k.split('/')[-1]} {v:.4f}" for k, v in bb.items()))
