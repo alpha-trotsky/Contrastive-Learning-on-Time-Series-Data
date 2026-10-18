@@ -8,6 +8,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 from pathlib import Path
 import argparse
+import copy
+import json
 import yaml
 import torch
 import matplotlib.pyplot as plt
@@ -16,6 +18,7 @@ from signals.gaussian_process import GaussianProcess1D
 from modalities.field_coeff import FieldCoeffModality
 from models.linear_clip import LinearCLIP
 from models.mlp_clip import MLPCLIP
+from models.mlp_regressor import MeanRegressor, GaussianRegressor
 from losses.clip_losses import CLIPConditionalLoss, CLIPJointLoss, MSEloss
 from evaluation.theory_match import theory_match_error, theory_match_dir_error
 from evaluation.forecast import forecast_mse, residual_cov_error, model_cov_error, debug_Ahat
@@ -59,6 +62,20 @@ def build_modality(cfg, gen):
             future_index = future_index,
             sigma_u = cfg.get('sigma_u', 0.0),
             sigma_v = cfg.get('sigma_v', 0.0),)
+    if cfg['type'] == 'weather':
+        # real data (no signal generator): see modalities/weather.py
+        from modalities.weather import WeatherModality
+        return WeatherModality(
+            u_groups=cfg['u_groups'],
+            v_groups=cfg['v_groups'],
+            past_len=cfg.get('past_len', 144),
+            future_len=cfg.get('future_len', 36),
+            past_stride=cfg.get('past_stride', 3),
+            fractions=tuple(cfg.get('fractions', (0.7, 0.1, 0.2))),
+            bank=cfg.get('bank', 'heldout'),
+            bank_block=cfg.get('bank_block', 1008),
+            bank_every=cfg.get('bank_every', 4),
+        )
     raise ValueError(f"Unknown modality type: {cfg['type']}")
 
 
@@ -81,6 +98,11 @@ def build_model(cfg, modality):
             skip=cfg.get('skip', True),
             init_logit_scale=cfg['init_logit_scale'],
         )
+    # non-contrastive baselines (loss 'regression'): depth 0 = linear
+    if cfg['type'] in ('mean_regressor', 'gaussian_regressor'):
+        cls = MeanRegressor if cfg['type'] == 'mean_regressor' else GaussianRegressor
+        return cls(modality.dim_u, modality.dim_v, hidden=cfg.get('hidden', 256),
+                   depth=cfg.get('depth', 2), skip=cfg.get('skip', True))
     raise ValueError(f"Unknown model type: {cfg['type']}")
 
 
@@ -131,6 +153,11 @@ def resolve_theory_target(loss_cfg):
 
 
 def build_loss(cfg, model=None):
+    if hasattr(model, 'loss'):
+        # regression baselines carry their own loss (MSE or Gaussian NLL), see run()
+        if cfg['type'] != 'regression':
+            raise ValueError(f"model {type(model).__name__} needs loss type 'regression'")
+        return None
     normalize = cfg.get('normalize', False)
     if cfg['type'] == 'conditional':
         return CLIPConditionalLoss(
@@ -160,6 +187,15 @@ def build_loss(cfg, model=None):
 # Main loop
 # ---------------------------------------------------------------------------
 
+def has_closed_form(modality):
+    """True if the modality exposes C_uu / C_vv / C_uv (synthetic data)."""
+    try:
+        modality.C_uu()
+    except NotImplementedError:
+        return False
+    return True
+
+
 def run(cfg):
     torch.manual_seed(cfg['experiment']['seed'])
 
@@ -172,12 +208,13 @@ def run(cfg):
     # Build everything
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"device: {device}")
-    gen = build_signal(cfg['signal'])
+    gen = build_signal(cfg['signal']) if 'signal' in cfg else None   # real data has none
     modality = build_modality(cfg['modality'], gen)
     model = build_model(cfg['model'], modality).to(device)
     # Linear-only metrics (theory match, closed-form forecast, similarity, retrieval)
-    # read the weight matrices directly; other encoders get the black-box metrics only.
-    linear = isinstance(model, LinearCLIP)
+    # read the weight matrices directly and need the modality's closed-form
+    # covariances; other encoders, and real data, get the black-box metrics only.
+    linear = isinstance(model, LinearCLIP) and has_closed_form(modality)
     if hasattr(model, 'set_input_stats'):
         # fixed input standardisation for MLP encoders, without touching the training RNG
         with torch.random.fork_rng():
@@ -229,10 +266,19 @@ def run(cfg):
     if split is not None:
         blackbox = BlackBoxEval(modality, cfg['loss'], test_sampler=split('val'),
                                 bank_sampler=split('bank'), **bb_kw)
+        bb_kw['n_test'] = bb_cfg.get('n_test_final', bb_kw['n_test'])
         blackbox_final = BlackBoxEval(modality, cfg['loss'], test_sampler=split('test'),
                                       bank_sampler=split('bank'), **bb_kw)
     else:
         blackbox = blackbox_final = BlackBoxEval(modality, cfg['loss'], **bb_kw)
+
+    # Optional early stopping: keep the weights with the best black-box energy
+    # score on the evaluation set used during training (the validation period
+    # for real data), checked every blackbox_every steps.
+    early_stopping = cfg['training'].get('early_stopping', False)
+    if early_stopping and not bb_every:
+        raise ValueError("training.early_stopping needs logging.blackbox_every > 0")
+    best = {'energy': float('inf'), 'step': None, 'state': None}
 
     # Pre-training forecast baseline
     if linear:
@@ -245,8 +291,11 @@ def run(cfg):
     for step in range(cfg['training']['num_steps']):
         u, v = modality.sample_pair(cfg['training']['batch_size'])
         u, v = u.to(device), v.to(device)
-        u_features, v_features, logit_scale = model(u.float(), v.float())
-        loss = loss_fn(u_features, v_features, logit_scale, u, v)
+        if loss_fn is None:                     # regression baseline
+            loss = model.loss(u, v)
+        else:
+            u_features, v_features, logit_scale = model(u.float(), v.float())
+            loss = loss_fn(u_features, v_features, logit_scale, u, v)
 
         optimizer.zero_grad()
         loss.backward()
@@ -317,7 +366,14 @@ def run(cfg):
             bb = blackbox(model)
             history['blackbox_steps'].append(step)
             history['blackbox'].append(bb)
-            wandb.log({**bb, 'logit_scale': model.logit_scale.exp().item()}, step=step)
+            if early_stopping and bb['bb/energy'] < best['energy']:
+                best.update(energy=bb['bb/energy'], step=step,
+                            state=copy.deepcopy(model.state_dict()))
+            if hasattr(model, 'logit_scale'):
+                bb_log = {**bb, 'logit_scale': model.logit_scale.exp().item()}
+            else:
+                bb_log = bb
+            wandb.log(bb_log, step=step)
             print(f"step {step:6d} | loss {loss.item():.4f} | energy skill {bb['bb/energy_skill']:.3f}"
                   + (f" | vs oracle {100 * bb['bb/energy_vs_oracle']:+.1f}%" if 'bb/energy_vs_oracle' in bb else '')
                   + f" | cov90 {bb['bb/cov90']:.3f}"
@@ -328,6 +384,12 @@ def run(cfg):
             torch.save(model.state_dict(), checkpoint_dir / f'step_{step}.pt')
 
     final_step = cfg['training']['num_steps'] - 1
+    if early_stopping:
+        model.load_state_dict(best['state'])
+        history['best_step'] = best['step']
+        history['best_val_energy'] = best['energy']
+        wandb.log({'best_step': best['step'], 'best_val_energy': best['energy']}, step=final_step)
+        print(f"early stopping | best validation energy {best['energy']:.4f} at step {best['step']}")
     if linear:
         # Post-training forecast
         post_mse = forecast_mse(model, modality, mean_family, n_samples=500)
@@ -346,6 +408,10 @@ def run(cfg):
     # Final black-box forecast evaluation (any encoder; test period for real data)
     bb = blackbox_final(model)
     history['blackbox_final'] = bb
+    if hasattr(modality, 'split'):
+        # real data: per-horizon CRPS, per-query coverage etc. for the write-up
+        history['blackbox_detail'] = blackbox_final.detail(model)
+        history['data'] = modality.describe()
     wandb.log({f'{k}_final': v for k, v in bb.items()}, step=final_step)
     print("blackbox | " + " | ".join(f"{k.split('/')[-1]} {v:.4f}" for k, v in bb.items()))
 
@@ -383,6 +449,17 @@ def plot_results(history, output_dir):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _rounded(x, digits=5):
+    """Floats rounded to `digits` significant digits, recursively (small JSON)."""
+    if isinstance(x, float):
+        return float(f'{x:.{digits}g}')
+    if isinstance(x, dict):
+        return {k: _rounded(v, digits) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_rounded(v, digits) for v in x]
+    return x
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='config.yaml')
@@ -404,6 +481,11 @@ def main():
     # Save model + history
     torch.save(model.state_dict(), output_dir / 'model.pt')
     torch.save(history, output_dir / 'history.pt')
+    if 'blackbox_detail' in history:
+        keys = ('blackbox_final', 'blackbox_detail', 'data', 'best_step', 'best_val_energy',
+                'blackbox_steps', 'blackbox')
+        json.dump(_rounded({'config': cfg, **{k: history[k] for k in keys if k in history}}),
+                  open(output_dir / 'results.json', 'w'))
 
     print(f"\nDone. Results in {output_dir}/")
 

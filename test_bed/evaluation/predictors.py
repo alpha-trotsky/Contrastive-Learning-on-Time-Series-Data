@@ -70,3 +70,26 @@ def clip_score_fn(model, inner_product, normalize=False):
             return s * gu @ gv.T
         return -0.5 * s * torch.cdist(gu, gv) ** 2
     return f
+
+
+# ---------------------------------------------------------------------------
+# Regression baselines (models/mlp_regressor.py)
+# ---------------------------------------------------------------------------
+
+@torch.no_grad()
+def regressor_samples(model, u, u_bank, v_bank, M):
+    """Predictive samples (N, M, d) of a regression baseline, with the noise
+    estimated on the bank (held-out pairs, not training data):
+      MeanRegressor      predicted mean + Gaussian residual noise, one fixed covariance
+      GaussianRegressor  predicted mean + per-step widths from the model, with the
+                         residual correlation across steps (standardised residuals)
+    """
+    from models.mlp_regressor import GaussianRegressor
+    if isinstance(model, GaussianRegressor):
+        mu, sd = (x.double() for x in model.predict(u))
+        mu_b, sd_b = (x.double() for x in model.predict(u_bank))
+        R = torch.corrcoef(((v_bank - mu_b) / sd_b).T)
+        return mu[:, None, :] + sd[:, None, :] * gaussian_samples(torch.zeros_like(mu), R, M)
+    pred = model.predict(u).double()
+    r = v_bank - model.predict(u_bank).double()
+    return gaussian_samples(pred, r.T @ r / r.shape[0], M)
