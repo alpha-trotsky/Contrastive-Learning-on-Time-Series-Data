@@ -152,8 +152,9 @@ from the paper's setting all the way to the weather station.
   past weather" by ~1%.
 * **Two real-data limits that the synthetic rounds did not show:**
   * **Little data.** The MLPs over-fit within a few hundred to a few thousand steps
-    and end up over-confident, even with early stopping. Every MLP was worse than
-    its linear version. One year of heavily overlapping 10-minute windows is only
+    and end up over-confident, even with early stopping. On temperature, the MLP
+    version of each strong model (L², MSE, Gaussian NLL) was worse than the linear
+    one; only the cosine scores, which are poor with linear encoders, gained. One year of heavily overlapping 10-minute windows is only
     about 190 days of distinct weather.
   * **The bank.** At 10 minutes ahead the contrastive forecast was worse than
     "repeat the last value". With 5.8k bank futures, few start at exactly today's

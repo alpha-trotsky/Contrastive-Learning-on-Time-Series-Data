@@ -1,0 +1,496 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{pifont}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\newcommand{\yes}{\ding{51}}
+\newcommand{\no}{\ding{55}}
+\newcommand{\Ltwo}{L\textsuperscript{2}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\title{Taking contrastive learning to time series:\\what transfers from the paper (goals 1--3)}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This note summarises three rounds of experiments that extend Baptista, Stuart \& Tran,
+\emph{A Mathematical Perspective on Contrastive Learning}~\cite{bst}, from its Gaussian,
+linear-encoder setting to forecasting time series. We relax one assumption at a time:
+non-Gaussian synthetic data (goal~1), nonlinear encoders (goal~2) and a real weather
+record (goal~3). The paper's probabilistic reading of contrastive learning, and its
+\Ltwo{} result, survive every relaxation. Its cosine-versus-\Ltwo{} contrast and its
+joint-loss penalty turn out to be properties of linear encoders. Off the paper's
+setting, the things that matter most are whether the score is bounded, the bank of
+real futures the forecast is built from, and the amount of data.
+\end{abstract}
+
+\noindent
+Detailed numbers are in the per-goal write-ups in \texttt{docs/}:
+\texttt{goal1\_nonlinear\_domain\_strategy.md} (the scoring method),
+\texttt{goal1\_results.md}, \texttt{goal2\_results.md} and \texttt{goal3\_results.md}.
+
+%======================================================================
+\section{The question}
+
+The paper reads contrastive learning (CLIP and its variants) as \emph{learning a
+conditional distribution}. A trained model with score $s(\text{past},\text{future})$
+defines a forecast:
+\begin{quote}
+take a collection of real futures and reweight each one by $\exp(\text{score})$.
+\end{quote}
+The paper works this out exactly when everything is Gaussian and the encoders are
+linear. In that setting it makes sharp predictions about which loss gets what right
+(Table~\ref{tab:predictions}).
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+& The paper's prediction (Gaussian data, linear encoders) \\
+\midrule
+P1 & The standard dot-product score (``cosine'', unnormalised) gets the \textbf{average}
+     forecast right but the \textbf{spread} wrong: its uncertainty is stuck at ``knowing
+     nothing'' (Cor.~5.2). \\
+P2 & The paper's new \textbf{\Ltwo{} score} (negative squared distance between embeddings),
+     trained in the forecasting direction, gets \textbf{both} the average and the spread
+     right (Thm~5.3, Cor.~5.4). \\
+P3 & For the dot product, weighting the two directions (past $\to$ future vs
+     future $\to$ past) does not change the answer. \\
+P4 & The \textbf{joint} loss (one softmax over all pairs) shrinks the forecast towards the
+     average, so it is a worse conditional forecaster than the one-way loss, but better at
+     the marginals (Thm~5.6, Cor.~5.7). \\
+P5 & Retrieval picks the most likely candidate under the model (Thm~4.2), so how well it
+     can work is capped by how much the past says about the future. \\
+\bottomrule
+\end{tabularx}
+\caption{The predictions we tested.}
+\label{tab:predictions}
+\end{table}
+
+We asked how far these carry over once the setting stops being the paper's,
+relaxing one assumption at a time.
+\begin{enumerate}
+\item \textbf{Goal 1: non-Gaussian data, still linear encoders.} Three synthetic series,
+  each with a dial whose zero point is the paper's Gaussian case:
+  \begin{itemize}
+  \item heavy tails (Student-$t$; occasional wild values);
+  \item a bent Gaussian process (skewed futures, nonlinear relation between past and future);
+  \item a double-well process (the series jumps between two levels, so the future can
+        have two separate likely outcomes).
+  \end{itemize}
+  Each has an exact ``perfect forecaster'' to compare against.
+\item \textbf{Goal 2: nonlinear (MLP) encoders}, on the same three series.
+\item \textbf{Goal 3: real data.} Jena weather station, 2020, 10-minute readings:
+  \begin{itemize}
+  \item forecast the next 6\,h of temperature from the last day of six variable groups;
+  \item a cross-modal setup, closer to how CLIP is used: future rain from past pressure,
+        wind and moisture.
+  \end{itemize}
+  There is no perfect forecaster here.
+\end{enumerate}
+Every round ran the full grid \{dot product, \Ltwo\} $\times$ \{one-way, two-way, joint\},
+plus normalised cosine (real CLIP) from goal~2 on. The comparison points were regression
+models: MSE plus a noise band, and from goal~2 on a Gaussian model with a past-dependent
+band width (``Gaussian NLL'').
+
+%======================================================================
+\section{How we scored forecasts}
+
+The earlier test bed scored models by comparing internal matrices against the paper's
+closed forms, or by a cosine similarity between predicted and true futures. Neither works
+once there is no closed form, and the similarity score ignores uncertainty, which is the
+paper's main subject. We replaced both with a \textbf{black-box} procedure that works for
+any model.
+
+\begin{itemize}
+\item \textbf{Turn the model into a forecast} exactly as the paper defines it (its eq.~31):
+  keep a ``bank'' of real futures and resample them with weights $\exp(\text{score})$.
+  This needs nothing but score calls: no closed form, no knowledge of the encoder.
+\item \textbf{Score the forecast} with the energy score~\cite{gneiting}, a standard measure
+  for probabilistic forecasts. It rewards being close to what happened and being honest
+  about uncertainty; a point forecast is simply a forecast with no spread. Alongside it we
+  report band coverage (does the 90\% band catch the truth 90\% of the time?), per-horizon
+  errors, and how many bank futures a forecast actually uses (a collapse check).
+\end{itemize}
+
+On the Gaussian test bed this procedure reproduces the paper's closed-form answers to
+within sampling error, and P1 shows up in it directly: cosine has the perfect forecaster's
+average error but 98\% coverage at nominal 90\%. On real data the procedure needs only the
+observed future, so the same yardstick runs from the paper's setting all the way to the
+weather station. We think this scoring setup is a methodological contribution in its own
+right.
+
+%======================================================================
+\section{What we found, round by round}
+
+\subsection{Goal 1: non-Gaussian data, linear encoders}
+
+\begin{itemize}
+\item \textbf{The paper's Gaussian results hold almost exactly where they apply.}
+  Linear \Ltwo{} sat on the theoretical optimum, and its retrieval matched the best
+  achievable. The old evaluation had reported it about $5\times$ too low, because it scored
+  retrieval with a similarity the model was never trained on. Cosine's apparent ``gap to
+  theory'' was mostly slow drift in directions that are pure noise; measured in the units
+  the forecast depends on, it was within about 5\% of the theory. Retrieval is low for
+  every model because the past says little about the future in this setup (P5).
+\item \textbf{\Ltwo{} stays within 0--5\% of the perfect forecaster on all three kinds of
+  non-Gaussian data}, with linear encoders. A Gaussian regression model lands at +11--15\%
+  on the bent and double-well series. The reason is that a contrastive forecast never
+  invents futures, it reweights real ones. Skew and two separate outcomes therefore come
+  from the data, and the encoder only has to choose the weights.
+\item \textbf{Cosine's too-wide bands (P1) get worse off-Gaussian, and on heavy tails it
+  breaks completely.} At the heaviest tails the forecast collapses onto a handful of
+  extreme training futures and is about $10\times$ worse than perfect.
+\item \textbf{One-way vs two-way made no difference (P3)}, for either score. Joint cosine
+  showed the predicted shrinkage on mild data (P4).
+\item \textbf{What linear encoders cannot do} is let the band width depend on the past. On
+  heavy tails every linear model is too wide on calm cases and too narrow on wild ones.
+\end{itemize}
+
+\subsection{Goal 2: nonlinear encoders}
+
+\begin{itemize}
+\item \textbf{The best contrastive models get within about 1\% of perfect on every series},
+  with calibrated bands: \Ltwo{} joint and normalised cosine (Table~\ref{tab:synthetic}).
+\item \textbf{Cosine's spread flaw mostly disappears.} On the Gaussian series cosine went
+  from +5.6\% to +1.4--2.7\%, and its 90\% bands on the hardest cases from 98\% to 89\%
+  coverage. So P1 is a statement about \textbf{linear encoders}, not about the dot product.
+\item \textbf{Band widths now follow the past} on heavy tails. A regression model with a
+  fixed noise band cannot do this.
+\item \textbf{The encoder learns what matters without being told.} On the bent series the
+  learned features recover the hidden ``un-bent'' quantity that predicts the future almost
+  perfectly ($R^2 \approx 1$), and ignore the rest of the past.
+\item \textbf{The shape advantage is real but conditional.} On the double-well, the best
+  Gaussian MLP (same networks, past-dependent width) is at +5--6\% while \Ltwo{} is within
+  1\%: a Gaussian puts probability between the two wells, where the future never goes. On
+  the bent series, which is skewed but single-peaked, the Gaussian MLP ties with \Ltwo.
+\item \textbf{Unbounded scores still fail on heavy tails.} Unnormalised cosine is the worst
+  contrastive model there (+7\% to +23\%) and still collapses onto single futures for some
+  inputs. Normalised cosine does not.
+\item \textbf{Normalisation needs a nonlinear encoder.} Linear-then-normalise keeps only the
+  \emph{direction} of the past and loses its \emph{size}. The size (the current level) is
+  most of the information in these series, so linear normalised cosine is poor (+12--23\%).
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llccccc@{}}
+\toprule
+domain & dial & cos 2-sided & norm.\ cos & \Ltwo{} joint & MSE + noise & Gauss NLL \\
+\midrule
+Gaussian (GP)  & ---          & $5.6 \to 1.4$ & $13.1 \to 0.5$ & $0.0 \to 0.1$ & $0.1 \to 0.6$ & $0.2 \to 0.4$ \\
+Heavy tails    & df $=3$      & ${\sim}10\times \to 23.3$ & $23.0 \to \mathbf{0.9}$ & $4.5 \to \mathbf{0.7}$ & $8.6 \to 9.5$ & $45.9 \to 22.2^{*}$ \\
+Bent GP        & full         & $40.0 \to 3.9$ & $12.2 \to 0.9$ & $1.6 \to 0.7$ & $12.7 \to 14.7$ & $27.5 \to 0.7$ \\
+Double-well    & $\lambda=1.5$ & $2.6 \to 0.3$ & $0.7 \to 0.3$ & $0.3 \to 0.0$ & $14.1 \to 7.6$ & $13.5 \to 5.2$ \\
+\bottomrule
+\end{tabular}
+\caption{Synthetic series: energy score above the perfect forecaster, in \%,
+linear $\to$ MLP encoders (mean of 2 seeds; 0 = perfect). $^{*}$One seed $+0.8$, the
+other $+43.6$. Full grids are in \texttt{goal1\_results.md} and \texttt{goal2\_results.md}.}
+\label{tab:synthetic}
+\end{table}
+
+\subsection{Goal 3: real weather data}
+
+\begin{itemize}
+\item \textbf{The probabilistic view works with no perfect forecaster to lean on.} When
+  the next 6\,h of temperature is forecast as a \emph{change from the last reading},
+  linear \Ltwo{} joint is the best model in the study, and calibrated. Its energy score is
+  48\% below that of ``repeat the last value'', just ahead of the Gaussian model built the
+  same way (47\%) and MSE (46\%); see Table~\ref{tab:weather}.
+\item \textbf{Linear cosine shows P1 at full size on real data}: right average, 90\% bands
+  about $5\times$ too wide (20--23\,\textdegree C against 4\,\textdegree C for \Ltwo).
+\item \textbf{Rain (spiky, mostly zero) is the real-data heavy-tail test, and it behaves as
+  goals 1--2 predicted.} Unnormalised cosine collapses onto single futures. The Gaussian
+  models put about 40\% of their samples on \emph{negative} rain and say ``it will rain''
+  for nearly every window. \Ltwo{} and normalised cosine keep ``mostly dry, sometimes a
+  burst'', with flat calibration histograms. But nothing forecasts rain well from these
+  inputs: the best models beat ``random past weather'' by about 1\%.
+\item \textbf{Two real-data limits that the synthetic rounds did not show.}
+  \begin{itemize}
+  \item \emph{Little data.} The MLPs over-fit within a few hundred to a few thousand steps
+    and end up over-confident, even with early stopping. On temperature, the MLP version
+    of each strong model (\Ltwo, MSE, Gaussian NLL) was worse than the linear one; only the
+    cosine scores, which are poor with linear encoders, gained. One year of heavily overlapping 10-minute windows is only about 190
+    days of distinct weather.
+  \item \emph{The bank.} At 10 minutes ahead the contrastive forecast was worse than
+    ``repeat the last value''. With 5.8k bank futures, few start at exactly today's
+    temperature, so the first steps are too spread out. Two fixes confirm this is the
+    bottleneck: a bigger bank ($+0.38 \to +0.45$ skill), and forecasting the change from
+    the last reading ($+0.38 \to +0.48$), which lets futures from cold days serve warm days.
+  \end{itemize}
+\item \textbf{Modality ablation.} The target's own past is almost everything. Radiation and
+  moisture help most of the rest, mostly by narrowing the bands. Dropping temperature's own
+  past made the contrastive forecast \emph{over}-confident rather than more cautious (open
+  question~4).
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+& \multicolumn{2}{c}{temperature (level)} & \multicolumn{2}{c}{temperature (change)} & \multicolumn{2}{c}{rain} \\
+& \multicolumn{2}{c}{skill vs persistence} & \multicolumn{2}{c}{skill vs persistence} & \multicolumn{2}{c}{skill vs climatology} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+model & linear & MLP & linear & MLP & linear & MLP \\
+\midrule
+\Ltwo{} joint   & $+0.38$ & $\mathbf{+0.28}$ & $\mathbf{+0.48}$ & $\mathbf{+0.46}$ & $\mathbf{+0.01}$ & $-0.04$ \\
+norm.\ cos      & $-0.30$ & $+0.07$ & $+0.27$ & $+0.38$ & $-0.00$ & $-0.06$ \\
+cos 2-sided     & $-0.56$ & $+0.14$ & $+0.21$ & $+0.42$ & $-0.92$ & $-1.04$ \\
+MSE + noise     & $+0.44$ & $+0.25$ & $+0.46$ & $+0.41$ & $-1.02$ & $-1.44$ \\
+Gauss NLL       & $\mathbf{+0.46}$ & $+0.21$ & $+0.47$ & $+0.41$ & $-1.16$ & $-0.67$ \\
+\bottomrule
+\end{tabular}
+\caption{Weather, test period (late October--December 2020), mean of 2 seeds. Skill is
+the fractional reduction in energy score against the reference (higher is better; 0 = no
+better). For rain, climatology is the meaningful reference: it already beats persistence.
+Full tables are in \texttt{test\_bed/results/weather/}.}
+\label{tab:weather}
+\end{table}
+
+%======================================================================
+\section{Scorecard: how the paper transfers}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.6cm}LLLL@{}}
+\toprule
+prediction & Gaussian, linear (paper's setting) & non-Gaussian, linear & nonlinear encoders & real data \\
+\midrule
+Model = reweighted real futures is a usable forecaster
+  & \yes{} matches closed form & \yes & \yes{} within ${\sim}1\%$ of perfect & \yes{} best model in study \\
+P2: \Ltwo{} gets average \emph{and} spread right
+  & \yes{} exactly & \yes{} 0--5\% of perfect & \yes & \yes{} calibrated (linear); MLPs over-confident \\
+P1: dot product gets spread wrong
+  & \yes{} bands too wide & \yes{} worse; breaks on heavy tails & \no{} mostly fixed & \yes{} linear ($5\times$ too wide); collapses on rain \\
+P3: one-way vs two-way doesn't matter
+  & \yes & \yes{} (for \Ltwo{} too) & \yes{} noisy on heavy tails & \yes{} linear; MLPs vary \\
+P4: joint shrinks, worse conditional forecaster
+  & \yes{} for cosine & \yes{} on mild data; \emph{less} broken on heavy tails & \no{} joint best or tied & \no{} joint best \\
+P5: retrieval capped by information
+  & \yes{} \Ltwo{} on the ceiling & --- & --- & --- \\
+\bottomrule
+\end{tabularx}
+\caption{Each prediction across the four settings.}
+\label{tab:scorecard}
+\end{table}
+
+Reading across the rows:
+\begin{itemize}
+\item \textbf{What transfers cleanly} is the framework (a contrastive model \emph{is} a
+  conditional distribution) and the \Ltwo{} result. They survive every relaxation we tried.
+  The framework's main practical benefit, a forecast whose shape comes from real data, is
+  invisible in the paper's Gaussian setting. It becomes the main argument for the method on
+  real, non-Gaussian data.
+\item \textbf{What transfers only in its own setting} is the cosine--\Ltwo{} contrast (P1)
+  and the joint-loss penalty (P4). Both are properties of what a \emph{linear} encoder can
+  represent. A flexible encoder can compensate for the dot product's missing term, and the
+  gap closes.
+\item \textbf{What the paper does not address, and which turned out to matter most} off its
+  setting: whether the score is bounded (heavy tails); the bank of futures the forecast is
+  built from; finite data and over-confidence; and the representation of the target (level
+  vs change).
+\end{itemize}
+
+%======================================================================
+\section{Rules of thumb: what to expect where}
+
+From the three rounds together, these are the predictions we would now make for a new
+problem.
+\begin{itemize}
+\item \textbf{Linear encoders:} use \Ltwo. Expect the dot product to give the right average
+  with bands far too wide. Do not normalise: it throws away the level.
+\item \textbf{Flexible encoders, well-behaved data:} the choice of score barely matters.
+  \Ltwo, joint cosine and normalised cosine all end up close to the best possible.
+\item \textbf{Heavy-tailed or spiky targets} (rain, bursts, outliers): use a bounded score,
+  i.e.\ \Ltwo{} or \emph{normalised} cosine. Expect the unnormalised dot product to collapse
+  onto a few extreme futures, and Gaussian baselines to put mass on impossible values.
+\item \textbf{Near-Gaussian targets} (6-hour temperature): expect contrastive and Gaussian
+  forecasters to be close. The shape advantage only pays off when the future has shape:
+  two outcomes, a floor at zero, strong skew.
+\item \textbf{Sharp, short-range forecasts:} expect the bank to be the bottleneck. Use as
+  many futures as possible, and a target that transfers between situations (changes rather
+  than levels).
+\item \textbf{Small or highly overlapping data:} expect MLP encoders to become over-confident
+  quickly. Early stopping on a held-out probabilistic score is necessary, and on our weather
+  data it was still not enough.
+\end{itemize}
+
+%======================================================================
+\section{What matters and what doesn't}
+
+\paragraph{Matters.}
+\begin{itemize}
+\item \textbf{The score family, when the encoder is linear.} \Ltwo{} vs dot product is the
+  difference between calibrated bands and bands $5\times$ too wide.
+\item \textbf{Whether the score is bounded, when the data has heavy tails.} This decides
+  collapse vs no collapse, whatever the encoder.
+\item \textbf{The bank:} its size, and whether its futures can stand in for the case at
+  hand. Worth 7--18 points of skill on real temperature.
+\item \textbf{Encoder flexibility relative to data size.} Flexibility helped a lot on
+  plentiful synthetic data and hurt on one year of weather.
+\item \textbf{How you evaluate.} The old metrics under-reported \Ltwo{} about $5\times$ on
+  retrieval, invented a ``theory floor'' for cosine, and could not see uncertainty at all.
+\end{itemize}
+
+\paragraph{Doesn't matter (much).}
+\begin{itemize}
+\item \textbf{One-way vs two-way training.} It made no consistent difference, as the paper
+  predicts for the dot product. Empirically the same holds for \Ltwo{} (MLPs on real data
+  vary more between the two, with no consistent winner).
+\item \textbf{Cosine normalisation, in most settings.} On well-behaved data with MLP
+  encoders it neither helps nor harms. It matters in exactly two places, in opposite
+  directions: it \emph{hurts} with linear encoders (it loses the level), and it is
+  \emph{needed} for the dot product on heavy-tailed data.
+\item \textbf{Whether the bank overlaps the training data.} We expected overlap to make MLPs
+  look over-confident. On weather it did not; size mattered more.
+\item \textbf{Batch size, for cosine's error against the theory.} There is no trend from 64
+  to 1024 negatives.
+\end{itemize}
+
+%======================================================================
+\section{The normalisation story: where it stands}
+
+\paragraph{The observation (solid).} Across goals 1--3, every catastrophic failure is an
+unbounded score on heavy-tailed or spiky data:
+\begin{itemize}
+\item linear cosine on heavy tails (about $10\times$ worse than perfect);
+\item MLP cosine on heavy tails (+7\% to +23\%);
+\item unnormalised cosine on rain: linear (energy 1.4--1.9$\times$ climatology's) and
+  one- and two-way MLP (2.0--2.4$\times$).
+\end{itemize}
+The bounded scores (\Ltwo{} and normalised cosine) never fail like that. One caveat: some
+MLP \Ltwo{} forecasts on rain also lean on only a couple of bank futures, but without the
+loss of skill.
+
+\paragraph{The mechanism (plausible, not yet measured).} A dot-product score grows with the
+size of the future. Reweighting by $\exp(\text{score})$ therefore favours the biggest
+futures without limit, and on heavy-tailed data a few extreme futures take all the weight.
+CLIP also normalises for practical reasons (stable training, a fixed temperature range), so
+the observation alone does not prove this is \emph{the} reason.
+
+\paragraph{A direct check (cheap).} For unnormalised cosine on rain, measure the length of
+each future's embedding against the size of that future, and how concentrated the forecast
+weights are. If the long embeddings belong to the spiky futures and those futures take the
+weight, the mechanism is confirmed.
+
+\paragraph{A clean theoretical argument (likely exists).} The model distribution is
+\[
+  \nu(v \mid u) \;=\; \frac{e^{s(u,v)}\,\mu_v(v)}{Z(u)},
+  \qquad
+  Z(u) \;=\; \int e^{s(u,v')}\,\mu_v(dv'),
+\]
+i.e.\ $\exp(\text{score})$ times the distribution of futures $\mu_v$, rescaled to sum to 1.
+\begin{itemize}
+\item For a score that is linear in the future, $s(u,v) = \langle a(u), v\rangle$ (the
+  dot product with a linear future encoder), $Z(u)$ is the moment generating function of
+  $\mu_v$. It is finite only if the futures have light, exponential-type tails. For a
+  Student-$t$ it is infinite for every $a(u) \neq 0$, so the ``model distribution'' the loss
+  is supposed to be learning does not exist. A finite batch or bank hides this by collapsing
+  onto its largest members, which is exactly what we observe.
+\item A score that is \textbf{bounded above}, $s \le c$, gives $Z(u) \le e^{c}$ for
+  \emph{any} distribution of futures. \Ltwo{} is at most 0 and normalised cosine at most
+  its scale, so both always define a valid model.
+\end{itemize}
+So bounded scores are the ones for which the paper's probabilistic objective is valid on
+arbitrary data. That is a stronger statement than ``CLIP normalises for a reason'', it comes
+straight out of the paper's framework, and it could be written up properly.
+
+%======================================================================
+\section{A research direction: the bank (reference set)}
+
+Forecasting by reweighting a bank of real futures is \textbf{importance sampling}. A known
+result~\cite{cd} says the number of samples needed grows roughly like
+$\exp(\mathrm{KL})$, where KL measures how far the target distribution (here, the forecast)
+is from the distribution the samples come from (here, the bank). That explains the
+short-range failure in goal~3:
+\begin{itemize}
+\item At 10 minutes ahead the true forecast is very sharp, so it is far from the bank's
+  broad spread. KL is large, and 5.8k futures are not enough.
+\item A bigger bank raises the sample count.
+\item The change-from-last-value target shrinks the gap, because a bank of \emph{changes}
+  is much closer to any particular forecast than a bank of \emph{levels}.
+\end{itemize}
+A theory version would split forecast error into \textbf{score error} (did training find
+the right weights?) plus \textbf{reference-set error}: bank size, a shift between the bank's
+period and the test period, and how the future is represented. It would also say which
+representations make a bank transferable. This lies outside the paper, which treats the
+bank as the true data distribution, and it is the limit that bit hardest on real data.
+
+%======================================================================
+\section{Open questions}
+
+\begin{enumerate}
+\item \textbf{Why does cosine work with MLP encoders?} The guess from goal~2 is that MLP
+  bias terms let the dot product contain a piece that depends on the future alone. That is
+  the piece the linear dot product is missing (the reason for P1) and that \Ltwo{} has
+  built in. The paper's own footnote on affine encoders points the same way.
+  \emph{Cheap test:} add an explicit future-only term to linear cosine and see whether the
+  spread is fixed.
+\item \textbf{Over-sharpening.} Longer training made MLP forecasts over-confident: in
+  goal~2, 30k steps were worse than 15k; in goal~3, MLPs over-fit within a few hundred to a
+  few thousand steps. Is the learned temperature (the logit scale) the culprit?
+  \emph{Cheap test:} after training, tune only the temperature on validation. If that fixes
+  calibration, the objective has a one-parameter sharpness problem, a cleaner story than
+  ``use early stopping''.
+\item \textbf{Why is joint consistently best?} \Ltwo{} joint was the best or tied for best
+  in goals 2 and 3. On rain, joint cosine was the only unnormalised MLP cosine that did not
+  collapse, and in goal~1 it was much less broken on heavy tails. The paper separates joint
+  from conditional losses, but predicts the opposite ranking for conditional forecasting
+  (P4). One guess: the joint softmax's shrinkage damps the pull towards extreme futures.
+  Untested.
+\item \textbf{Over-confidence when the input says little.} With temperature's own past
+  removed, the contrastive forecast became over-confident instead of falling back towards
+  ``random past weather''. Whether that is an estimation artefact or structural matters for
+  real cross-modal use, where one modality often says little about the other.
+\item \textbf{Does ``the encoder learns the useful quantity'' (goal~2) hold on real data?}
+  We never checked what the weather encoders learned.
+\end{enumerate}
+
+%======================================================================
+\section{Caveats}
+
+\begin{itemize}
+\item Synthetic rounds: 2 seeds and 500 test cases per setting, so differences under about
+  1\% are noise. The fixed synthetic field setup has observation noise larger than the
+  signal's own variation, which mutes the bent-series effects.
+\item Real data: one year, one station, one test period (late October--December, colder
+  than most of training), 2 seeds.
+\item The MLPs were barely tuned: one architecture, no weight decay or dropout, and only the
+  learning rate compared. A regularised MLP may well beat the linear models on weather; that
+  is the obvious next experiment.
+\item The normalisation mechanism and every open question are hypotheses, not results.
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{bst} R.~Baptista, A.~Stuart and S.~Tran.
+  \emph{A Mathematical Perspective on Contrastive Learning}. arXiv:2505.24134, 2025.
+\bibitem{cd} S.~Chatterjee and P.~Diaconis.
+  The sample size required in importance sampling.
+  \emph{Annals of Applied Probability}, 28(2):1099--1135, 2018.
+\bibitem{gneiting} T.~Gneiting and A.~E.~Raftery.
+  Strictly proper scoring rules, prediction, and estimation.
+  \emph{Journal of the American Statistical Association}, 102(477):359--378, 2007.
+\end{thebibliography}
+
+\end{document}
