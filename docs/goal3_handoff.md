@@ -46,18 +46,56 @@ is no oracle?**
   summary tables and the 4-way parallel runner.
 
 ## What to build
-1. **Data:** `modalities/real_series.py`. It should load a CSV and produce (past
-   window, future window) pairs.
-   * Suggested dataset: **ETTh1** (hourly electricity transformer temperature,
-     17,420 rows, 7 columns). Issue #1 suggested ETT / Weather. It downloads from
-     here: `https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv`
-     (checked, HTTP 200).
-   * Start **univariate** (target column `OT`). Past and future lengths are
-     the user's call. A natural start is past 96 / future 24, or keep 50/50 to mirror
-     the synthetic setup.
-   * **Chronological split** (e.g. 60/20/20 train/val/test), with a gap of at least
-     past+future steps between splits so windows don't overlap across them.
-     Standardise with **train statistics only**.
+1. **Data: the Weather dataset, with several modalities.** The user wants
+   multiple modalities. Write `modalities/weather.py` to produce (u, v) windows built
+   from groups of variables.
+   * **Source:** the standard long-term-forecasting "Weather" benchmark (Jena, Max
+     Planck roof station, 2020, every 10 min, 52,696 rows, 21 variables). It downloads
+     from here (checked, HTTP 200, 7.2 MB):
+     `https://huggingface.co/datasets/thuml/Time-Series-Library/resolve/main/weather/weather.csv`.
+     Read it with `encoding='latin-1'`, because the units in the header have non-ASCII
+     characters. Fallback: Keras' `jena_climate_2009_2016.csv.zip` on
+     storage.googleapis.com (2009–2016, 14 variables, also reachable).
+   * **Data cleaning:** `wv`, `max. PAR` and `OT` contain `-9999` sentinels (81 cells).
+     Replace them with NaN and interpolate. `wd` (wind direction, degrees) is circular:
+     encode it as sin/cos.
+   * **Suggested modality groups.** Several columns are near-copies of each other:
+     Tpot, Tlog, Tdew, VPmax, VPact, sh and H2OC are close functions of T, humidity and
+     pressure. Putting such copies on both sides makes the task trivially easy, so use
+     one representative per physical quantity:
+
+     | modality | columns |
+     |---|---|
+     | temperature | `T (degC)` |
+     | moisture | `rh (%)`, `VPdef (mbar)` |
+     | pressure | `p (mbar)` |
+     | wind | `wv`, `max. wv`, sin/cos(`wd`) |
+     | radiation | `SWDR`, `PAR` |
+     | rain | `rain (mm)`, `raining (s)` (zero 96% of the time, spiky: a real heavy-tail case) |
+
+   * **Two setups. Do A first, then B if time allows:**
+     * **A. Many modalities → one future.** u = past windows of all groups
+       (standardised, concatenated). v = future temperature. This is the direct
+       real-data version of goals 1–2, and every existing model works on it
+       unchanged (just a bigger `dim_u`).
+     * **B. Cross-modal, CLIP-style.** u and v are *different* modalities, e.g.
+       u = past pressure + wind + moisture, v = future rain, or future temperature
+       from everything except temperature. This is closest to what CLIP actually
+       does (two different kinds of data, one shared space). The rain target also
+       tests goal 2's main claim on real data: unbounded scores should struggle on
+       spiky futures, and normalised cosine / L² should not.
+   * **Modality ablation (cheap, informative):** retrain with one group dropped from u
+     and report the loss in energy skill. This says what each modality contributes to
+     the forecast, including its uncertainty, not just its average.
+   * **Windows:** 10-min steps, so past 144 (1 day) / future 36 (6 h) is a natural
+     start. All groups over 1 day give `dim_u` ≈ 144 × 10 = 1440: fine for the MLP,
+     large for the linear model (consider striding the past by 3 to keep it manageable).
+   * **Chronological split** (e.g. 70/10/20 train/val/test over the year), with a gap
+     of at least past+future steps between splits so windows don't overlap across
+     them. Standardise each column with **train statistics only**. The year has
+     seasons, so test (Oct–Dec) is a harder, shifted regime: report that, don't hide it.
+   * Optional second dataset: ETTh1 (electricity transformer, 7 columns), at
+     `https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv`.
 2. **Bank:** forecasts are built by resampling futures, so the bank must contain only
    futures the model could know. Use the training-split futures (all of them, or a
    strided subset). Goal 2 found MLPs can become over-confident, and a bank that
@@ -90,8 +128,8 @@ is no oracle?**
   * mean error;
   * ESS median / min (collapse check);
   * the step chosen by early stopping.
-* If time allows, a second dataset (Weather, or ETTm1) or the multivariate version
-  (all 7 columns in u, OT in v).
+* Setup A first (all groups → future temperature), then setup B (cross-modal, e.g.
+  → future rain), then the modality ablation on the best model.
 
 ## Hypotheses to test (from goals 1–2)
 * L² joint and normalised cosine (MLP) beat MSE + noise and match or beat the
@@ -102,6 +140,11 @@ is no oracle?**
   poor (it discards the level of the past).
 * Contrastive forecasts keep real-data shape (skew, daily cycles) that Gaussian
   baselines miss. Check PIT / coverage by horizon.
+* Rain as the future (setup B) is the real-data heavy-tail test. Expect unnormalised
+  cosine to collapse (ESS → 1) and the Gaussian models to put mass on negative rain.
+  L² / normalised cosine should keep the "mostly zero, sometimes a burst" shape.
+* Extra modalities should help most with the *uncertainty* (band width that
+  tracks fronts and showers), not only the average. The ablation shows this.
 
 ## Practical notes
 * CPU only, 4 cores: `torch.set_num_threads(1)` per job, 4 jobs in parallel. A
@@ -113,4 +156,5 @@ is no oracle?**
 * Don't `pkill -f <pattern>` with a pattern that appears in your own command line.
 * Install: `pip install torch --index-url https://download.pytorch.org/whl/cpu` and
   `numpy scipy pyyaml matplotlib wandb pandas`.
-* Keep downloaded CSVs out of git, or commit only if small. ETTh1 is 2.6 MB.
+* Keep downloaded CSVs out of git (`data/` + `.gitignore`) and download them in the
+  loader. Weather is 7.2 MB.
