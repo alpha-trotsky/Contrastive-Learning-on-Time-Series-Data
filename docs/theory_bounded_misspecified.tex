@@ -54,6 +54,9 @@ What still matters is the choice of \emph{score}, and it matters only through th
   has no valid model on heavy-tailed data, and its bank forecast degenerates as the bank
   grows, putting all its weight on a single future.
 \end{itemize}
+Experiments confirm both halves, with one refinement: a ceiling is necessary but not
+sufficient in practice. Training never sees the far tails, so the score must also not
+\emph{reward} extreme futures, which \Ltwo{} and normalised cosine do not.
 \end{tcolorbox}
 
 \noindent
@@ -384,8 +387,8 @@ Let $g$ be a ReLU network and $g_\infty$ the same network with its biases remove
 $\langle f(u),g_\infty(v_0)\rangle>0$ for some direction $v_0$ and the futures are elliptical
 Student-$t$, then $Z(u)=\infty$. So the dot product is admissible at $u$ only if its score never
 grows in any direction of the future, and nothing in training enforces that. A bounded output
-layer on $g$ (such as $\tanh$) does enforce it, by Proposition~\ref{prop:bounded}, without
-normalising anything.
+layer on $g$ (such as $\tanh$) makes the score admissible, by Proposition~\ref{prop:bounded},
+without normalising anything. Section~\ref{sec:exp} shows this is not enough in practice.
 \end{proposition}
 
 Admissibility is not a technicality. It is exactly the condition for the bank forecast to
@@ -463,7 +466,86 @@ says every informative parameter is of this kind.
 %======================================================================
 \section{Testing the tails directly}\label{sec:exp}
 
-EXPERIMENTS_PLACEHOLDER
+We ran two experiments, both on the heavy-tailed domain ($\nu=3$), with the Gaussian
+process as a control.
+
+\paragraph{Setup.} Each model is trained exactly as in Section~\ref{sec:evidence} (same data,
+15k steps, batch 256), then frozen. Only the bank changes: the forecast is rebuilt from
+held-out banks of $N=100$ up to $N=200{,}000$ futures, with up to 3 disjoint banks per size,
+on the same 500 test pasts. We record the energy score above the perfect forecaster, the
+largest bank weight, and, for collapsed forecasts (largest weight $>0.5$), how extreme the
+winning future is: its percentile by size within the bank. 2 seeds on the heavy-tailed
+domain, 1 for the control. The script is \texttt{test\_bed/analysis/bank\_sweep.py}.
+
+\paragraph{Experiment 1: does a bigger bank help or hurt?} Theory
+(Propositions~\ref{prop:snis}, \ref{prop:collapse}) predicts that bounded scores improve and
+level off as the bank grows, and that the unbounded dot product turns around and gets worse.
+
+\begin{table}[h]
+\centering\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+& model & $N=100$ & 1k & 3k & 30k & 100k & 200k \\
+\midrule
+heavy tails, MLP & dot product (unbounded) & $+33.6$ & $+8.7$ & $\mathbf{+7.1}$ & $+17.5$ & $+34.5$ & $+46.3$ \\
+& dot, $\tanh$ future encoder & $+37.0$ & $+9.7$ & $+6.7$ & $\mathbf{+3.2}$ & $+5.4$ & $+7.5$ \\
+& \Ltwo{} one-way & $+36.8$ & $+11.8$ & $+8.0$ & $+4.5$ & $+3.8$ & $+2.9$ \\
+& \Ltwo{} joint & $+31.5$ & $+6.2$ & $+3.2$ & $+0.9$ & $+0.7$ & $+0.6$ \\
+& normalised cosine & $+41.8$ & $+8.0$ & $+3.5$ & $+1.0$ & $+0.8$ & $+0.8$ \\
+\midrule
+heavy tails, linear & dot product (unbounded) & $\mathbf{+33.2}$ & $+38.7$ & $+70.2$ & $+1253$ & $+2705$ & $+3358$ \\
+& dot, $\tanh$ future encoder & $+28.0$ & $\mathbf{+22.1}$ & $+24.5$ & $+64.1$ & $+92.3$ & $+102.6$ \\
+& \Ltwo{} one-way & $+22.8$ & $+8.1$ & $+5.8$ & $+4.6$ & $+4.3$ & $+4.2$ \\
+& \Ltwo{} joint & $+21.5$ & $+7.8$ & $+5.7$ & $+4.5$ & $+4.5$ & $+4.5$ \\
+& normalised cosine & $+25.4$ & $+23.5$ & $+23.2$ & $+23.1$ & $+23.0$ & $+23.1$ \\
+\midrule
+Gaussian (control), MLP & dot product (unbounded) & $+13.7$ & $+2.9$ & $+1.5$ & $+2.0$ & $+1.8$ & $+1.8$ \\
+Gaussian (control), linear & dot product (unbounded) & $+9.9$ & $+6.4$ & $+6.1$ & $+5.8$ & $+5.7$ & $+5.7$ \\
+\bottomrule
+\end{tabular}
+\caption{Energy score above the perfect forecaster (\%) as the bank grows, for frozen
+models. Mean of 2 seeds (control: 1 seed). Bold marks the best bank size where a curve turns
+around. Full tables: \texttt{test\_bed/results/bank\_sweep/summary.md}.}
+\label{tab:banksweep}
+\end{table}
+
+The prediction holds. On heavy tails the unbounded dot product is best at a small bank and
+then gets steadily worse: with MLP encoders from $+7\%$ at 3k futures to $+46\%$ at 200k, and
+with linear encoders from $+33\%$ to over $+3000\%$. Every bounded score improves and levels
+off. On the Gaussian control the same unbounded score also improves and levels off (at
+$+5.7\%$ linear, matching the $+5.6\%$ of Finding~1), so the turnaround is caused by the tails,
+not by the score alone. The collapse diagnostic shows the mechanism directly. With linear
+encoders, 20\% of the dot product's forecasts at $N=200$k put more than half their weight on
+one future, and that future is the most extreme in the bank (99.998th percentile by size,
+seed 1).
+
+\paragraph{Experiment 2: is a ceiling enough?} Proposition~\ref{prop:relu} says that a
+$\tanh$ on the future encoder makes the dot product admissible without normalising
+anything. The result is only a partial fix (Table~\ref{tab:banksweep}, second row of each
+block):
+\begin{itemize}
+\item it is far better than the uncapped dot product ($+103\%$ against $+3358\%$ with linear
+  encoders, $+7.5\%$ against $+46\%$ with MLPs at 200k);
+\item but it still turns around: in one MLP seed it improves to $+1.2\%$, in the other it rises
+  from $+8\%$ to $+14\%$; with linear encoders it rises from $+22\%$ to $+103\%$;
+\item its forecasts rarely collapse onto one future, but the futures they favour are still
+  the most extreme in the bank (99.99th percentile, linear, seed 1).
+\end{itemize}
+This does not contradict the theory. The ceiling makes the model exist, so the bank
+forecast converges. But it converges to a model that over-weights extremes. A $\tanh$
+score rises \emph{towards} its ceiling as the future becomes more extreme, so extreme futures
+in the favoured direction receive the top score. A small bank contains few of them and
+hides the problem, and a large bank exposes it.
+
+\paragraph{What the two experiments say together.} The scores that work either
+\emph{penalise} extreme futures (\Ltwo{}: the score falls as $g(v)$ moves away from $f(u)$) or
+are \emph{indifferent} to how extreme a future is (normalised cosine depends only on the
+direction of $g(v)$). It is not the height of the ceiling that matters: normalised cosine's
+learned scale is about 72, so its ceiling is enormous, and it is the best model here. The
+underlying reason is that training cannot correct the tails. A batch of 256 futures almost
+never contains one from the far tail, so how the score treats extreme futures is set by the
+architecture, not learned from data. A ceiling is \emph{necessary}: without one the model does
+not exist. In practice the score must also not \emph{reward} extremity.
 
 %======================================================================
 \section{Finite data: the loss matters again, for a different reason}\label{sec:finite}
@@ -572,8 +654,13 @@ relatives. It was not exhaustive, so ``we did not find'' below means only that.
 \item Rain is physically bounded, so its true $Z(u)$ is finite and Proposition~\ref{prop:collapse}
   does not apply literally. What applies is its finite-$N$ version: a tiny $\mathrm{ESS}/N$
   whenever the scores over the bank are heavy-tailed.
-\item All experiments use 2 seeds (one seed for some of the new runs in
-  Section~\ref{sec:exp}).
+\item All experiments use 2 seeds, except the Gaussian control of Section~\ref{sec:exp}
+  (1 seed). The collapse diagnostic was recorded for seed 1 only.
+\item The ``does not reward extremity'' refinement of Section~\ref{sec:exp} is an empirical
+  reading of two experiments on one domain. We have not stated or proved it as a theorem.
+\item Untested so far: the weak-dependence Gaussian prediction of
+  Proposition~\ref{prop:scalar} at finite data, the quadratic-augmented dot product
+  (Table~\ref{tab:miss}, last column) in training, and the bank sweep on rain.
 \end{itemize}
 
 %======================================================================
