@@ -157,6 +157,8 @@ def refs_stats(rs):
 
 f2 = lambda x: '—' if x is None or (isinstance(x, float) and math.isnan(x)) else f'{x:.2f}'
 f3 = lambda x: '—' if x is None or (isinstance(x, float) and math.isnan(x)) else f'{x:.3f}'
+# CRPS / width: 3 significant digits (rain amounts are small numbers)
+g3 = lambda x: '—' if x is None or (isinstance(x, float) and math.isnan(x)) else f'{x:.3g}'
 
 
 def summary(setup):
@@ -183,11 +185,11 @@ def summary(setup):
         s, n = stats[k]
         ess = f"{s['ess_med']:.0f} / {s['ess_min']:.1f}" if 'ess_med' in s else '—'
         L.append(f"| {LABEL.get(k[0], k[0])} | {k[1]} | {n} | {f3(s['skill'])} | {f3(s['skill_p'])} | "
-                 + ' / '.join(f2(x) for x in s['crps']) + f" | {f2(s['cov50'])} | {f2(s['cov90'])} | "
-                 f"{f2(s['width90'])} | {s['bias']:+.2f} | {ess} | {s['stop']:.0f} |")
+                 + ' / '.join(g3(x) for x in s['crps']) + f" | {f2(s['cov50'])} | {f2(s['cov90'])} | "
+                 f"{g3(s['width90'])} | {s['bias']:+.3g} | {ess} | {s['stop']:.0f} |")
     for name, r in refs_stats(next(iter(runs.values()))).items():
         L.append(f"| *{name.replace('_', '-')}* | — | — | {f3(r['skill'])} | {f3(r['skill_p'])} | "
-                 + ' / '.join(f2(x) for x in r['crps']) + f" | — | {f2(r['cov90'])} | — | — | — | — |")
+                 + ' / '.join(g3(x) for x in r['crps']) + f" | — | {f2(r['cov90'])} | — | — | — | — |")
     L += ['', '## Calibration detail', '',
           'cov90 per query, by tercile of a difficulty proxy (calm / mid / hard), coverage by horizon, '
           'and the PIT histogram (ideal: 0.20 of values in the two outer bins, 0.50 in the lower half).',
