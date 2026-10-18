@@ -75,6 +75,7 @@ def build_modality(cfg, gen):
             bank=cfg.get('bank', 'heldout'),
             bank_block=cfg.get('bank_block', 1008),
             bank_every=cfg.get('bank_every', 4),
+            v_relative=cfg.get('v_relative', False),
         )
     raise ValueError(f"Unknown modality type: {cfg['type']}")
 

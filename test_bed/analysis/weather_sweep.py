@@ -10,6 +10,9 @@ Setups (u groups -> v groups, see modalities/weather.py):
   A    all six groups              -> future temperature
   B    pressure + wind + moisture  -> future rain      (cross-modal, spiky target)
   B2   all groups but temperature  -> future temperature (cross-modal)
+  Arel setup A, but v = change of temperature from its last observed value
+       (bank futures then transfer across temperature levels; scores are the
+       same as for the absolute future, see modalities/weather.py)
 Ablation: setup A with one group dropped from u  (--drop <group>, tag A-<group>).
 Bank check: --bank train resamples from the training futures (tag A+trainbank).
 
@@ -37,7 +40,9 @@ SETUPS = {
     'A': (list(GROUPS), ['temperature']),
     'B': (['pressure', 'wind', 'moisture'], ['rain']),
     'B2': ([g for g in GROUPS if g != 'temperature'], ['temperature']),
+    'Arel': (list(GROUPS), ['temperature']),
 }
+RELATIVE = {'Arel'}
 
 
 def make_config(setup, model, encoder, seed, drop=None, steps=None, bank=None, out_root='results/weather'):
@@ -49,7 +54,7 @@ def make_config(setup, model, encoder, seed, drop=None, steps=None, bank=None, o
     # setup tag: A, A-<dropped group>, A+trainbank (bank = the training futures)
     tag = f"{setup}{'-' + drop if drop else ''}{'+' + bank + 'bank' if bank else ''}_{model}_{encoder}_s{seed}"
     cfg['experiment'].update(name=f'weather_{tag}', output_dir=f'{out_root}/{tag}', seed=seed)
-    cfg['modality'].update(u_groups=u_groups, v_groups=v_groups)
+    cfg['modality'].update(u_groups=u_groups, v_groups=v_groups, v_relative=setup in RELATIVE)
     if bank:
         cfg['modality']['bank'] = bank
     if encoder == 'linear':

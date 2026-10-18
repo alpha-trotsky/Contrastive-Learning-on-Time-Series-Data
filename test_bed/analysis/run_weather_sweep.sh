@@ -3,6 +3,7 @@
 #   bash analysis/run_weather_sweep.sh                                   # setup A, full grid
 #   SETUPS="B" bash analysis/run_weather_sweep.sh                        # setup B
 #   SETUPS="A" MODELS="l2_joint" ENCODERS=mlp DROPS="rain wind" bash analysis/run_weather_sweep.sh
+#   BANK=train SETUPS=A MODELS=l2_joint bash analysis/run_weather_sweep.sh   # bank = training futures
 # Runs whose results.json already exists are skipped.
 set -u
 export WANDB_MODE=disabled PYTHONDONTWRITEBYTECODE=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1
@@ -11,7 +12,7 @@ run() {  # setup model encoder seed [drop]
   local drop=${5:-}
   local cfg
   cfg=$(python -m analysis.weather_sweep --setup "$1" --model "$2" --encoder "$3" --seed "$4" \
-          ${drop:+--drop "$drop"}) || return
+          ${drop:+--drop "$drop"} ${BANK:+--bank "$BANK"}) || return
   local tag
   tag=$(basename "$cfg" .yaml)
   [ -f "results/weather/$tag/results.json" ] && return

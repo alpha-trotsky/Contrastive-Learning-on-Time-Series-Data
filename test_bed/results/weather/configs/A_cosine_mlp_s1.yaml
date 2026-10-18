@@ -1,0 +1,53 @@
+experiment:
+  name: weather_A_cosine_mlp_s1
+  output_dir: results/weather/A_cosine_mlp_s1
+  seed: 1
+modality:
+  type: weather
+  u_groups:
+  - temperature
+  - moisture
+  - pressure
+  - wind
+  - radiation
+  - rain
+  v_groups:
+  - temperature
+  past_len: 144
+  past_stride: 3
+  future_len: 36
+  fractions:
+  - 0.7
+  - 0.1
+  - 0.2
+  bank: heldout
+  bank_block: 1008
+  bank_every: 4
+  v_relative: false
+model:
+  type: mlp_clip
+  embed_dim: 100
+  hidden: 256
+  depth: 2
+  skip: true
+  init_logit_scale: 2.659
+loss:
+  type: conditional
+  inner_product: true
+  lambda_u: 0.5
+  lambda_v: 0.5
+training:
+  batch_size: 256
+  num_steps: 10000
+  lr: 0.0003
+  optimizer: adam
+  early_stopping: true
+logging:
+  log_every: 100
+  theory_match_every: 500
+  blackbox_every: 250
+blackbox:
+  n_test: 300
+  n_test_final: 1000
+  bank: 20000
+  M: 300

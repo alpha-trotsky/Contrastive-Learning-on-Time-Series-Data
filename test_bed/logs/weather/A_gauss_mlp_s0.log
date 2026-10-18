@@ -1,0 +1,45 @@
+device: cpu
+step      0 | loss 0.8101 | energy skill -0.314 | cov90 0.920
+step    250 | loss -1.2594 | energy skill 0.639 | cov90 0.797
+step    500 | loss -1.6500 | energy skill 0.622 | cov90 0.668
+step    750 | loss -1.7705 | energy skill 0.619 | cov90 0.606
+step   1000 | loss -1.8225 | energy skill 0.628 | cov90 0.565
+step   1250 | loss -1.9854 | energy skill 0.619 | cov90 0.500
+step   1500 | loss -2.0419 | energy skill 0.621 | cov90 0.473
+step   1750 | loss -2.1592 | energy skill 0.616 | cov90 0.426
+step   2000 | loss -2.2078 | energy skill 0.608 | cov90 0.404
+step   2250 | loss -2.2553 | energy skill 0.605 | cov90 0.385
+step   2500 | loss -2.3635 | energy skill 0.606 | cov90 0.371
+step   2750 | loss -2.2680 | energy skill 0.596 | cov90 0.356
+step   3000 | loss -2.3547 | energy skill 0.597 | cov90 0.328
+step   3250 | loss -2.3583 | energy skill 0.596 | cov90 0.332
+step   3500 | loss -2.4256 | energy skill 0.585 | cov90 0.307
+step   3750 | loss -2.4634 | energy skill 0.587 | cov90 0.294
+step   4000 | loss -2.5087 | energy skill 0.589 | cov90 0.298
+step   4250 | loss -2.4322 | energy skill 0.585 | cov90 0.297
+step   4500 | loss -2.5435 | energy skill 0.580 | cov90 0.277
+step   4750 | loss -2.5238 | energy skill 0.576 | cov90 0.276
+step   5000 | loss -2.5964 | energy skill 0.576 | cov90 0.247
+step   5250 | loss -2.5779 | energy skill 0.568 | cov90 0.258
+step   5500 | loss -2.5797 | energy skill 0.567 | cov90 0.252
+step   5750 | loss -2.6406 | energy skill 0.570 | cov90 0.261
+step   6000 | loss -2.6586 | energy skill 0.569 | cov90 0.238
+step   6250 | loss -2.6613 | energy skill 0.565 | cov90 0.232
+step   6500 | loss -2.6934 | energy skill 0.569 | cov90 0.232
+step   6750 | loss -2.6062 | energy skill 0.561 | cov90 0.235
+step   7000 | loss -2.6668 | energy skill 0.562 | cov90 0.226
+step   7250 | loss -2.6718 | energy skill 0.564 | cov90 0.224
+step   7500 | loss -2.7148 | energy skill 0.559 | cov90 0.220
+step   7750 | loss -2.7239 | energy skill 0.563 | cov90 0.223
+step   8000 | loss -2.7214 | energy skill 0.557 | cov90 0.216
+step   8250 | loss -2.7329 | energy skill 0.556 | cov90 0.213
+step   8500 | loss -2.7458 | energy skill 0.556 | cov90 0.206
+step   8750 | loss -2.7670 | energy skill 0.558 | cov90 0.211
+step   9000 | loss -2.7650 | energy skill 0.554 | cov90 0.200
+step   9250 | loss -2.7768 | energy skill 0.554 | cov90 0.196
+step   9500 | loss -2.7862 | energy skill 0.553 | cov90 0.196
+step   9750 | loss -2.7320 | energy skill 0.554 | cov90 0.199
+early stopping | best validation energy 0.9662 at step 250
+blackbox | energy 0.9562 | energy_skill 0.7599 | crps 0.1406 | mse_mean 0.0594 | cov50 0.3591 | cov90 0.7075 | width90 0.5343 | cal_err 0.1758 | ref_persistence_energy_skill 0.7019 | ref_seasonal_naive_energy_skill 0.5262
+
+Done. Results in results/weather/A_gauss_mlp_s0/

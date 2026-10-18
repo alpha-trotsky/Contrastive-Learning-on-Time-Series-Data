@@ -19,7 +19,11 @@ trivial):
     u = past windows of the u_groups (past_len steps, every past_stride-th one),
         each column standardised with TRAINING statistics, concatenated
         column by column:  [col_1(t-P+1..t), col_2(...), ...]
-    v = future window of the v_groups (future_len steps, every step).
+    v = future window of the v_groups (future_len steps, every step), or with
+        v_relative=True its change from the last observed value of the same
+        column.  The last value is known at forecast time, so scores of a
+        relative forecast equal those of (last value + forecast) against the
+        absolute future: energy score and CRPS are unchanged by a shift.
 
 Setup A (all groups -> future temperature) and setup B (cross-modal, e.g.
 pressure + wind + moisture -> future rain) are just different group lists.
@@ -117,12 +121,13 @@ class _WindowSampler(PairSampler):
 class WeatherModality(_WindowSampler):
     def __init__(self, u_groups, v_groups, past_len=144, future_len=36, past_stride=3,
                  fractions=(0.7, 0.1, 0.2), bank='heldout', bank_block=1008, bank_every=4,
-                 path=DATA_PATH):
+                 v_relative=False, path=DATA_PATH):
         cols, self.time = load_weather(path)
         self.u_groups, self.v_groups = list(u_groups), list(v_groups)
         self.u_cols = [c for g in self.u_groups for c in GROUPS[g]]
         self.v_cols = [c for g in self.v_groups for c in GROUPS[g]]
         self.past_len, self.future_len, self.past_stride = past_len, future_len, past_stride
+        self.v_relative = v_relative
         T = len(self.time)
         win = past_len + future_len
 
@@ -167,7 +172,8 @@ class WeatherModality(_WindowSampler):
         self.v_scale = torch.tensor([self.std[c] for c in self.v_cols for _ in range(future_len)])
         floors = [(FLOORS[c] - self.mean[c]) / self.std[c] if c in FLOORS else -math.inf
                   for c in self.v_cols for _ in range(future_len)]
-        self.v_floor = torch.tensor(floors) if any(math.isfinite(f) for f in floors) else None
+        has_floor = any(math.isfinite(f) for f in floors) and not v_relative
+        self.v_floor = torch.tensor(floors) if has_floor else None
         super().__init__(self, self.split_starts['train'])
 
     @property
@@ -183,6 +189,8 @@ class WeatherModality(_WindowSampler):
         s = torch.as_tensor(starts, dtype=torch.long)[:, None]
         u = self.U[s + self.past_off]                   # (N, P', Cu)
         v = self.V[s + self.future_off]                 # (N, F, Cv)
+        if self.v_relative:
+            v = v - self.V[s + self.past_len - 1]       # change from the last value
         return (u.transpose(1, 2).reshape(len(s), -1).double(),
                 v.transpose(1, 2).reshape(len(s), -1).double())
 
@@ -192,10 +200,12 @@ class WeatherModality(_WindowSampler):
         last = self.V[s[:, 0] + self.past_len - 1]                        # (N, Cv)
         persist = last[:, :, None].expand(-1, -1, self.future_len)
         day = 144                                                         # 1 day of 10-min steps
-        refs = {'persistence': persist.reshape(len(s), -1)}
+        refs = {'persistence': persist}
         if self.past_len >= day:
-            seas = self.V[s + self.future_off - day].transpose(1, 2)
-            refs['seasonal_naive'] = seas.reshape(len(s), -1)
+            refs['seasonal_naive'] = self.V[s + self.future_off - day].transpose(1, 2)
+        if self.v_relative:
+            refs = {k: r - last[:, :, None] for k, r in refs.items()}
+        refs = {k: r.reshape(len(s), -1) for k, r in refs.items()}
         return {k: r.double()[:, None, :] for k, r in refs.items()}
 
     def proxies(self, starts):
