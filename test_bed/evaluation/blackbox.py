@@ -103,7 +103,9 @@ class BlackBoxEval:
                 return gaussian_samples(self.u @ W, r.T @ r / r.shape[0], self.M), None
             score = clip_score_fn(model, self.loss_cfg.get('inner_product', True),
                                   self.loss_cfg.get('normalize', False))
-            return sir_samples(score, self.u, self.v_bank.float(), self.M)
+            # resample the bank itself (float64), not a float32 copy: exact values
+            # matter for point masses such as dry futures (rain = 0)
+            return sir_samples(score, self.u, self.v_bank, self.M)
 
     def _eval_samples(self, model):
         was_training = model.training
@@ -162,9 +164,9 @@ class BlackBoxEval:
                 d['pit_hist'] = torch.histc(pit(s, self.y).float(), bins=10, min=0, max=1).tolist()
             if self.v_floor is not None:
                 fl = self.v_floor.to(s)
-                d['below_floor'] = (s < fl - 1e-9).double().mean().item()
-                p_event = (s > fl + 1e-9).any(-1).double().mean(1)
-                event = (self.y > fl + 1e-9).any(-1).double()
+                d['below_floor'] = (s < fl - 1e-6).double().mean().item()
+                p_event = (s > fl + 1e-6).any(-1).double().mean(1)
+                event = (self.y > fl + 1e-6).any(-1).double()
                 d['brier_any'] = ((p_event - event) ** 2).mean().item()
                 d['event_rate'] = event.mean().item()
             out['forecasters'][k] = d
