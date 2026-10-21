@@ -16,6 +16,10 @@ from collections import defaultdict
 from statistics import mean
 
 ORDER = {'t': ['inf', '10', '3'], 'warp': ['0', '0.5', '1'], 'dwell': ['0', '1', '1.5']}
+# run key -> display name; 'cosine' / 'l2' are the first sweep's two-sided / one-sided runs
+MODELS = ['cosine_1s', 'cosine', 'cosine_joint', 'l2', 'l2_2s', 'l2_joint', 'mse']
+LABEL = {'cosine_1s': 'cosine one-sided', 'cosine': 'cosine two-sided', 'cosine_joint': 'cosine joint',
+         'l2': 'L2 one-sided', 'l2_2s': 'L2 two-sided', 'l2_joint': 'L2 joint', 'mse': 'MSE + noise'}
 NAMES = {'t': 'Heavy tails (Student-t), dial = df (inf = GP)',
          'warp': 'Bent GP (warp), dial = strength (0 = GP)',
          'dwell': 'Double-well, dial = lambda (0 = OU)'}
@@ -28,12 +32,32 @@ def main():
         a = r['args']
         runs[(a['domain'], f"{a['dial']:g}", a['model'])].append(r)
 
+    def cell(dom, d, model, f):
+        rs = runs.get((dom, d, model), [])
+        return mean(f(r) for r in rs) if rs else None
+
+    o = lambda r: r['scores']['oracle']
+    s_ = lambda r: r['scores']['model']
+    for title, f, fmt in [
+        ('Energy vs perfect forecaster (0% = perfect)',
+         lambda r: (s_(r)['energy'] - o(r)['energy']) / o(r)['energy'], lambda x: f'{100 * x:+.1f}%'),
+        ('90% band coverage on the HARD third of cases (target 0.90)',
+         lambda r: s_(r)['cov90_by_spread'][2], lambda x: f'{x:.2f}'),
+        ('90% band coverage overall (target 0.90)', lambda r: s_(r)['cov90'], lambda x: f'{x:.2f}')]:
+        print(f'\n### {title}\n')
+        print('| domain | dial | ' + ' | '.join(LABEL[m] for m in MODELS) + ' |')
+        print('|---|---|' + '---|' * len(MODELS))
+        for dom, dials in ORDER.items():
+            for d in dials:
+                vals = [cell(dom, d, m, f) for m in MODELS]
+                print(f'| {dom} | {d} | ' + ' | '.join('—' if v is None else fmt(v) for v in vals) + ' |')
+
     for dom, dials in ORDER.items():
         print(f'\n### {NAMES[dom]}\n')
         print('| dial | model | energy vs oracle | skill | avg err vs oracle | band90 | band90 easy / mid / hard | width90 / oracle | seeds |')
         print('|---|---|---|---|---|---|---|---|---|')
         for d in dials:
-            for model in ('cosine', 'l2', 'mse'):
+            for model in MODELS:
                 rs = runs.get((dom, d, model), [])
                 if not rs:
                     continue
@@ -46,12 +70,12 @@ def main():
                 c = m(lambda r: s(r)['cov90'])
                 byb = [m(lambda r, i=i: s(r)['cov90_by_spread'][i]) for i in range(3)]
                 w = m(lambda r: s(r)['width90'] / o(r)['width90'])
-                print(f'| {d} | {model} | {100 * ex:+.1f}% | {sk:.3f} | {me:.2f}x | {c:.3f} | '
+                print(f'| {d} | {LABEL[model]} | {100 * ex:+.1f}% | {sk:.3f} | {me:.2f}x | {c:.3f} | '
                       f'{byb[0]:.2f} / {byb[1]:.2f} / {byb[2]:.2f} | {w:.2f} | {len(rs)} |')
         # point-forecast reference and extras
         extras = []
         for d in dials:
-            for model in ('cosine', 'l2'):
+            for model in MODELS[:-1]:
                 rs = runs.get((dom, d, model), [])
                 if rs:
                     e = rs[0]['extra']

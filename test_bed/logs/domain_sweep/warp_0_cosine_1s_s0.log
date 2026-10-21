@@ -1,0 +1,1 @@
+warp_0_cosine_1s_s0: energy model 0.2664 oracle 0.2525 clim 0.3547 | cov90 0.981 by-spread [0.98, 0.98, 0.98] | {'final_loss': 5.047585487365723, 'logit_scale': 8.459382057189941, 'ess_median': 31524.198603379056, 'ess_min': 11.377191328393687}

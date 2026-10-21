@@ -1,8 +1,9 @@
 # Goal 1 results — linear models on non-Gaussian domains
 
-Setup: the existing linear models (cosine CLIP = two-sided conditional inner
-product; L² = one-sided on p(v|u); MSE regression + Gaussian residual noise),
-trained 15k steps on each domain at three dial settings, 2 seeds each (54 runs).
+Setup: the existing linear models, i.e. cosine (inner product) and L² scores, each
+trained one-sided, two-sided and joint, plus MSE regression + Gaussian residual
+noise. Each was trained 15k steps on each domain at three dial settings, 2 seeds
+each (126 runs).
 Field setup unchanged from `config.yaml`. Contrastive models are scored only
 through their own score (resampling a bank of 50k real training futures).
 Full table: `test_bed/results/domain_sweep/summary.md`.
@@ -13,19 +14,46 @@ How to read the columns:
 * **band90**: how often the 90% band catches the truth (target 0.90), split into
   easy / mid / hard cases by how uncertain the perfect forecaster is.
 
-## Headline numbers (energy vs perfect forecaster, mean of 2 seeds)
+## Full grid: {cosine, L²} × {one-sided, two-sided, joint} + MSE
 
-| domain | dial | cosine CLIP | L² | MSE + noise |
-|---|---|---|---|---|
-| Heavy tails | GP (df=∞) | +5.6% | **+0.0%** | +0.1% |
-| | df=10 | +12.9% | **+1.2%** | +1.6% |
-| | df=3 | **~10× worse** (energy 1.8–2.6 vs 0.20) | **+4.6%** | +8.6% |
-| Bent GP | 0 (GP) | +5.6% | **−0.0%** | +0.0% |
-| | 0.5 | +17.1% | **+0.2%** | +1.7% |
-| | 1 | +40.0% (no better than ignoring the past) | **+1.6%** | +12.7% |
-| Double-well | 0 (OU) | +0.4% | +0.1% | −0.1% |
-| | 1 | +1.5% | **+0.7%** | +10.9% |
-| | 1.5 | +2.6% | **+0.4%** | +14.1% |
+"One-sided" = past → future only (the forecasting direction). "Two-sided" =
+average of past → future and future → past (standard CLIP). "Joint" = one softmax
+over every past–future pair in the batch. Energy vs the perfect forecaster, mean
+of 2 seeds (0% = perfect):
+
+| domain | dial | cos 1-sided | cos 2-sided | cos joint | L² 1-sided | L² 2-sided | L² joint | MSE + noise |
+|---|---|---|---|---|---|---|---|---|
+| Heavy tails | ∞ (GP) | +5.6% | +5.6% | +9.8% | +0.0% | +0.0% | +0.0% | +0.1% |
+| | 10 | +12.9% | +12.9% | +19.5% | +1.2% | +1.3% | +1.2% | +1.6% |
+| | 3 | ~9× worse | ~10× worse | +69.5% | +4.6% | +4.5% | +4.5% | +8.6% |
+| Bent GP | 0 (GP) | +5.5% | +5.6% | +12.5% | −0.0% | −0.0% | +0.0% | +0.0% |
+| | 0.5 | +16.2% | +17.1% | +23.1% | +0.2% | +0.3% | +0.3% | +1.7% |
+| | 1 | +37.4% | +40.0% | +25.2% | +1.6% | +1.5% | +1.6% | +12.7% |
+| Double-well | 0 (OU) | +0.3% | +0.4% | +1.5% | +0.1% | −0.1% | +0.1% | −0.1% |
+| | 1 | +1.5% | +1.5% | +3.3% | +0.7% | +0.5% | +0.6% | +10.9% |
+| | 1.5 | +1.3% | +2.6% | +2.7% | +0.4% | +0.1% | +0.3% | +14.1% |
+
+90% band coverage on the hardest third of cases (target 0.90):
+
+| domain | dial | cos 1-sided | cos 2-sided | cos joint | L² 1-sided | L² 2-sided | L² joint | MSE + noise |
+|---|---|---|---|---|---|---|---|---|
+| Heavy tails | ∞ | 0.98 | 0.98 | 0.97 | 0.89 | 0.89 | 0.89 | 0.89 |
+| | 10 | 0.95 | 0.95 | 0.92 | 0.80 | 0.80 | 0.81 | 0.81 |
+| | 3 | 0.65 | 0.64 | 0.78 | 0.76 | 0.76 | 0.77 | 0.81 |
+| Bent GP | 1 | 0.93 | 0.92 | 0.93 | 0.89 | 0.89 | 0.89 | 0.80 |
+| Double-well | 1.5 | 0.91 | 0.91 | 0.92 | 0.89 | 0.89 | 0.90 | 0.91 |
+
+(Full tables, including overall coverage and band widths: `test_bed/results/domain_sweep/summary.md`.)
+
+**The score type decides everything; how the softmax is set up barely matters.**
+* One-sided vs two-sided makes no difference for either score. That matches the
+  theory for cosine (same target for any weighting) and your earlier GP runs for L².
+* Joint L² is as good as conditional L². Joint cosine is worse on mild data (the
+  known joint shrinkage, +10–12% on the GP vs +5.6%). On heavy tails, though, it
+  is much *less* catastrophic (+70% vs ~10×): the shrinkage weakens the pull
+  towards extreme futures that breaks conditional cosine.
+* Every L² variant sits within 0–5% of perfect on every domain. Every cosine
+  variant over-covers on mild data and degrades with non-Gaussianity.
 
 ## What it means
 
@@ -82,7 +110,8 @@ bent GP and double-well, L²'s bands stay even across easy/hard; MSE's do not.
 
 ## For goal 2
 
-* Carry **L²** forward as the main loss. Keep cosine as the comparison point the
-  paper predicts will fail, and add normalised cosine.
+* Carry **L²** forward as the main score. One-sided, two-sided or joint is a free
+  choice; one-sided past → future is the simplest for forecasting. Keep cosine as
+  the comparison point the paper predicts will fail, and add normalised cosine.
 * The target for nonlinear encoders is clear: fix the easy/hard band imbalance on
   heavy tails, and close the last 1–5%.
