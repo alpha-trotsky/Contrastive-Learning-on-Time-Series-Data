@@ -1,0 +1,1 @@
+dwell_1_l2_s1: energy model 1.7946 oracle 1.7788 clim 3.4609 | cov90 0.891 by-spread [0.89, 0.89, 0.89] | {'final_loss': 4.37353515625, 'logit_scale': 2.9370391368865967, 'ess_median': 16302.13629847637, 'ess_min': 3490.2910293198306}
