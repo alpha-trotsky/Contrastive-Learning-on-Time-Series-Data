@@ -1,0 +1,65 @@
+device: cpu
+step      0 | loss 0.9830 | energy skill -0.381 | cov90 0.923
+step    250 | loss 0.6807 | energy skill -0.345 | cov90 0.923
+step    500 | loss 0.8065 | energy skill -0.345 | cov90 0.925
+step    750 | loss 0.8588 | energy skill -0.343 | cov90 0.922
+step   1000 | loss 0.8756 | energy skill -0.345 | cov90 0.922
+step   1250 | loss 0.8481 | energy skill -0.348 | cov90 0.921
+step   1500 | loss 0.5126 | energy skill -0.336 | cov90 0.925
+step   1750 | loss 1.1930 | energy skill -0.345 | cov90 0.921
+step   2000 | loss 1.0531 | energy skill -0.336 | cov90 0.924
+step   2250 | loss 1.0659 | energy skill -0.336 | cov90 0.924
+step   2500 | loss 1.2048 | energy skill -0.348 | cov90 0.924
+step   2750 | loss 0.7847 | energy skill -0.341 | cov90 0.921
+step   3000 | loss 0.8518 | energy skill -0.354 | cov90 0.919
+step   3250 | loss 0.5781 | energy skill -0.344 | cov90 0.924
+step   3500 | loss 0.9054 | energy skill -0.336 | cov90 0.923
+step   3750 | loss 1.1212 | energy skill -0.335 | cov90 0.925
+step   4000 | loss 1.2748 | energy skill -0.341 | cov90 0.924
+step   4250 | loss 0.6767 | energy skill -0.343 | cov90 0.923
+step   4500 | loss 0.7675 | energy skill -0.348 | cov90 0.917
+step   4750 | loss 1.0335 | energy skill -0.345 | cov90 0.919
+step   5000 | loss 0.5619 | energy skill -0.335 | cov90 0.925
+step   5250 | loss 1.0590 | energy skill -0.340 | cov90 0.923
+step   5500 | loss 0.7922 | energy skill -0.345 | cov90 0.920
+step   5750 | loss 1.6890 | energy skill -0.350 | cov90 0.918
+step   6000 | loss 1.0891 | energy skill -0.341 | cov90 0.923
+step   6250 | loss 0.9504 | energy skill -0.339 | cov90 0.924
+step   6500 | loss 0.6064 | energy skill -0.349 | cov90 0.916
+step   6750 | loss 0.8082 | energy skill -0.347 | cov90 0.920
+step   7000 | loss 0.9124 | energy skill -0.341 | cov90 0.924
+step   7250 | loss 1.4579 | energy skill -0.343 | cov90 0.921
+step   7500 | loss 0.7863 | energy skill -0.343 | cov90 0.920
+step   7750 | loss 0.7839 | energy skill -0.340 | cov90 0.921
+step   8000 | loss 1.0679 | energy skill -0.334 | cov90 0.925
+step   8250 | loss 0.7693 | energy skill -0.344 | cov90 0.922
+step   8500 | loss 1.2032 | energy skill -0.339 | cov90 0.923
+step   8750 | loss 0.7712 | energy skill -0.335 | cov90 0.924
+step   9000 | loss 1.1803 | energy skill -0.343 | cov90 0.920
+step   9250 | loss 0.6785 | energy skill -0.334 | cov90 0.924
+step   9500 | loss 1.3096 | energy skill -0.326 | cov90 0.925
+step   9750 | loss 0.5797 | energy skill -0.343 | cov90 0.922
+step  10000 | loss 0.9607 | energy skill -0.338 | cov90 0.923
+step  10250 | loss 1.4812 | energy skill -0.340 | cov90 0.922
+step  10500 | loss 1.6189 | energy skill -0.345 | cov90 0.920
+step  10750 | loss 0.9096 | energy skill -0.336 | cov90 0.923
+step  11000 | loss 1.6027 | energy skill -0.339 | cov90 0.921
+step  11250 | loss 0.6823 | energy skill -0.343 | cov90 0.921
+step  11500 | loss 1.0119 | energy skill -0.339 | cov90 0.923
+step  11750 | loss 0.6845 | energy skill -0.333 | cov90 0.923
+step  12000 | loss 1.1539 | energy skill -0.335 | cov90 0.924
+step  12250 | loss 1.1712 | energy skill -0.343 | cov90 0.921
+step  12500 | loss 0.8237 | energy skill -0.333 | cov90 0.923
+step  12750 | loss 0.6846 | energy skill -0.340 | cov90 0.923
+step  13000 | loss 0.8882 | energy skill -0.332 | cov90 0.924
+step  13250 | loss 0.7710 | energy skill -0.335 | cov90 0.925
+step  13500 | loss 0.6672 | energy skill -0.341 | cov90 0.922
+step  13750 | loss 0.6441 | energy skill -0.337 | cov90 0.921
+step  14000 | loss 1.0617 | energy skill -0.350 | cov90 0.919
+step  14250 | loss 1.1807 | energy skill -0.337 | cov90 0.925
+step  14500 | loss 1.1809 | energy skill -0.346 | cov90 0.919
+step  14750 | loss 1.1938 | energy skill -0.343 | cov90 0.923
+early stopping | best validation energy 7.4987 at step 9500
+blackbox | energy 4.8832 | energy_skill -1.0111 | crps 0.4600 | mse_mean 0.6112 | cov50 0.7953 | cov90 0.9745 | width90 4.2772 | cal_err 0.1402 | ref_persistence_energy_skill -0.2004 | ref_seasonal_naive_energy_skill -0.8933
+
+Done. Results in results/weather/B_mse_linear_s0/

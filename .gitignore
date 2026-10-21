@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+# downloaded datasets (fetched by the loaders)
+data/
+# weather sweep: keep configs, logs and results.json, not the weights
+test_bed/results/weather/*/model.pt
+test_bed/results/weather/*/history.pt
+test_bed/results/weather/*/checkpoints/
