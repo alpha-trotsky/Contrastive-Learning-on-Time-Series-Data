@@ -33,8 +33,8 @@
 \theoremstyle{remark}
 \newtheorem{remark}[proposition]{Remark}
 
-\title{For flexible encoders the contrastive loss stops mattering;\\
-the score matters only through its tails}
+\title{For flexible encoders, neither the contrastive loss\\ nor the divergence matters;
+the score matters\\ only through its tails}
 \author{}
 \date{}
 
@@ -42,10 +42,11 @@ the score matters only through its tails}
 \maketitle
 
 \begin{tcolorbox}[colback=blue!3!white,colframe=blue!40!black,title=Thesis]
-For flexible encoders and infinite data, the choice of contrastive loss (one-way,
-two-way or joint) stops mattering: all three aim at the same target and can all reach it.
-What still matters is the choice of \emph{score}, and it matters only through the score's
-\emph{tail behaviour}:
+For flexible encoders and infinite data, neither the choice of contrastive loss (one-way,
+two-way or joint) nor the choice of divergence it minimises (KL, as in CLIP, or an
+alternative such as an energy distance) matters: every combination aims at the same target
+and can reach it. What still matters is the choice of \emph{score}, and it matters only
+through the score's \emph{tail behaviour}:
 \begin{itemize}
 \item a score that is \textbf{bounded above} (\Ltwo{}, normalised cosine) defines a valid
   model for every data distribution, and the forecast built from a bank of real futures
@@ -54,9 +55,11 @@ What still matters is the choice of \emph{score}, and it matters only through th
   has no valid model on heavy-tailed data, and its bank forecast degenerates as the bank
   grows, putting all its weight on a single future.
 \end{itemize}
-Experiments confirm both halves, with one refinement: a ceiling is necessary but not
-sufficient in practice. Training never sees the far tails, so the score must also not
-\emph{reward} extreme futures, which \Ltwo{} and normalised cosine do not.
+Experiments confirm the tail half, with one refinement: a ceiling is necessary but not
+sufficient in practice. Training never sees the far tails, and KL barely charges for
+misplaced tail mass, so the score must also not \emph{reward} extreme futures, which
+\Ltwo{} and normalised cosine do not. The loss half is confirmed for the loss variants; the
+divergence half is proved but not yet tested, since all our models were trained with KL.
 \end{tcolorbox}
 
 \noindent
@@ -69,7 +72,8 @@ The note builds the thesis in four steps. Section~\ref{sec:paper} sets out the f
 Baptista, Stuart \& Tran~\cite{bst} that everything rests on. Section~\ref{sec:evidence}
 collects what three rounds of experiments showed when we took that framework from its
 Gaussian, linear setting to time series. Section~\ref{sec:loss} proves the first half of the
-thesis (the loss stops mattering) and Section~\ref{sec:tails} the second (the tails decide).
+thesis (neither the loss nor the divergence matters) and Section~\ref{sec:tails} the second
+(the tails decide).
 Section~\ref{sec:exp} reports two new experiments that test the second half directly.
 Section~\ref{sec:finite} explains what changes with finite data, and
 Section~\ref{sec:lit} places the results in the literature.
@@ -120,6 +124,17 @@ data and this model (the paper's Thm~3.2, Thm~3.8 and Remark~3.12):
   J_{\rm joint}(s) &= \KL(\mu\,\|\,\nu)
                && \text{joint (one softmax over all pairs)}.
 \end{align*}
+
+\paragraph{Other divergences.} The paper also replaces KL by a general divergence $D$
+(its Optimisation Problems~3.4 and~3.6), giving losses $J^D_\vu(s)=\E_u D(\mu_\vu,\nu_\vu)$,
+$J^D_2=\lambda_uJ^D_\vu+\lambda_vJ^D_\uv$ and $J^D_{\rm joint}=D(\mu,\nu)$. Its Remark~3.5 notes that
+such a loss can be trained from samples alone when $D$ is the KL divergence, and also when
+$D$ is an energy distance or a maximum mean discrepancy (MMD). Throughout, a \emph{divergence}
+is any $D$ with $D(p,q)\ge0$ and $D(p,q)=0$ only if $p=q$. The energy distance (on distributions
+with a finite mean) and MMD with a characteristic kernel both qualify. The energy distance
+is also exactly what our evaluation measures: the energy score of a forecast $q$, minus that
+of the truth $p$, is $\frac12 D_E(p,q)$ with
+$D_E(p,q)=2\E|X-Y|-\E|X-X'|-\E|Y-Y'|$, where $X,X'\sim p$ and $Y,Y'\sim q$ are independent.
 
 \paragraph{The forecast we actually compute.} The paper's eq.~(31) turns the model into a
 forecast using a finite \emph{bank} $v_1,\dots,v_N$ of real futures:
@@ -231,35 +246,64 @@ one-way \Ltwo{} (temperature skill $+0.28$ vs $+0.15$ against persistence). Sect
 explains why this does not contradict the thesis, which is a statement about infinite data.
 
 %======================================================================
-\section{Why the loss stops mattering}\label{sec:loss}
+\section{Why neither the loss nor the divergence matters}\label{sec:loss}
 
-All three losses aim at the same object, the log density ratio. They differ only in which
-part of it they leave free.
+Every loss variant, under every divergence, aims at the same object, the log density ratio.
+The variants differ only in which part of it they leave free, and the divergences only in
+how they measure a miss.
 
 \begin{proposition}[Common target]\label{prop:target}
-For any score $s$:
+Let $D$ be any divergence, and $s$ an admissible score (Section~\ref{sec:tails}). Then:
 \begin{enumerate}[label=(\roman*)]
-\item $J_\vu(s)=0 \iff s(u,v)=\log r(u,v)+c(u)$ for some function $c$;
-\item $J_\uv(s)=0 \iff s(u,v)=\log r(u,v)+c'(v)$ for some function $c'$;
-\item $J_2(s)=0 \iff J_{\rm joint}(s)=0 \iff s=\log r+\text{const}$.
+\item $J^D_\vu(s)=0 \iff s(u,v)=\log r(u,v)+c(u)$ for some function $c$;
+\item $J^D_\uv(s)=0 \iff s(u,v)=\log r(u,v)+c'(v)$ for some function $c'$;
+\item $J^D_2(s)=0 \iff J^D_{\rm joint}(s)=0 \iff s=\log r+\text{const}$.
 \end{enumerate}
+The right-hand sides do not involve $D$. With $D=\KL$ these are the CLIP-style losses
+$J_\vu,J_2,J_{\rm joint}$.
 \end{proposition}
 
 \begin{definition}
 A score family $\cS$ is \emph{well-specified} for a loss if that loss can be driven to $0$
 on $\cS$. By Proposition~\ref{prop:target}, that means $\cS$ contains some $\log r+c(u)$ for
-the one-way loss, and $\log r+\text{const}$ for the two-way and joint losses.
+the one-way loss, and $\log r+\text{const}$ for the two-way and joint losses, whatever the
+divergence.
 \end{definition}
 
 \begin{corollary}[Agreement]\label{cor:agree}
-If $\cS$ contains $\log r+\text{const}$, then the one-way, two-way (any $\lambda_u,\lambda_v>0$)
-and joint losses all have minimisers that give exactly the true forecast,
-$\nu_\vu=\mu_\vu$. The loss variants cannot be told apart at the population level.
+If $\cS$ contains $\log r+\text{const}$, then for every divergence $D$, the one-way, two-way
+(any $\lambda_u,\lambda_v>0$) and joint losses all have minimisers that give exactly the true
+forecast, $\nu_\vu=\mu_\vu$. Neither the loss variant nor the divergence can be told apart at
+the population level.
 \end{corollary}
 
-So a difference between loss variants is a symptom of a score family that cannot represent
-$\log r$. The converse fails: P3 is a case where the family cannot represent $\log r$, yet two
-variants still agree.
+So a difference between loss variants, or between divergences, is a symptom of a score
+family that cannot represent $\log r$. When the family is too rigid, every (loss,
+divergence) pair picks its own closest miss. The converse fails: P3 is a case where the
+family cannot represent $\log r$, yet two variants still agree.
+
+\paragraph{Where divergences differ: misplaced tail mass.} Under misspecification the
+divergences can disagree sharply, and they disagree most about the tails. The simplest case
+is a forecast that is right except for a small amount of mass moved far away.
+
+\begin{proposition}[KL is blind to how far misplaced mass goes]\label{prop:farmass}
+Let $p$ be a distribution on $\R^d$ with a finite mean and no atom at $a$, and let
+$q_\varepsilon=(1-\varepsilon)p+\varepsilon\,\delta_a$. Then
+\[
+  \KL(p\,\|\,q_\varepsilon)\le-\log(1-\varepsilon)\quad\text{for every } a,
+  \qquad
+  \tfrac12 D_E(p,q_\varepsilon)=\tfrac12\varepsilon^2\big(2\,\E|X-a|-\E|X-X'|\big)\;\xrightarrow[|a|\to\infty]{}\;\infty .
+\]
+\end{proposition}
+
+So moving a fraction $\varepsilon$ of the forecast to an absurdly extreme future costs at most about
+$\varepsilon$ in KL, however extreme the future, while its cost in energy score grows linearly
+with the distance. A model trained with KL has almost no incentive to keep mass out of the far
+tails; an evaluation by energy score punishes exactly that. This is the second reason,
+alongside the batch argument of Section~\ref{sec:tails}, why training does not correct the
+tails, and it is the mechanism we propose for the $\tanh$ result of Section~\ref{sec:exp}.
+It also predicts that training with the energy distance itself, which the paper's
+Remark~3.5 allows, would penalise tail over-weighting directly. We have not tested this.
 
 \paragraph{Flexible encoders make the family well-specified.} With biases, $\langle f(u),g(v)\rangle$
 contains terms $c(u)+d(v)$. Sums $\sum_k f_k(u)g_k(v)$ of products of network features are
@@ -267,8 +311,16 @@ dense in the continuous functions on compact sets, by Stone--Weierstrass. Stuart
 Wolf~\cite{stuartwolf} have made this precise for two-tower CLIP: with flexible enough
 encoders and a learnable temperature, the model can approximate any joint distribution on
 a compact domain to arbitrary accuracy in KL. Combined with Corollary~\ref{cor:agree}, this is
-the first half of the thesis: once the encoders are flexible, the loss variants converge to
-the same forecast. Finding~2 is that convergence, seen at finite data.
+the first half of the thesis: once the encoders are flexible, every loss variant and every
+divergence leads to the same forecast. Finding~2 is that convergence for the loss variants,
+seen at finite data.
+
+One caution about ``arbitrary accuracy''. Being close in KL does not make two distributions
+close in energy distance: Proposition~\ref{prop:farmass} is a pair that is close in KL and
+arbitrarily far apart in energy distance. KL-closeness controls the bulk; closeness in energy
+distance also needs control of where the tail mass sits. So the divergences agree exactly at
+the optimum, and approximately in the bulk, but an approximation that is good in one can be
+poor in another in the tails. That is the second half of the thesis again.
 
 \subsection{What happens when the family is too rigid: the Gaussian case}
 
@@ -335,8 +387,9 @@ $\rho=0.9$ & 0.830 & 0.512 & 0.512 & 0.571 & 0 & 0.021 & 0.023 & 0 \\
 our Gaussian process & 1.627 & 0.704 & 0.704 & 0.746 & 0 & 0.003 & 0.003 & 0 \\
 \bottomrule
 \end{tabular}
-\caption{Fraction of the information $I(u;v)$ (in nats) lost by the forecast at each loss's
-population optimum: 0 is perfect, 1 is climatology. Exact, from Gaussian KL divergences, with
+\caption{Fraction of the information $I(u;v)$ (in nats) lost by the forecast at each KL loss's
+population optimum: 0 is perfect, 1 is climatology. Other divergences would pick other
+closest misses in the rigid families, and the same exact answer in the last column. Exact, from Gaussian KL divergences, with
 no training or sampling. The last row uses the exact covariances of our synthetic Gaussian
 process.}
 \label{tab:miss}
@@ -625,17 +678,21 @@ relatives. It was not exhaustive, so ``we did not find'' below means only that.
 
 \paragraph{What we did not find.}
 \begin{itemize}
-\item The statement that the one-way, two-way and joint losses agree exactly when the score
-  family can represent $\log r$, with the one-way loss needing strictly less
-  (Proposition~\ref{prop:target}, Corollary~\ref{cor:agree}).
+\item The statement that the one-way, two-way and joint losses, under any divergence, agree
+  exactly when the score family can represent $\log r$, with the one-way loss needing strictly
+  less (Proposition~\ref{prop:target}, Corollary~\ref{cor:agree}). The divergence part is a
+  short consequence of the definitions; its interest is in what it rules out.
+\item That KL training is blind to how far misplaced forecast mass goes while the energy
+  score is not, as an explanation of why bounded but extremity-rewarding scores fail
+  (Proposition~\ref{prop:farmass}).
 \item That linear \Ltwo{} is too rigid for the two-way and joint losses on any correlated
   Gaussian, with the closed form and the $3/8$ limit (Propositions~\ref{prop:l2joint},
   \ref{prop:scalar}).
 \item That a score growing in the future has no valid model on heavy-tailed data even with
   ReLU encoders, and that its bank forecast then collapses and gets worse as the bank grows
   (Propositions~\ref{prop:linear}--\ref{prop:collapse}, Section~\ref{sec:exp}).
-\item The thesis itself: with flexible encoders the choice of loss drops out and the choice
-  of score survives only through its tails.
+\item The thesis itself: with flexible encoders the choice of loss and of divergence drops
+  out, and the choice of score survives only through its tails.
 \end{itemize}
 
 %======================================================================
@@ -658,6 +715,10 @@ relatives. It was not exhaustive, so ``we did not find'' below means only that.
   (1 seed). The collapse diagnostic was recorded for seed 1 only.
 \item The ``does not reward extremity'' refinement of Section~\ref{sec:exp} is an empirical
   reading of two experiments on one domain. We have not stated or proved it as a theorem.
+\item The divergence half of the thesis is proved but not tested: every model here was
+  trained with KL. The test is to train with the energy-distance loss and compare. By
+  Proposition~\ref{prop:farmass} we expect it to matter most for scores that reward
+  extreme futures.
 \item Untested so far: the weak-dependence Gaussian prediction of
   Proposition~\ref{prop:scalar} at finite data, the quadratic-augmented dot product
   (Table~\ref{tab:miss}, last column) in training, and the bank sweep on rain.
@@ -667,13 +728,24 @@ relatives. It was not exhaustive, so ``we did not find'' below means only that.
 \appendix
 \section{Proofs}
 
-\paragraph{Proposition~\ref{prop:target}.} (i) $J_\vu(s)=0$ iff $\nu_\vu(\cdot\mid u)=\mu_\vu(\cdot\mid u)$ for
+\paragraph{Proposition~\ref{prop:target}.} Because $D(p,q)\ge0$ with equality only if $p=q$, each
+loss is zero exactly when the distributions it compares are equal, whatever $D$ is. The
+rest of the argument is therefore about equality of distributions and does not involve
+$D$. (i) $J^D_\vu(s)=0$ iff $\nu_\vu(\cdot\mid u)=\mu_\vu(\cdot\mid u)$ for
 a.e.\ $u$. Comparing densities with respect to $\mu_v$, that is $e^{s(u,v)}/Z(u)=r(u,v)$, i.e.\
 $s=\log r+\log Z(u)$. Conversely, $s=\log r+c(u)$ gives $Z(u)=e^{c(u)}\int r(u,\cdot)\,d\mu_v=e^{c(u)}$ and
-hence the true conditional. (ii) is symmetric. (iii) With $\lambda_u,\lambda_v>0$, $J_2=0$ iff (i) and
+hence the true conditional. (ii) is symmetric. (iii) With $\lambda_u,\lambda_v>0$, $J^D_2=0$ iff (i) and
 (ii) both hold, so $c(u)=c'(v)$ for $\mu_u\otimes\mu_v$-a.e.\ $(u,v)$. A function of $u$ alone that
 equals a function of $v$ alone a.e.\ under a product measure is a.e.\ constant. For the joint
-loss, $\KL(\mu\|\nu)=0$ iff $e^{s}/Z=r$, i.e.\ $s=\log r+\log Z$. \qed
+loss, $D(\mu,\nu)=0$ iff $\nu=\mu$ iff $e^{s}/Z=r$, i.e.\ $s=\log r+\log Z$. \qed
+
+\paragraph{Proposition~\ref{prop:farmass}.} Since $p$ has no atom at $a$, $q_\varepsilon\ge(1-\varepsilon)p$ on
+the support of $p$, so $dp/dq_\varepsilon\le1/(1-\varepsilon)$ $p$-a.e.\ and
+$\KL(p\|q_\varepsilon)=\int\log(dp/dq_\varepsilon)\,dp\le-\log(1-\varepsilon)$. For the energy distance, write
+$m=\E|X-X'|$ and $A=\E|X-a|$. With $Y\sim q_\varepsilon$, $\E|X-Y|=(1-\varepsilon)m+\varepsilon A$ and
+$\E|Y-Y'|=(1-\varepsilon)^2m+2\varepsilon(1-\varepsilon)A$. Substituting,
+$D_E=2(1-\varepsilon)m+2\varepsilon A-m-(1-\varepsilon)^2m-2\varepsilon(1-\varepsilon)A=\varepsilon^2(2A-m)$, and
+$A\ge|a|-\E|X|\to\infty$. \qed
 
 \paragraph{Proposition~\ref{prop:l2joint}.} The model joint has density proportional to
 $e^{s}\,\mathcal N(0,D)$; with $s=-\frac12z^\top Qz$, $z=(u,v)$, that is
