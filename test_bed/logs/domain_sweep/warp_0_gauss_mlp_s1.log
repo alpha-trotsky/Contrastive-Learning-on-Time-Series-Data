@@ -1,0 +1,1 @@
+warp_0_gauss_mlp_s1: energy model 0.2529 oracle 0.2519 clim 0.3559 | cov90 0.891 by-spread [0.89, 0.89, 0.89] | {'final_loss': 0.11620385199785233}

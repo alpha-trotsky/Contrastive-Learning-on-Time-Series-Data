@@ -1,0 +1,1 @@
+t_10_mse_mlp_s1: energy model 0.2565 oracle 0.2497 clim 0.3497 | cov90 0.896 by-spread [0.96, 0.92, 0.81] | {'final_loss': 0.45896050333976746}

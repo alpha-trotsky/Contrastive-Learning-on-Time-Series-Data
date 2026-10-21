@@ -56,13 +56,17 @@ def sir_samples(score_fn, u, bank, M, chunk=256, gen=None):
 # Score functions for the CLIP models in this repo (what the loss trains)
 # ---------------------------------------------------------------------------
 
-def clip_score_fn(model, inner_product):
-    """Model logit s(u, v): cosine/inner-product or L2 tilting."""
+def clip_score_fn(model, inner_product, normalize=False):
+    """Model logit s(u, v): cosine/inner-product (optionally on L2-normalised
+    embeddings, as in real CLIP) or L2 tilting."""
     @torch.no_grad()
     def f(u, v):
         gu, gv = model.encode_u(u.float()), model.encode_v(v.float())
         s = model.logit_scale.exp()
         if inner_product:
+            if normalize:
+                gu = torch.nn.functional.normalize(gu, dim=-1)
+                gv = torch.nn.functional.normalize(gv, dim=-1)
             return s * gu @ gv.T
         return -0.5 * s * torch.cdist(gu, gv) ** 2
     return f

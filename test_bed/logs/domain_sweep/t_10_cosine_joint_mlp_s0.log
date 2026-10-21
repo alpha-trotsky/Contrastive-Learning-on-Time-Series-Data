@@ -1,0 +1,1 @@
+t_10_cosine_joint_mlp_s0: energy model 0.2473 oracle 0.2467 clim 0.3504 | cov90 0.901 by-spread [0.91, 0.9, 0.9] | {'final_loss': 3.469294548034668, 'logit_scale': 0.5915928483009338, 'ess_median': 6003.848628048753, 'ess_min': 154.3093287582973, 'ess_p05': 1320.1051076009915}
