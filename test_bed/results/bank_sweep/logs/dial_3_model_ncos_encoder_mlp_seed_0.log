@@ -1,0 +1,8 @@
+B=   100  excess  +41.64%  ESS med       5.7  max w 0.398  frac(max w>0.5) 0.279
+B=   300  excess  +22.16%  ESS med      14.8  max w 0.214  frac(max w>0.5) 0.093
+B=  1000  excess   +7.87%  ESS med      47.7  max w 0.090  frac(max w>0.5) 0.012
+B=  3000  excess   +3.28%  ESS med     141.3  max w 0.039  frac(max w>0.5) 0.001
+B= 10000  excess   +1.49%  ESS med     471.6  max w 0.014  frac(max w>0.5) 0.000
+B= 30000  excess   +0.92%  ESS med    1433.3  max w 0.005  frac(max w>0.5) 0.000
+B=100000  excess   +0.68%  ESS med    4800.1  max w 0.002  frac(max w>0.5) 0.000
+B=200000  excess   +0.67%  ESS med    9612.7  max w 0.001  frac(max w>0.5) 0.000

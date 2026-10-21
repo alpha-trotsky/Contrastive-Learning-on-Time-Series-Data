@@ -1,0 +1,851 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\newcommand{\Ltwo}{L\textsuperscript{2}}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcommand{\KL}{D_{\mathrm{KL}}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\vu}{{v\mid u}}
+\newcommand{\uv}{{u\mid v}}
+\newcommand{\cS}{\mathcal{S}}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}[proposition]{Corollary}
+\newtheorem{lemma}[proposition]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[proposition]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[proposition]{Remark}
+
+\title{For flexible encoders, neither the contrastive loss\\ nor the divergence matters;
+the score matters\\ only through its tails}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{tcolorbox}[colback=blue!3!white,colframe=blue!40!black,title=Thesis]
+For flexible encoders and infinite data, neither the choice of contrastive loss (one-way,
+two-way or joint) nor the choice of divergence it minimises (KL, as in CLIP, or an
+alternative such as an energy distance) matters: every combination aims at the same target
+and can reach it. What still matters is the choice of \emph{score}, and it matters only
+through the score's \emph{tail behaviour}:
+\begin{itemize}
+\item a score that is \textbf{bounded above} (\Ltwo{}, normalised cosine) defines a valid
+  model for every data distribution, and the forecast built from a bank of real futures
+  converges to that model as the bank grows;
+\item a score that \textbf{grows without bound} in the future (the unnormalised dot product)
+  has no valid model on heavy-tailed data, and its bank forecast degenerates as the bank
+  grows, putting all its weight on a single future.
+\end{itemize}
+Experiments confirm the tail half, with one refinement: a ceiling is necessary but not
+sufficient in practice. Training never sees the far tails, and KL barely charges for
+misplaced tail mass, so the score must also not \emph{reward} extreme futures, which
+\Ltwo{} and normalised cosine do not. The loss half is confirmed for the loss variants; the
+divergence half is proved but not yet tested, since all our models were trained with KL.
+\end{tcolorbox}
+
+\noindent
+``Valid model'' has a precise meaning here: the normalising constant of the model's forecast,
+$Z(u)$ below, is finite, so the forecast is a probability distribution and the loss has a
+finite value. When it is infinite, the object the loss is trying to learn does not exist.
+
+\medskip\noindent
+The note builds the thesis in four steps. Section~\ref{sec:paper} sets out the framework of
+Baptista, Stuart \& Tran~\cite{bst} that everything rests on. Section~\ref{sec:evidence}
+collects what three rounds of experiments showed when we took that framework from its
+Gaussian, linear setting to time series. Section~\ref{sec:loss} proves the first half of the
+thesis (neither the loss nor the divergence matters) and Section~\ref{sec:tails} the second
+(the tails decide).
+Section~\ref{sec:exp} reports two new experiments that test the second half directly.
+Section~\ref{sec:finite} explains what changes with finite data, and
+Section~\ref{sec:lit} places the results in the literature.
+
+%======================================================================
+\section{The framework: a contrastive model is a forecast}\label{sec:paper}
+
+\paragraph{Data and score.} The past is $u$, the future is $v$, the data distribution is
+$\mu(du,dv)$, and its marginals are $\mu_u,\mu_v$. We assume $\mu$ and $\mu_u\otimes\mu_v$ are
+mutually absolutely continuous and write
+\[
+  r(u,v) = \frac{d\mu}{d(\mu_u\otimes\mu_v)}(u,v) = \frac{p(v\mid u)}{p(v)} .
+\]
+So $\log r$ is the pointwise mutual information: how much more likely this future is
+given this past than it is in general. Its average is the mutual information
+$I(u;v)=\E_\mu\log r$.
+
+A contrastive model is a \emph{score} $s(u,v)$, built from a past encoder $f$, a future
+encoder $g$ and a scale $\kappa>0$ (the learned logit scale). We use three scores:
+\[
+  s_{\rm dot} = \kappa\,\langle f(u),g(v)\rangle,\qquad
+  s_{\rm ncos} = \kappa\,\Big\langle \tfrac{f(u)}{|f(u)|},\tfrac{g(v)}{|g(v)|}\Big\rangle,\qquad
+  s_{\Ltwo} = -\tfrac{\kappa}{2}\,|f(u)-g(v)|^2 .
+\]
+$s_{\rm dot}$ is the paper's unnormalised ``cosine'' score, $s_{\rm ncos}$ is real CLIP's
+normalised cosine, and $s_{\Ltwo}$ is the paper's \Ltwo{} score. Note that $s_{\Ltwo}\le 0$
+and $|s_{\rm ncos}|\le\kappa$, while $s_{\rm dot}$ is unbounded whenever $g$ is.
+
+\paragraph{The model.} The paper's central observation (its eqs.~(13)--(16)) is that a
+score defines a probability model by tilting the product of the marginals:
+\[
+  \nu(du,dv) = \frac{e^{s(u,v)}}{Z}\,\mu_u(du)\,\mu_v(dv),\qquad
+  \nu_\vu(dv\mid u) = \frac{e^{s(u,v)}}{Z(u)}\,\mu_v(dv),
+\]
+\[
+  Z = \iint e^{s}\,d\mu_u\,d\mu_v,\qquad Z(u) = \int e^{s(u,v)}\,\mu_v(dv).
+\]
+In words: the forecast for a past $u$ takes the distribution of all futures and reweights
+each one by $e^{\text{score}}$.
+
+\paragraph{The losses.} The CLIP-style losses are, up to constants, divergences between the
+data and this model (the paper's Thm~3.2, Thm~3.8 and Remark~3.12):
+\begin{align*}
+  J_\vu(s)   &= \E_{u}\,\KL\big(\mu_\vu(\cdot\mid u)\,\|\,\nu_\vu(\cdot\mid u)\big)
+               && \text{one-way (the forecasting direction)},\\
+  J_{2}(s)   &= \lambda_u J_\vu(s) + \lambda_v J_\uv(s),\quad \lambda_u,\lambda_v>0
+               && \text{two-way (standard CLIP)},\\
+  J_{\rm joint}(s) &= \KL(\mu\,\|\,\nu)
+               && \text{joint (one softmax over all pairs)}.
+\end{align*}
+
+\paragraph{Other divergences.} The paper also replaces KL by a general divergence $D$
+(its Optimisation Problems~3.4 and~3.6), giving losses $J^D_\vu(s)=\E_u D(\mu_\vu,\nu_\vu)$,
+$J^D_2=\lambda_uJ^D_\vu+\lambda_vJ^D_\uv$ and $J^D_{\rm joint}=D(\mu,\nu)$. Its Remark~3.5 notes that
+such a loss can be trained from samples alone when $D$ is the KL divergence, and also when
+$D$ is an energy distance or a maximum mean discrepancy (MMD). Throughout, a \emph{divergence}
+is any $D$ with $D(p,q)\ge0$ and $D(p,q)=0$ only if $p=q$. The energy distance (on distributions
+with a finite mean) and MMD with a characteristic kernel both qualify. The energy distance
+is also exactly what our evaluation measures: the energy score of a forecast $q$, minus that
+of the truth $p$, is $\frac12 D_E(p,q)$ with
+$D_E(p,q)=2\E|X-Y|-\E|X-X'|-\E|Y-Y'|$, where $X,X'\sim p$ and $Y,Y'\sim q$ are independent.
+
+\paragraph{The forecast we actually compute.} The paper's eq.~(31) turns the model into a
+forecast using a finite \emph{bank} $v_1,\dots,v_N$ of real futures:
+\[
+  \nu^N_\vu(\cdot\mid u) = \sum_{j=1}^N w_j\,\delta_{v_j},\qquad
+  w_j = \frac{e^{s(u,v_j)}}{\sum_k e^{s(u,v_k)}},\qquad
+  \mathrm{ESS} = \Big(\sum_j w_j^2\Big)^{-1}.
+\]
+This is self-normalised importance sampling with proposal $\mu_v$. ESS, the effective
+sample size, counts how many bank futures the forecast really uses. ESS $\approx1$ means the
+forecast has collapsed onto a single future.
+
+\paragraph{The paper's predictions.} With Gaussian data and linear encoders, the paper
+derives every minimiser in closed form. Four predictions matter here:
+\begin{center}\small
+\begin{tabularx}{\textwidth}{@{}lL@{}}
+\toprule
+P1 & The dot product gets the forecast's average right but its spread wrong: the spread is
+     stuck at ``knowing nothing'' (Cor.~5.2). \\
+P2 & \Ltwo{} trained one-way gets both average and spread right (Thm~5.3, Cor.~5.4). \\
+P3 & For the dot product, one-way and two-way give the same answer (Thm~5.1). \\
+P4 & The joint loss shrinks the forecast towards the average, so it is a worse forecaster
+     than the one-way loss (Thm~5.6, Cor.~5.7). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+%======================================================================
+\section{What the experiments showed}\label{sec:evidence}
+
+We tested these predictions in three rounds, relaxing one of the paper's assumptions at a
+time.
+
+\paragraph{Protocol.} Every contrastive model is scored only through its own score, by
+building $\nu^N_\vu$ from a bank of real futures that were not used in training. Forecasts are
+scored with the \emph{energy score}~\cite{gneiting}, a proper scoring rule for
+multivariate probabilistic forecasts that rewards both accuracy and honest uncertainty. On
+synthetic data each domain has an exact ``perfect forecaster'' (oracle), and we report the
+energy score as a percentage above the oracle's (0\% = perfect). On real data we report
+\emph{skill}, the fractional reduction in energy score against a reference forecast (higher
+is better). Each synthetic setting uses 200k training pairs, a bank of 50k held-out
+futures, 500 test cases and 2 seeds, so differences under about 1\% are noise. Past and
+future are windows of 50 points of a smooth Gaussian process observed with noise.
+
+\paragraph{Domains.} Each synthetic domain has a dial whose zero point is the Gaussian
+process, which is the paper's setting:
+\begin{itemize}
+\item \textbf{heavy tails}: an elliptical Student-$t$ process with $\nu$ degrees of freedom
+  ($\nu=\infty$ is the Gaussian process, $\nu=3$ the heaviest we used);
+\item \textbf{bent GP}: a monotone warp of the Gaussian process (skewed futures, nonlinear
+  relation between past and future);
+\item \textbf{double-well}: a stochastic process that jumps between two levels, so the future
+  can have two separate likely outcomes.
+\end{itemize}
+The real data are one year (2020) of 10-minute readings from the Jena weather station. We
+forecast the next 6\,h of temperature from the last day of six variable groups, and the next
+6\,h of rain from past pressure, wind and moisture.
+
+\paragraph{Finding 1: with linear encoders, both the loss and the score matter.} On the
+Gaussian process the dot product is $+5.6\%$ above perfect whichever direction it is trained
+in (P3), and $+9.8\%$ when trained jointly (P4). Its 90\% bands catch the truth 98\% of the time
+on the hardest third of cases (P1: too wide). \Ltwo{} is at $+0.0\%$ in all three
+variants. Linear normalised cosine is poor everywhere ($+12$--$23\%$), because it sees the past
+only through its direction and loses its level.
+
+\paragraph{Finding 2: with MLP encoders, the loss variant mostly stops mattering.} With
+two-layer MLP encoders (width 256, plus a linear shortcut), the spread between the
+variants collapses:
+\begin{center}\small
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+domain & encoder & dot 1-way & dot 2-way & dot joint & spread \\
+\midrule
+Gaussian process & linear & $+5.6$ & $+5.6$ & $+9.8$ & 4.2 \\
+                 & MLP    & $+2.7$ & $+1.4$ & $+0.3$ & 2.4 \\
+bent GP (full warp) & linear & $+37.4$ & $+40.0$ & $+25.2$ & 14.8 \\
+                    & MLP    & $+5.9$ & $+3.9$ & $+0.6$ & 5.3 \\
+double-well ($\lambda=1.5$) & linear & $+1.3$ & $+2.6$ & $+2.7$ & 1.4 \\
+                    & MLP    & $+0.6$ & $+0.3$ & $+0.5$ & 0.3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+P1 also fades: the dot product's coverage on the hardest cases drops from 98\% to 89\%. The
+best models (\Ltwo{} joint, normalised cosine) are within about 1\% of perfect on every
+domain. The differences that remain are small and consistently favour the joint loss; we
+return to them in Section~\ref{sec:finite}.
+
+\paragraph{Finding 3: every catastrophic failure is an unbounded score on heavy tails.}
+\begin{center}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+heavy tails, $\nu=3$ & dot 2-way & normalised cosine & \Ltwo{} joint \\
+\midrule
+linear & $\sim10\times$ worse than perfect & $+23.0$ & $+4.5$ \\
+MLP    & $+23.3$ & $+0.9$ & $+0.7$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The linear dot product's forecasts put essentially all their weight on single bank futures
+(minimum ESS $1.0$). The MLP does not rescue it: MLP dot products are still $+7$ to $+23\%$
+above perfect and still collapse onto single futures for some inputs. On rain, which is
+mostly zero with occasional bursts, the unnormalised dot product scored 1.4--2.4 times
+worse than climatology, while \Ltwo{} and normalised cosine kept the shape ``mostly dry,
+sometimes a burst''. Normalisation helps exactly where tails are heavy, and only there.
+
+\paragraph{Finding 4: with real, limited data, the loss matters again.} On weather, MLPs
+over-fit within a few hundred to a few thousand steps. There, joint \Ltwo{} clearly beat
+one-way \Ltwo{} (temperature skill $+0.28$ vs $+0.15$ against persistence). Section~\ref{sec:finite}
+explains why this does not contradict the thesis, which is a statement about infinite data.
+
+%======================================================================
+\section{Why neither the loss nor the divergence matters}\label{sec:loss}
+
+Every loss variant, under every divergence, aims at the same object, the log density ratio.
+The variants differ only in which part of it they leave free, and the divergences only in
+how they measure a miss.
+
+\begin{proposition}[Common target]\label{prop:target}
+Let $D$ be any divergence, and $s$ an admissible score (Section~\ref{sec:tails}). Then:
+\begin{enumerate}[label=(\roman*)]
+\item $J^D_\vu(s)=0 \iff s(u,v)=\log r(u,v)+c(u)$ for some function $c$;
+\item $J^D_\uv(s)=0 \iff s(u,v)=\log r(u,v)+c'(v)$ for some function $c'$;
+\item $J^D_2(s)=0 \iff J^D_{\rm joint}(s)=0 \iff s=\log r+\text{const}$.
+\end{enumerate}
+The right-hand sides do not involve $D$. With $D=\KL$ these are the CLIP-style losses
+$J_\vu,J_2,J_{\rm joint}$.
+\end{proposition}
+
+\begin{definition}
+A score family $\cS$ is \emph{well-specified} for a loss if that loss can be driven to $0$
+on $\cS$. By Proposition~\ref{prop:target}, that means $\cS$ contains some $\log r+c(u)$ for
+the one-way loss, and $\log r+\text{const}$ for the two-way and joint losses, whatever the
+divergence.
+\end{definition}
+
+\begin{corollary}[Agreement]\label{cor:agree}
+If $\cS$ contains $\log r+\text{const}$, then for every divergence $D$, the one-way, two-way
+(any $\lambda_u,\lambda_v>0$) and joint losses all have minimisers that give exactly the true
+forecast, $\nu_\vu=\mu_\vu$. Neither the loss variant nor the divergence can be told apart at
+the population level.
+\end{corollary}
+
+So a difference between loss variants, or between divergences, is a symptom of a score
+family that cannot represent $\log r$. When the family is too rigid, every (loss,
+divergence) pair picks its own closest miss. The converse fails: P3 is a case where the
+family cannot represent $\log r$, yet two variants still agree.
+
+\paragraph{Where divergences differ: misplaced tail mass.} Under misspecification the
+divergences can disagree sharply, and they disagree most about the tails. The simplest case
+is a forecast that is right except for a small amount of mass moved far away.
+
+\begin{proposition}[KL is blind to how far misplaced mass goes]\label{prop:farmass}
+Let $p$ be a distribution on $\R^d$ with a finite mean and no atom at $a$, and let
+$q_\varepsilon=(1-\varepsilon)p+\varepsilon\,\delta_a$. Then
+\[
+  \KL(p\,\|\,q_\varepsilon)\le-\log(1-\varepsilon)\quad\text{for every } a,
+  \qquad
+  \tfrac12 D_E(p,q_\varepsilon)=\tfrac12\varepsilon^2\big(2\,\E|X-a|-\E|X-X'|\big)\;\xrightarrow[|a|\to\infty]{}\;\infty .
+\]
+\end{proposition}
+
+So moving a fraction $\varepsilon$ of the forecast to an absurdly extreme future costs at most about
+$\varepsilon$ in KL, however extreme the future, while its cost in energy score grows linearly
+with the distance. A model trained with KL has almost no incentive to keep mass out of the far
+tails; an evaluation by energy score punishes exactly that. This is the second reason,
+alongside the batch argument of Section~\ref{sec:tails}, why training does not correct the
+tails, and it is the mechanism we propose for the $\tanh$ result of Section~\ref{sec:exp}.
+It also predicts that training with the energy distance itself, which the paper's
+Remark~3.5 allows, would penalise tail over-weighting directly. We have not tested this.
+
+\paragraph{Flexible encoders make the family well-specified.} With biases, $\langle f(u),g(v)\rangle$
+contains terms $c(u)+d(v)$. Sums $\sum_k f_k(u)g_k(v)$ of products of network features are
+dense in the continuous functions on compact sets, by Stone--Weierstrass. Stuart \&
+Wolf~\cite{stuartwolf} have made this precise for two-tower CLIP: with flexible enough
+encoders and a learnable temperature, the model can approximate any joint distribution on
+a compact domain to arbitrary accuracy in KL. Combined with Corollary~\ref{cor:agree}, this is
+the first half of the thesis: once the encoders are flexible, every loss variant and every
+divergence leads to the same forecast. Finding~2 is that convergence for the loss variants,
+seen at finite data.
+
+One caution about ``arbitrary accuracy''. Being close in KL does not make two distributions
+close in energy distance: Proposition~\ref{prop:farmass} is a pair that is close in KL and
+arbitrarily far apart in energy distance. KL-closeness controls the bulk; closeness in energy
+distance also needs control of where the tail mass sits. So the divergences agree exactly at
+the optimum, and approximately in the bulk, but an approximation that is good in one can be
+poor in another in the tails. That is the second half of the thesis again.
+
+\subsection{What happens when the family is too rigid: the Gaussian case}
+
+The Gaussian case shows how the loss variants come apart when the family is not flexible,
+and recovers P1, P3 and P4. Let $\mu$ be a centred Gaussian with covariance blocks
+$C_{uu},C_{uv},C_{vv}$, joint precision $P$ and $D=\mathrm{blockdiag}(C_{uu},C_{vv})$. Then
+\[
+  \log r(u,v) = -\tfrac12 u^\top(P_{uu}-C_{uu}^{-1})u \;-\; u^\top P_{uv} v
+                \;-\; \tfrac12 v^\top(P_{vv}-C_{vv}^{-1})v + \text{const}.
+\]
+There are three ingredients: a past--future interaction, which sets the forecast's average;
+a future-only term, which sets its spread; and a past-only term. With linear encoders every
+score is $s=-\tfrac12 u^\top Ru + u^\top Av - \tfrac12 v^\top Sv$, and the families differ in
+which ingredients they can set:
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+family & allowed $(R,A,S)$ & well-specified for \\
+\midrule
+dot product & $R=S=0$ & nothing (if $C_{uv}\neq0$) \\
+\Ltwo{} & $\begin{psmallmatrix}R&-A\\-A^\top&S\end{psmallmatrix}=[G,-H]^\top[G,-H]\succeq0$ & one-way only \\
+dot $+$ free quadratics & $R,S$ symmetric, $A$ free & every loss \\
+\bottomrule
+\end{tabular}
+\end{center}
+\begin{itemize}
+\item \textbf{P1.} The dot product has no future-only term, so its forecast's covariance is
+  $C_{vv}$ whatever $A$ is: the spread is stuck at climatology.
+\item \textbf{P4.} The joint loss also needs the past-only term, which the dot product lacks.
+  On top of that, the joint normaliser is finite only if
+  $\|C_{uu}^{1/2}AC_{vv}^{1/2}\|<1$, which is where the paper's shrinkage function $h$ comes
+  from. Our numerical minimiser reproduces $h$ exactly.
+\item \textbf{P2.} One-way \Ltwo{} is well-specified, because $S\succeq0$ can match the
+  future-only term.
+\end{itemize}
+
+\begin{proposition}[Linear \Ltwo{} is too rigid for the two-way and joint losses]\label{prop:l2joint}
+Under linear \Ltwo{}, every model joint covariance satisfies $(D^{-1}+Q)^{-1}\preceq D$, with
+$Q=[G,-H]^\top[G,-H]\succeq0$. The data satisfy $C\not\preceq D$ whenever $C_{uv}\neq0$. So the two-way
+and joint losses cannot reach zero. In words: an \Ltwo{} model can couple past and future
+only by shrinking both marginals, and real data couple them without shrinking.
+\end{proposition}
+
+\begin{proposition}[Scalar closed form]\label{prop:scalar}
+For unit-variance scalars with correlation $\rho\in(0,1)$, the joint-\Ltwo{} optimum forecasts
+$\mathcal N\big(\tfrac{\rho}{2-\rho}u,\ \tfrac{2(1-\rho)}{2-\rho}\big)$ against the truth
+$\mathcal N(\rho u, 1-\rho^2)$. The average is shrunk and the forecast is over-confident. The
+fraction of the information $I(u;v)$ it loses tends to $3/8$ as $\rho\to0$ and to $0$ as
+$\rho\to1$.
+\end{proposition}
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}lc|ccc|ccc|c@{}}
+\toprule
+& & \multicolumn{3}{c|}{dot product} & \multicolumn{3}{c|}{\Ltwo{}} & dot $+$ quad. \\
+setting & $I(u;v)$ & 1-way & 2-way & joint & 1-way & 2-way & joint & all three \\
+\midrule
+$\rho=0.1$ & 0.005 & 0.005 & 0.005 & 0.005 & 0 & 0.294 & 0.333 & 0 \\
+$\rho=0.3$ & 0.047 & 0.046 & 0.046 & 0.051 & 0 & 0.219 & 0.251 & 0 \\
+$\rho=0.5$ & 0.144 & 0.131 & 0.131 & 0.157 & 0 & 0.148 & 0.170 & 0 \\
+$\rho=0.7$ & 0.337 & 0.272 & 0.272 & 0.323 & 0 & 0.081 & 0.092 & 0 \\
+$\rho=0.9$ & 0.830 & 0.512 & 0.512 & 0.571 & 0 & 0.021 & 0.023 & 0 \\
+our Gaussian process & 1.627 & 0.704 & 0.704 & 0.746 & 0 & 0.003 & 0.003 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{Fraction of the information $I(u;v)$ (in nats) lost by the forecast at each KL loss's
+population optimum: 0 is perfect, 1 is climatology. Other divergences would pick other
+closest misses in the rigid families, and the same exact answer in the last column. Exact, from Gaussian KL divergences, with
+no training or sampling. The last row uses the exact covariances of our synthetic Gaussian
+process.}
+\label{tab:miss}
+\end{table}
+
+Table~\ref{tab:miss} makes the picture quantitative. Two points stand out.
+\begin{itemize}
+\item \textbf{Each rigid family fails in its own regime.} The dot product's error is in the
+  spread, which matters most when dependence is strong. \Ltwo{}'s two-way/joint error is the
+  coupling-by-shrinking constraint, which matters most when dependence is weak. Our Gaussian
+  process is strongly dependent ($I=1.63$ nats), so two-way and joint \Ltwo{} lose only 0.3\% of
+  the information there. That is why Finding~1 showed all three \Ltwo{} variants at $+0.0\%$.
+\item \textbf{Adding the missing ingredients removes every difference.} Giving the dot product
+  free past-only and future-only quadratic terms makes all three losses exact (last column).
+  This is the flexibility argument in miniature: complete the family and the loss stops
+  mattering.
+\end{itemize}
+
+%======================================================================
+\section{Why the score still matters: its tails}\label{sec:tails}
+
+Flexibility is about representing $\log r$ well where the data are. It says nothing about how
+the score behaves far out, and that is where the second half of the thesis lives. Stuart \&
+Wolf's extension of their approximation result to unbounded domains already needs the score
+to be \emph{bounded} outside a compact set, with an error term that grows like $e^{B}$ in
+that bound~\cite{stuartwolf}. We show what goes wrong without it.
+
+\begin{definition}
+A score $s$ is \emph{admissible} for $\mu$ if $Z(u)<\infty$ for $\mu_u$-almost every $u$. Then
+the forecast $\nu_\vu$ exists and $J_\vu(s)$ is finite. Otherwise $J_\vu(s)=+\infty$ and there is
+no model to learn.
+\end{definition}
+
+\begin{proposition}[Bounded above $\Rightarrow$ admissible for every distribution]\label{prop:bounded}
+If $s\le c$, then $Z(u)\le e^c$ and $Z\le e^c$ for every $\mu$. So \Ltwo{} ($c=0$) and
+normalised cosine ($c=\kappa$) are admissible for every data distribution, with any encoders.
+\end{proposition}
+
+\begin{proposition}[A score linear in the future needs light tails]\label{prop:linear}
+If $s(u,v)=\langle a(u),Hv\rangle+b(u)$, then $Z(u)=e^{b(u)}M_{\mu_v}(H^\top a(u))$, where $M_{\mu_v}$ is the
+moment generating function of the futures. For a multivariate Student-$t$ (any degrees of
+freedom), $M_{\mu_v}(w)=\infty$ for every $w\ne0$. So the linear dot product is admissible only
+if it ignores the past: every informative parameter has infinite loss.
+\end{proposition}
+
+\begin{proposition}[ReLU networks do not rescue the dot product]\label{prop:relu}
+Let $g$ be a ReLU network and $g_\infty$ the same network with its biases removed. If
+$\langle f(u),g_\infty(v_0)\rangle>0$ for some direction $v_0$ and the futures are elliptical
+Student-$t$, then $Z(u)=\infty$. So the dot product is admissible at $u$ only if its score never
+grows in any direction of the future, and nothing in training enforces that. A bounded output
+layer on $g$ (such as $\tanh$) makes the score admissible, by Proposition~\ref{prop:bounded},
+without normalising anything. Section~\ref{sec:exp} shows this is not enough in practice.
+\end{proposition}
+
+Admissibility is not a technicality. It is exactly the condition for the bank forecast to
+work.
+
+\begin{proposition}[Admissible $\Leftrightarrow$ the bank forecast converges]\label{prop:snis}
+Fix $u$ and draw the bank i.i.d.\ from $\mu_v$. If $Z(u)<\infty$, then $\nu^N_\vu\to\nu_\vu$ weakly,
+almost surely, and $\mathrm{ESS}/N\to1/\E_{\mu_v}[(d\nu_\vu/d\mu_v)^2]$ when that moment is finite.
+If $Z(u)=\infty$, the normaliser $\frac1N\sum_j e^{s(u,v_j)}$ diverges and there is nothing to
+converge to.
+\end{proposition}
+
+\begin{proposition}[Collapse]\label{prop:collapse}
+If the scores $X_j=s(u,v_j)$ of the bank futures have a regularly varying right tail,
+$P(X>x)=x^{-\alpha}L(x)$, then $\max_jw_j\to1$ in probability as $N\to\infty$. This covers the linear
+dot product on Student-$t$ futures, with $\alpha$ equal to the degrees of freedom.
+\end{proposition}
+
+So the thesis's two outcomes are, precisely: with a bounded score the bank forecast
+\emph{converges to the model} as the bank grows; with an unbounded score on heavy tails it
+\emph{collapses onto the single most extreme future}, and a bigger bank only supplies more
+extreme futures to collapse onto. Table~\ref{tab:collapse} checks this for fixed scores, with
+no training.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{@{}rccc@{}}
+\toprule
+bank size $N$ & linear score, Gaussian & linear score, Student-$t$ ($\nu=3$) & \Ltwo{} score, Student-$t$ ($\nu=3$)\\
+\midrule
+$10^2$ & 0.081 \;(0.41) & 0.240 \;(0.30)\phantom{00} & 0.018 \;(0.79)\\
+$10^3$ & 0.016 \;(0.38) & 0.455 \;(0.038)\phantom{0} & 0.002 \;(0.79)\\
+$10^4$ & 0.003 \;(0.37) & 0.760 \;(0.0007) & $<10^{-3}$ (0.79)\\
+$10^5$ & 0.001 \;(0.37) & 0.902 \;($10^{-5}$)\phantom{0} & $<10^{-4}$ (0.79)\\
+$10^6$ & $<10^{-4}$ (0.37) & 0.954 \;($10^{-6}$)\phantom{0} & $<10^{-5}$ (0.79)\\
+\bottomrule
+\end{tabular}
+\caption{Largest bank weight (mean over 200 banks), with $\mathrm{ESS}/N$ in brackets, for a
+fixed score $s=v$ or $s=-\frac12(v-1)^2$ on unit-variance futures. For the Gaussian, theory
+gives $\mathrm{ESS}/N\to e^{-1}=0.368$.}
+\label{tab:collapse}
+\end{table}
+
+\begin{proposition}[Bounded on both sides: guaranteed bank, capped sharpness]\label{prop:twosided}
+If $|s|\le\kappa$ (normalised cosine), then $e^{-2\kappa}\le d\nu_\vu/d\mu_v\le e^{2\kappa}$. Hence
+$\KL(\nu_\vu\|\mu_v)\le2\kappa$ and $\mathrm{ESS}/N\ge e^{-2\kappa}$ in the limit, uniformly in $u$. The
+price is that no forecast can be more than $e^{2\kappa}$ times as concentrated as climatology, or
+carry more than $2\kappa$ nats of information.
+\end{proposition}
+
+\begin{table}[h]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}lLLL@{}}
+\toprule
+& unbounded (dot product) & bounded above (\Ltwo{}) & bounded both sides (norm.\ cosine) \\
+\midrule
+model exists & only with light-tailed futures & always & always \\
+bank forecast converges & only with light-tailed futures & always & always \\
+bank needed & can be infinite (collapse) & finite, $\approx e^{\KL(\nu_\vu\|\mu_v)}$~\cite{cd} & uniformly $\lesssim e^{2\kappa}$ \\
+sharpness & unlimited & unlimited & capped by $\kappa$ \\
+\bottomrule
+\end{tabularx}
+\caption{The boundedness hierarchy.}
+\label{tab:hierarchy}
+\end{table}
+
+\paragraph{A subtlety: why training does not avoid the problem.} At the population level an
+inadmissible parameter has infinite loss, so an exact minimiser would avoid it. But training
+uses the empirical loss, which is always finite: a batch of 256 futures never contains the
+extreme futures that make $Z(u)$ infinite. So training can settle on an informative
+parameter whose score grows in the future, and the problem only shows up when the forecast
+meets a large bank. For the linear dot product on Student-$t$ data, Proposition~\ref{prop:linear}
+says every informative parameter is of this kind.
+
+%======================================================================
+\section{Testing the tails directly}\label{sec:exp}
+
+We ran two experiments, both on the heavy-tailed domain ($\nu=3$), with the Gaussian
+process as a control.
+
+\paragraph{Setup.} Each model is trained exactly as in Section~\ref{sec:evidence} (same data,
+15k steps, batch 256), then frozen. Only the bank changes: the forecast is rebuilt from
+held-out banks of $N=100$ up to $N=200{,}000$ futures, with up to 3 disjoint banks per size,
+on the same 500 test pasts. We record the energy score above the perfect forecaster, the
+largest bank weight, and, for collapsed forecasts (largest weight $>0.5$), how extreme the
+winning future is: its percentile by size within the bank. 2 seeds on the heavy-tailed
+domain, 1 for the control. The script is \texttt{test\_bed/analysis/bank\_sweep.py}.
+
+\paragraph{Experiment 1: does a bigger bank help or hurt?} Theory
+(Propositions~\ref{prop:snis}, \ref{prop:collapse}) predicts that bounded scores improve and
+level off as the bank grows, and that the unbounded dot product turns around and gets worse.
+
+\begin{table}[h]
+\centering\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+& model & $N=100$ & 1k & 3k & 30k & 100k & 200k \\
+\midrule
+heavy tails, MLP & dot product (unbounded) & $+33.6$ & $+8.7$ & $\mathbf{+7.1}$ & $+17.5$ & $+34.5$ & $+46.3$ \\
+& dot, $\tanh$ future encoder & $+37.0$ & $+9.7$ & $+6.7$ & $\mathbf{+3.2}$ & $+5.4$ & $+7.5$ \\
+& \Ltwo{} one-way & $+36.8$ & $+11.8$ & $+8.0$ & $+4.5$ & $+3.8$ & $+2.9$ \\
+& \Ltwo{} joint & $+31.5$ & $+6.2$ & $+3.2$ & $+0.9$ & $+0.7$ & $+0.6$ \\
+& normalised cosine & $+41.8$ & $+8.0$ & $+3.5$ & $+1.0$ & $+0.8$ & $+0.8$ \\
+\midrule
+heavy tails, linear & dot product (unbounded) & $\mathbf{+33.2}$ & $+38.7$ & $+70.2$ & $+1253$ & $+2705$ & $+3358$ \\
+& dot, $\tanh$ future encoder & $+28.0$ & $\mathbf{+22.1}$ & $+24.5$ & $+64.1$ & $+92.3$ & $+102.6$ \\
+& \Ltwo{} one-way & $+22.8$ & $+8.1$ & $+5.8$ & $+4.6$ & $+4.3$ & $+4.2$ \\
+& \Ltwo{} joint & $+21.5$ & $+7.8$ & $+5.7$ & $+4.5$ & $+4.5$ & $+4.5$ \\
+& normalised cosine & $+25.4$ & $+23.5$ & $+23.2$ & $+23.1$ & $+23.0$ & $+23.1$ \\
+\midrule
+Gaussian (control), MLP & dot product (unbounded) & $+13.7$ & $+2.9$ & $+1.5$ & $+2.0$ & $+1.8$ & $+1.8$ \\
+Gaussian (control), linear & dot product (unbounded) & $+9.9$ & $+6.4$ & $+6.1$ & $+5.8$ & $+5.7$ & $+5.7$ \\
+\bottomrule
+\end{tabular}
+\caption{Energy score above the perfect forecaster (\%) as the bank grows, for frozen
+models. Mean of 2 seeds (control: 1 seed). Bold marks the best bank size where a curve turns
+around. Full tables: \texttt{test\_bed/results/bank\_sweep/summary.md}.}
+\label{tab:banksweep}
+\end{table}
+
+The prediction holds. On heavy tails the unbounded dot product is best at a small bank and
+then gets steadily worse: with MLP encoders from $+7\%$ at 3k futures to $+46\%$ at 200k, and
+with linear encoders from $+33\%$ to over $+3000\%$. Every bounded score improves and levels
+off. On the Gaussian control the same unbounded score also improves and levels off (at
+$+5.7\%$ linear, matching the $+5.6\%$ of Finding~1), so the turnaround is caused by the tails,
+not by the score alone. The collapse diagnostic shows the mechanism directly. With linear
+encoders, 20\% of the dot product's forecasts at $N=200$k put more than half their weight on
+one future, and that future is the most extreme in the bank (99.998th percentile by size,
+seed 1).
+
+\paragraph{Experiment 2: is a ceiling enough?} Proposition~\ref{prop:relu} says that a
+$\tanh$ on the future encoder makes the dot product admissible without normalising
+anything. The result is only a partial fix (Table~\ref{tab:banksweep}, second row of each
+block):
+\begin{itemize}
+\item it is far better than the uncapped dot product ($+103\%$ against $+3358\%$ with linear
+  encoders, $+7.5\%$ against $+46\%$ with MLPs at 200k);
+\item but it still turns around: in one MLP seed it improves to $+1.2\%$, in the other it rises
+  from $+8\%$ to $+14\%$; with linear encoders it rises from $+22\%$ to $+103\%$;
+\item its forecasts rarely collapse onto one future, but the futures they favour are still
+  the most extreme in the bank (99.99th percentile, linear, seed 1).
+\end{itemize}
+This does not contradict the theory. The ceiling makes the model exist, so the bank
+forecast converges. But it converges to a model that over-weights extremes. A $\tanh$
+score rises \emph{towards} its ceiling as the future becomes more extreme, so extreme futures
+in the favoured direction receive the top score. A small bank contains few of them and
+hides the problem, and a large bank exposes it.
+
+\paragraph{What the two experiments say together.} The scores that work either
+\emph{penalise} extreme futures (\Ltwo{}: the score falls as $g(v)$ moves away from $f(u)$) or
+are \emph{indifferent} to how extreme a future is (normalised cosine depends only on the
+direction of $g(v)$). It is not the height of the ceiling that matters: normalised cosine's
+learned scale is about 72, so its ceiling is enormous, and it is the best model here. The
+underlying reason is that training cannot correct the tails. A batch of 256 futures almost
+never contains one from the far tail, so how the score treats extreme futures is set by the
+architecture, not learned from data. A ceiling is \emph{necessary}: without one the model does
+not exist. In practice the score must also not \emph{reward} extremity.
+
+%======================================================================
+\section{Finite data: the loss matters again, for a different reason}\label{sec:finite}
+
+The thesis is a statement about infinite data. With finite data the loss variant can matter
+again, through over-fitting rather than through what it aims at. The clearest case is
+weather, where one-way \Ltwo{} is the well-specified variant yet loses to joint:
+\begin{center}\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+skill (2 seeds) & \Ltwo{} 1-way & \Ltwo{} 2-way & \Ltwo{} joint \\
+\midrule
+rain, linear (vs climatology) & $-0.106$ & $+0.011$ & $+0.012$ \\
+temperature, MLP (vs persistence) & $+0.152$ & $+0.243$ & $+0.280$ \\
+temperature, linear (vs persistence) & $+0.352$ & $+0.344$ & $+0.383$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The population argument bounds what joint and two-way \Ltwo{} can lose to rigidity: in the
+scalar Gaussian, at most about $3/8$ (joint) or $1/3$ (two-way) of $I(u;v)$. On rain $I(u;v)$
+is tiny (the best model beats climatology by 1\%), so that cost is negligible, and the
+observed gaps must come from finite data. One-way \Ltwo{} has nothing that stops it from
+becoming over-sharp, and on rain its forecasts collapsed (minimum ESS 1.6 with linear
+encoders, median ESS 3 with MLPs). Two-way and joint \Ltwo{} do have such a check: by a Schur
+complement, $S\succeq A^\top R^{+}A$, so a sharp forecast must come with a sharp backward
+conditional, which the two-way loss penalises; the joint loss also scores the model's
+marginals, which a collapsed forecast distorts. On this reading the joint loss's small bias
+buys a regulariser against over-sharpening. It predicts that the one-way deficit shrinks as
+training data grow, as it does on the plentiful synthetic data of Finding~2. This is a
+hypothesis, not a result.
+
+%======================================================================
+\section{Relation to the literature}\label{sec:lit}
+
+A literature sweep (about fifteen targeted searches, October 2026) found the following
+relatives. It was not exhaustive, so ``we did not find'' below means only that.
+
+\paragraph{What is known, and what we build on.}
+\begin{itemize}
+\item \textbf{The probabilistic framework} is that of Baptista, Stuart \& Tran~\cite{bst}.
+  Stuart \& Wolf~\cite{stuartwolf} take the same population-level view and prove that
+  two-tower CLIP is a universal approximator in KL on compact domains. Their extension to
+  unbounded domains requires the score to be bounded outside a compact set, with an error
+  term that grows like $e^{B}$ in that bound. They also bound the conditional KLs by the joint
+  KL, but do not claim that the loss variants share minimisers. Our first half (the loss stops
+  mattering) is their expressivity result combined with Proposition~\ref{prop:target}. Our
+  second half explains why their boundedness condition is not just a convenience of the
+  proof.
+\item \textbf{The optimal score is the log density ratio.} That the InfoNCE optimum is the
+  pointwise mutual information plus a function of the conditioning variable is standard
+  (CPC~\cite{cpc}; Poole et al.~\cite{poole}). For CLIP's symmetric loss, Uesaka et
+  al.~\cite{uesaka} show that the optimal similarity is the pointwise mutual information and
+  argue that inner products of finite-dimensional embeddings may fail to reach it. They
+  propose a richer similarity. That is the closest relative of our misspecification view, but
+  it concerns a single loss, not the agreement or disagreement between variants.
+\item \textbf{Sampling by reweighting candidates.} Sordoni et al.~\cite{sordoni} note that
+  resampling candidates with softmax-normalised critic scores approximates $p(y\mid x)$, and
+  that it is exact as the candidate pool grows. That is our bank forecast. They do not study
+  when the limit fails to exist.
+\item \textbf{Bounded critics and normalisation.} In mutual-information estimation, Song \&
+  Ermon~\cite{songermon} clip the critic to tame the variance of partition-function
+  estimates. In representation learning, normalised embeddings are standard because they
+  remove the scale degree of freedom that lets the softmax become arbitrarily
+  sharp~\cite{simclr,wangisola}. Negative squared Euclidean distance logits (our \Ltwo{}) are
+  used in practice and match or beat cosine CLIP~\cite{euclip}. None of these ties
+  boundedness to the \emph{existence} of the model or to the behaviour of a reweighted bank.
+\item \textbf{Importance-sampling degeneracy.} Weight collapse is classical: in high
+  dimensions it is studied by Bengtsson, Bickel \& Li~\cite{bbl}, heavy-tailed weights by
+  Pareto-smoothed importance sampling~\cite{psis}, and the required sample size
+  $\approx e^{\KL}$ by Chatterjee \& Diaconis~\cite{cd}. That an exponential tilt $e^{\langle a,v\rangle}$
+  needs a finite moment generating function is textbook. Propositions~\ref{prop:snis}
+  and~\ref{prop:collapse} apply these facts to contrastive scores; we claim no new probability.
+\item \textbf{Analog forecasting.} Forecasting by weighting historical futures is the analog
+  ensemble of weather forecasting~\cite{anen} and kernel analog forecasting~\cite{kaf}. A
+  contrastive bank forecast is an analog forecast whose kernel, $e^{s(u,v)}$, is learned.
+\end{itemize}
+
+\paragraph{What we did not find.}
+\begin{itemize}
+\item The statement that the one-way, two-way and joint losses, under any divergence, agree
+  exactly when the score family can represent $\log r$, with the one-way loss needing strictly
+  less (Proposition~\ref{prop:target}, Corollary~\ref{cor:agree}). The divergence part is a
+  short consequence of the definitions; its interest is in what it rules out.
+\item That KL training is blind to how far misplaced forecast mass goes while the energy
+  score is not, as an explanation of why bounded but extremity-rewarding scores fail
+  (Proposition~\ref{prop:farmass}).
+\item That linear \Ltwo{} is too rigid for the two-way and joint losses on any correlated
+  Gaussian, with the closed form and the $3/8$ limit (Propositions~\ref{prop:l2joint},
+  \ref{prop:scalar}).
+\item That a score growing in the future has no valid model on heavy-tailed data even with
+  ReLU encoders, and that its bank forecast then collapses and gets worse as the bank grows
+  (Propositions~\ref{prop:linear}--\ref{prop:collapse}, Section~\ref{sec:exp}).
+\item The thesis itself: with flexible encoders the choice of loss and of divergence drops
+  out, and the choice of score survives only through its tails.
+\end{itemize}
+
+%======================================================================
+\section{Scope and caveats}
+
+\begin{itemize}
+\item Sections~\ref{sec:loss} and~\ref{sec:tails} are population-level statements (infinite
+  data, infinite negatives). The finite-sample statements are Propositions~\ref{prop:snis}
+  and~\ref{prop:collapse}, the experiments of Section~\ref{sec:exp}, and the hypothesis of
+  Section~\ref{sec:finite}.
+\item The information losses in Table~\ref{tab:miss} are KL divergences; the experiments use
+  the energy score, which is less sensitive to spread errors. The two should agree in sign,
+  not in size.
+\item Proposition~\ref{prop:relu} is proved for ReLU networks. Our MLPs use GELU, which grows
+  like ReLU at infinity, so the same conclusion holds, but we have not written out that proof.
+\item Rain is physically bounded, so its true $Z(u)$ is finite and Proposition~\ref{prop:collapse}
+  does not apply literally. What applies is its finite-$N$ version: a tiny $\mathrm{ESS}/N$
+  whenever the scores over the bank are heavy-tailed.
+\item All experiments use 2 seeds, except the Gaussian control of Section~\ref{sec:exp}
+  (1 seed). The collapse diagnostic was recorded for seed 1 only.
+\item The ``does not reward extremity'' refinement of Section~\ref{sec:exp} is an empirical
+  reading of two experiments on one domain. We have not stated or proved it as a theorem.
+\item The divergence half of the thesis is proved but not tested: every model here was
+  trained with KL. The test is to train with the energy-distance loss and compare. By
+  Proposition~\ref{prop:farmass} we expect it to matter most for scores that reward
+  extreme futures.
+\item Untested so far: the weak-dependence Gaussian prediction of
+  Proposition~\ref{prop:scalar} at finite data, the quadratic-augmented dot product
+  (Table~\ref{tab:miss}, last column) in training, and the bank sweep on rain.
+\end{itemize}
+
+%======================================================================
+\appendix
+\section{Proofs}
+
+\paragraph{Proposition~\ref{prop:target}.} Because $D(p,q)\ge0$ with equality only if $p=q$, each
+loss is zero exactly when the distributions it compares are equal, whatever $D$ is. The
+rest of the argument is therefore about equality of distributions and does not involve
+$D$. (i) $J^D_\vu(s)=0$ iff $\nu_\vu(\cdot\mid u)=\mu_\vu(\cdot\mid u)$ for
+a.e.\ $u$. Comparing densities with respect to $\mu_v$, that is $e^{s(u,v)}/Z(u)=r(u,v)$, i.e.\
+$s=\log r+\log Z(u)$. Conversely, $s=\log r+c(u)$ gives $Z(u)=e^{c(u)}\int r(u,\cdot)\,d\mu_v=e^{c(u)}$ and
+hence the true conditional. (ii) is symmetric. (iii) With $\lambda_u,\lambda_v>0$, $J^D_2=0$ iff (i) and
+(ii) both hold, so $c(u)=c'(v)$ for $\mu_u\otimes\mu_v$-a.e.\ $(u,v)$. A function of $u$ alone that
+equals a function of $v$ alone a.e.\ under a product measure is a.e.\ constant. For the joint
+loss, $D(\mu,\nu)=0$ iff $\nu=\mu$ iff $e^{s}/Z=r$, i.e.\ $s=\log r+\log Z$. \qed
+
+\paragraph{Proposition~\ref{prop:farmass}.} Since $p$ has no atom at $a$, $q_\varepsilon\ge(1-\varepsilon)p$ on
+the support of $p$, so $dp/dq_\varepsilon\le1/(1-\varepsilon)$ $p$-a.e.\ and
+$\KL(p\|q_\varepsilon)=\int\log(dp/dq_\varepsilon)\,dp\le-\log(1-\varepsilon)$. For the energy distance, write
+$m=\E|X-X'|$ and $A=\E|X-a|$. With $Y\sim q_\varepsilon$, $\E|X-Y|=(1-\varepsilon)m+\varepsilon A$ and
+$\E|Y-Y'|=(1-\varepsilon)^2m+2\varepsilon(1-\varepsilon)A$. Substituting,
+$D_E=2(1-\varepsilon)m+2\varepsilon A-m-(1-\varepsilon)^2m-2\varepsilon(1-\varepsilon)A=\varepsilon^2(2A-m)$, and
+$A\ge|a|-\E|X|\to\infty$. \qed
+
+\paragraph{Proposition~\ref{prop:l2joint}.} The model joint has density proportional to
+$e^{s}\,\mathcal N(0,D)$; with $s=-\frac12z^\top Qz$, $z=(u,v)$, that is
+$\mathcal N(0,(D^{-1}+Q)^{-1})$. Since $D^{-1}+Q\succeq D^{-1}$, inverting reverses the order, so
+$(D^{-1}+Q)^{-1}\preceq D$. On the data side,
+$D-C=\begin{psmallmatrix}0&-C_{uv}\\-C_{uv}^\top&0\end{psmallmatrix}$ has eigenvalues
+$\pm\sigma_i(C_{uv})$, so $C\preceq D$ forces $C_{uv}=0$. Zero two-way or joint loss requires the
+model joint to equal $\mu$ (Proposition~\ref{prop:target}(iii)), which is impossible when
+$C_{uv}\ne0$. The inequality $S\succeq A^\top R^+A$ is the generalised Schur criterion for
+$\begin{psmallmatrix}R&-A\\-A^\top&S\end{psmallmatrix}\succeq0$. \qed
+
+\paragraph{Proposition~\ref{prop:scalar}.} With $s=-\frac12(gu-hv)^2$ and unit variances,
+$Q=\begin{psmallmatrix}g^2&-gh\\-gh&h^2\end{psmallmatrix}$ and, up to constants,
+$2J_{\rm joint}=g^2+h^2-2gh\rho-\log(1+g^2+h^2)$. For fixed $t=g^2+h^2$ the cross term is minimised
+at $g=h$, leaving $t(1-\rho)-\log(1+t)$, minimised at $t=\rho/(1-\rho)$. The forecast then has
+precision $1+t/2=(2-\rho)/(2(1-\rho))$ and mean coefficient $\rho/(2-\rho)$. Expanding for small $\rho$
+gives $J_\vu=\frac3{16}\rho^2+O(\rho^3)$ against $I(u;v)=\frac12\rho^2+O(\rho^4)$, so the ratio tends to
+$3/8$. At $\rho=0.5$ the closed form gives $0.1699$, matching Table~\ref{tab:miss}. \qed
+
+\paragraph{Proposition~\ref{prop:bounded}.} $Z(u)=\int e^{s}\,d\mu_v\le e^c$, and likewise for $Z$. For
+\Ltwo{}, $-\frac\kappa2|f-g|^2\le0$; for normalised cosine, $|\langle\bar f,\bar g\rangle|\le1$ by
+Cauchy--Schwarz. \qed
+
+\paragraph{Proposition~\ref{prop:linear}.} $Z(u)=e^{b(u)}\E\exp\langle H^\top a(u),v\rangle$ by definition. A
+multivariate $t$ is elliptical, so for $w\ne0$ the projection $\langle w,v\rangle$ is a scaled
+univariate $t$, whose density decays polynomially; hence $\E e^{\langle w,v\rangle}=\infty$. \qed
+
+\paragraph{Proposition~\ref{prop:relu}.} Write $g=W_L\sigma(\dots\sigma(W_1v+b_1)\dots)+b_L$ with
+$\sigma=\mathrm{ReLU}$. ReLU is 1-Lipschitz and positively homogeneous, so by induction over layers
+$|g(v)-g_\infty(v)|\le\sum_\ell\|b_\ell\|\prod_{k>\ell}\|W_k\|=:B<\infty$, and $g_\infty(tv)=tg_\infty(v)$ for $t\ge0$.
+Let $\delta=\langle f(u),g_\infty(v_0)\rangle>0$. By continuity there is an open cone $K\ni v_0$ on which
+$\langle f(u),g_\infty(v/|v|)\rangle\ge\delta'>0$, so on $K$, $s(u,v)\ge\kappa(\delta'|v|-|f(u)|B)$. An elliptical
+$t$ gives every open cone a polynomial tail, $\mu_v(K\cap\{|v|>t\})\asymp t^{-\nu}$, so
+$\int_K e^{\kappa\delta'|v|}\,d\mu_v=\infty$. \qed
+
+\paragraph{Proposition~\ref{prop:snis}.} For bounded continuous $\varphi$, the strong law gives
+$\frac1N\sum_j e^{s(u,v_j)}\varphi(v_j)\to\int e^{s}\varphi\,d\mu_v$ and $\frac1N\sum_je^{s(u,v_j)}\to Z(u)$ almost
+surely, since both integrands are integrable when $Z(u)<\infty$. The ratio converges to
+$\int\varphi\,d\nu_\vu$; a countable convergence-determining class gives weak convergence. With
+$\rho=e^{s}/Z(u)$, $N\sum_jw_j^2=\frac{\frac1N\sum\rho(v_j)^2}{(\frac1N\sum\rho(v_j))^2}\to\E_{\mu_v}[\rho^2]$. If
+$Z(u)=\infty$, the strong law for nonnegative variables gives $\frac1N\sum_je^{s(u,v_j)}\to\infty$. \qed
+
+\paragraph{Proposition~\ref{prop:collapse}.} Let $X_{(1)}\ge X_{(2)}$ be the two largest scores and
+$b_N$ the $1-1/N$ quantile of $X$, so $b_N=N^{1/\alpha}\ell(N)$ with $\ell$ slowly varying. By the
+extreme-value limit for regularly varying tails, $(X_{(1)},X_{(2)})/b_N$ converges in distribution
+to $(\Gamma_1^{-1/\alpha},\Gamma_2^{-1/\alpha})$, the first two points of a Poisson process, which are a.s.\
+distinct. So for every $\varepsilon>0$ there is $c>0$ with $P(X_{(1)}-X_{(2)}\ge cb_N)\ge1-\varepsilon$ for
+large $N$, and on that event $1-\max_jw_j\le\sum_{j\ne(1)}e^{X_j-X_{(1)}}\le Ne^{-cb_N}\to0$, because
+$b_N$ grows polynomially. \qed
+
+\paragraph{Proposition~\ref{prop:twosided}.} $|s|\le\kappa$ gives $Z(u)\in[e^{-\kappa},e^\kappa]$, so
+$d\nu_\vu/d\mu_v=e^{s}/Z(u)\in[e^{-2\kappa},e^{2\kappa}]$. Then $\KL(\nu_\vu\|\mu_v)=\E_\nu\log(d\nu/d\mu_v)\le2\kappa$ and
+$\E_{\mu_v}[(d\nu/d\mu_v)^2]=\E_\nu[d\nu/d\mu_v]\le e^{2\kappa}$; the ESS limit follows from
+Proposition~\ref{prop:snis}. \qed
+
+\paragraph{Reproducibility.} Table~\ref{tab:miss} and Table~\ref{tab:collapse} are produced by
+\texttt{test\_bed/theory/misspecification.py}; the experiments of Section~\ref{sec:exp} by
+\texttt{test\_bed/analysis/bank\_sweep.py}.
+
+\begin{thebibliography}{99}
+\bibitem{bst} R.~Baptista, A.~Stuart and S.~Tran.
+  \emph{A Mathematical Perspective on Contrastive Learning}. arXiv:2505.24134, 2025.
+\bibitem{stuartwolf} A.~Stuart and F.~Wolf.
+  \emph{Expressivity in Multimodal Contrastive Learning}. arXiv:2608.17203, 2026.
+\bibitem{cpc} A.~van den Oord, Y.~Li and O.~Vinyals.
+  \emph{Representation Learning with Contrastive Predictive Coding}. arXiv:1807.03748, 2018.
+\bibitem{poole} B.~Poole, S.~Ozair, A.~van den Oord, A.~Alemi and G.~Tucker.
+  On variational bounds of mutual information. \emph{ICML}, 2019.
+\bibitem{uesaka} T.~Uesaka et al.
+  Weighted point set embedding for multimodal contrastive learning toward optimal
+  similarity metric. \emph{ICLR}, 2025 (arXiv:2404.19228).
+\bibitem{sordoni} A.~Sordoni et al.
+  Decomposed mutual information estimation for contrastive representation learning.
+  \emph{ICML}, 2021 (arXiv:2106.13401).
+\bibitem{songermon} J.~Song and S.~Ermon.
+  Understanding the limitations of variational mutual information estimators. \emph{ICLR}, 2020.
+\bibitem{simclr} T.~Chen, S.~Kornblith, M.~Norouzi and G.~Hinton.
+  A simple framework for contrastive learning of visual representations. \emph{ICML}, 2020.
+\bibitem{wangisola} T.~Wang and P.~Isola.
+  Understanding contrastive representation learning through alignment and uniformity on the
+  hypersphere. \emph{ICML}, 2020.
+\bibitem{euclip} J.~C.-C.~Chou et al.
+  Embedding geometries of contrastive language-image pre-training. ECCV Workshops, 2024
+  (arXiv:2409.13079).
+\bibitem{bbl} T.~Bengtsson, P.~Bickel and B.~Li.
+  Curse-of-dimensionality revisited: collapse of the particle filter in very large scale
+  systems. \emph{IMS Collections}, 2:316--334, 2008.
+\bibitem{psis} A.~Vehtari, D.~Simpson, A.~Gelman, Y.~Yao and J.~Gabry.
+  Pareto smoothed importance sampling. \emph{JMLR}, 25, 2024 (arXiv:1507.02646).
+\bibitem{cd} S.~Chatterjee and P.~Diaconis.
+  The sample size required in importance sampling.
+  \emph{Annals of Applied Probability}, 28(2):1099--1135, 2018.
+\bibitem{anen} L.~Delle Monache, F.~A.~Eckel, D.~L.~Rife, B.~Nagarajan and K.~Searight.
+  Probabilistic weather prediction with an analog ensemble. \emph{Monthly Weather Review},
+  141(10):3498--3516, 2013.
+\bibitem{kaf} Z.~Zhao and D.~Giannakis.
+  Analog forecasting with dynamics-adapted kernels. \emph{Nonlinearity}, 29(9):2888--2939, 2016.
+\bibitem{gneiting} T.~Gneiting and A.~E.~Raftery.
+  Strictly proper scoring rules, prediction, and estimation. \emph{Journal of the American
+  Statistical Association}, 102(477):359--378, 2007.
+\end{thebibliography}
+
+\end{document}
