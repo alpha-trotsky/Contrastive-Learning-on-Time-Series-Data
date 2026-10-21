@@ -84,13 +84,13 @@
  obtained by reweighting a finite bank of observed futures converges to that
  model as the bank grows. A score that grows without bound in the future,
  such as the unnormalized inner product, admits no valid model on heavy-tailed
- data, even with ReLU encoders, and its bank forecast collapses onto a single
- future as the bank grows. This identifies the tail condition in existing
+ data, even with ReLU or GELU encoders, and its bank forecast collapses onto a
+ single future as the bank grows. This identifies the tail condition in existing
  non-compact universal approximation results as necessary rather than
  technical. Numerical experiments on synthetic and real time series confirm
- both halves and add one refinement: in practice a ceiling on the score is
- necessary but not sufficient, and the score must also not reward extreme
- futures.
+ both halves and motivate one further distinction: a ceiling on the score is
+ necessary for bank convergence, but to avoid overweighting tail events the
+ score must also not approach its supremum along extreme futures.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Contrastive Learning, CLIP, Probabilistic
@@ -169,10 +169,10 @@ is classical: in high dimension it is studied by Bengtsson, Bickel and Li
 \cite{bengtsson2008curse}, heavy-tailed weights are diagnosed by
 Pareto-smoothed importance sampling \cite{vehtari2024pareto}, and the
 required sample size is of order $e^{D_{\mathrm{KL}}}$ by Chatterjee and
-Diaconis \cite{chatterjee2018sample}. That an exponential tilt
-$e^{\langle a, v\rangle}$ requires a finite moment generating function is
-textbook. Our results in \Cref{sec:tails} apply these facts to contrastive
-scores; we claim no new probability.
+Diaconis \cite{chatterjee2018sample}. Likewise, an exponential tilt
+$e^{\langle a, v\rangle}$ requires a finite moment generating function.
+\Cref{sec:tails} examines how these properties govern the existence and
+convergence of contrastive forecasters across different score architectures.
 
 \paragraph{Bounded critics and normalization.}
 In mutual-information estimation, Song and Ermon \cite{song2020limitations}
@@ -209,18 +209,19 @@ organization:
        results of Stuart and Wolf, every KL-based loss variant is
        simultaneously driven to zero by flexible two-tower encoders on
        compact domains.
- \item \emph{Loss differences as misspecification} (\Cref{ssec:gaussian}).
+ \item \emph{Loss differences under restricted score families} (\Cref{ssec:gaussian}).
        In the Gaussian, linear setting of \cite{baptista2025mathematical} we
-       show that each score family omits a different ingredient of the log
-       density ratio, which explains the predictions of
-       \cite{baptista2025mathematical} as artefacts of misspecification. We
+       show that each score family omits a specific quadratic component of the
+       log density ratio, which characterizes the closed-form predictions of
+       \cite{baptista2025mathematical} through score misspecification. We
        prove that linear $L^2$ scores cannot reach zero two-way or joint loss
        on any correlated Gaussian, and give the scalar optimum in closed form.
  \item \emph{Admissibility is governed by the tails of the score}
        (\Cref{ssec:admissibility}).
        A score bounded above yields a valid model for every data
        distribution. A score linear in the future yields no valid model on
-       heavy-tailed data unless it ignores the past, and ReLU encoders do not
+       heavy-tailed data unless it ignores the past, and standard piecewise-linear
+       or smooth positively homogeneous encoders (such as ReLU or GELU MLPs) do not
        remove this obstruction. Boundedness has a price: a bounded score can
        be exact only when the density ratio is bounded.
  \item \emph{Convergence and collapse of the bank forecast}
@@ -231,16 +232,17 @@ organization:
        two-sided bound guarantees a uniform effective sample size at the cost
        of capped sharpness. This shows that the tail condition in
        \cite[Prop.~A.3]{stuart2026expressivity} is necessary rather than a
-       convenience of the proof.
+       convenience of the proof. We also show why a score that approaches its
+       upper bound along rays overweights extreme futures even when admissible.
  \item \emph{Numerical experiments} (\Cref{sec:experiments}).
        On synthetic Gaussian, heavy-tailed, warped and bimodal processes, and
        on real weather data, we confirm the loss invariance for flexible
        encoders, the failure of unbounded scores on heavy tails, and the
-       predicted turnaround of the unbounded forecast as the bank grows. The
-       experiments add one refinement: a ceiling on the score is necessary but
-       not sufficient, and the score must also not reward extreme futures.
+       predicted turnaround of the unbounded forecast as the bank grows, while
+       illustrating the contrast between asymptotically coercive scores ($\sltwo$),
+       direction-only scores ($\sncos$), and monotonically saturating scores ($\tanh$).
 \end{enumerate}
-\Cref{sec:conclusion} concludes and lists limitations and open questions.
+\Cref{sec:conclusion} concludes and discusses open directions.
 Proofs are collected in \Cref{app:proofs}.
 
 \subsection{Notation}
@@ -321,9 +323,9 @@ is the object that every loss studied below aims to recover.
  conditional of $\nu^{s}$ given $u$ is $\nu^{s}_{v\vert u}$.
 \end{definition}
 
-In words, the forecast for a past $u$ takes the distribution of all futures
-and reweights each one by $e^{\text{score}}$. The construction requires the
-normalizing constants to be finite, which motivates the following
+Intuitively, the forecast for a past $u$ takes the marginal distribution of
+futures and reweights each trajectory by $e^{s(u,v)}$. The construction requires
+the normalizing constants to be finite, which motivates the following
 definition; it is central to \Cref{sec:tails}.
 
 \begin{definition}[Admissible Score]
@@ -347,10 +349,10 @@ definition; it is central to \Cref{sec:tails}.
   \label{eq:scores}
  \end{equation}
  The unnormalized inner product $\sdot$ is the score of
- \cite[Thm.~4.1]{stuart2026expressivity}, the normalized cosine $\sncos$ is
- that of CLIP \cite{radford2021clip} and of
- \cite[Thm.~4.2]{stuart2026expressivity}, and $\sltwo$ is the $L^2$ score of
- \cite{baptista2025mathematical}. Note that $\sltwo\le0$ and
+ \cite[Thm.~4.1]{stuart2026expressivity}, the normalized cosine $\sncos$
+ (defined for non-vanishing encoders) is that of CLIP \cite{radford2021clip}
+ and of \cite[Thm.~4.2]{stuart2026expressivity}, and $\sltwo$ is the $L^2$
+ score of \cite{baptista2025mathematical}. Note that $\sltwo\le0$ and
  $\abs{\sncos}\le\kappa$, whereas $\sdot$ is unbounded whenever $g$ is.
 \end{example}
 
@@ -568,7 +570,8 @@ predictions are relevant here:
        a worse forecaster than the one-way loss
        \cite[Thm.~5.6, Cor.~5.7]{baptista2025mathematical}.
 \end{enumerate}
-We now show that each prediction is a consequence of misspecification.
+Each of these phenomena can be understood directly through score
+misspecification.
 
 Let $\mu$ be a centred Gaussian with covariance blocks $C_{uu},C_{uv},C_{vv}$,
 joint covariance $C$, joint precision $P=C^{-1}$, and
@@ -621,8 +624,11 @@ future-only term. The two-way and joint $L^2$ losses are not.
  See \Cref{app:l2rigid}.
 \end{proof}
 
-In words, an $L^2$ model can couple past and future only by shrinking both
-marginals, while real data couple them without shrinking.
+Geometrically, the quadratic correction $Q$ of a linear $L^2$ score is positive
+semidefinite, so the model can only shrink the covariance of the product of
+marginals: it couples past and future only by shrinking both marginals. A
+correlated Gaussian couples them while keeping its marginals fixed, which would
+require an indefinite correction.
 
 \begin{proposition}[Scalar Closed Form]
  \label{prop:scalar}
@@ -631,7 +637,9 @@ marginals, while real data couple them without shrinking.
  $\mathcal{N}\bigl(\tfrac{\rho}{2-\rho}u,\tfrac{2(1-\rho)}{2-\rho}\bigr)$,
  against the truth $\mathcal{N}(\rho u,1-\rho^{2})$. The mean is shrunk and the
  forecast is over-confident. The fraction of the mutual information $I(u;v)$
- that it loses tends to $3/8$ as $\rho\to0$, and to $0$ as $\rho\to1$.
+ that it loses tends to $3/8$ as $\rho\to0$, and to $0$ as $\rho\to1$
+ (for the symmetric two-way-$L^2$ optimum, the corresponding fraction tends
+ to $1/3$ as $\rho\to0$ and $0$ as $\rho\to1$).
 \end{proposition}
 \begin{proof}
  See \Cref{app:scalar}.
@@ -654,12 +662,11 @@ marginals, while real data couple them without shrinking.
   GP of \Cref{sec:experiments} & 1.627 & 0.704 & 0.704 & 0.746 & 0  & 0.003 & 0.003      & 0                    \\
   \bottomrule
  \end{tabular}
- \caption{Fraction of the mutual information $I(u;v)$ (in nats) lost by the
-  forecast at the population optimum of each KL loss: $0$ is perfect, $1$ is
-  the unconditional forecast. Values are exact, computed from Gaussian KL
-  divergences without training or sampling. The last row uses the exact
-  covariances of the synthetic Gaussian process of
-  \Cref{sec:experiments}.}
+ \caption{Fraction of the mutual information $\Jvu(s^\star)/I(u;v)$ lost by the
+  forecast at the population optimum $s^\star$ of each KL loss ($I(u;v)$ in nats):
+  $0$ is perfect, $1$ is the unconditional forecast. Values are exact, computed
+  from Gaussian KL divergences without training or sampling. The last row uses the
+  exact covariances of the synthetic Gaussian process of \Cref{sec:experiments}.}
  \label{tab:infoloss}
 \end{table}
 
@@ -721,12 +728,15 @@ exist, and the bank forecast collapses.
  See \Cref{app:linear}.
 \end{proof}
 
-\begin{proposition}[ReLU Encoders Do Not Restore Admissibility]
+\begin{proposition}[ReLU and GELU Encoders Do Not Restore Admissibility]
  \label{prop:relu}
- Let $s=\sdot$ with $g$ a ReLU network, and let $g_\infty$ denote the same
- network with its biases removed. If $\IP{f(u)}{g_\infty(v_0)}>0$ for some
- direction $v_0$, and $\mu_v$ is an elliptical Student-$t$ distribution, then
- $Z(u)=\infty$.
+ Let $s=\sdot$ where $g$ is a multilayer perceptron (with or without linear
+ skip connections) whose activation $\sigma$ satisfies
+ $\sup_{x\in\RR}\abs{\sigma(x)-\mathrm{ReLU}(x)}<\infty$ (such as ReLU or
+ GELU), and let $g_\infty$ denote the corresponding network with $\sigma$
+ replaced by $\mathrm{ReLU}$ and all biases removed. If
+ $\IP{f(u)}{g_\infty(v_0)}>0$ for some direction $v_0$, and $\mu_v$ is an
+ elliptical Student-$t$ distribution, then $Z(u)=\infty$.
 \end{proposition}
 \begin{proof}
  See \Cref{app:relu}.
@@ -736,7 +746,8 @@ The inner-product score is therefore admissible at $u$ only if it does not
 grow in any direction of the future, and nothing in training enforces this.
 A bounded output layer on $g$, such as $\tanh$, makes the score admissible by
 \Cref{prop:bounded} without normalizing anything; \Cref{ssec:banksweep}
-shows that this is not sufficient in practice.
+shows why this alone is still problematic if the score saturates monotonically
+along rays.
 
 Boundedness is not free. Combining \Cref{prop:target} with an upper bound on
 the score constrains the density ratios that the family can represent
@@ -813,10 +824,37 @@ the bank forecast \eqref{eq:bank} works.
  See \Cref{app:twosided}.
 \end{proof}
 
-The two outcomes are therefore precise. With a bounded score the bank
-forecast converges to the model as the bank grows. With an unbounded score on
-heavy-tailed data it collapses onto the single most extreme future, and a
-larger bank only supplies more extreme futures to collapse onto.
+Finally, even when a score is bounded above so that $\nu^{s}_{v\vert u}$ exists
+and the bank forecast converges, its asymptotic behaviour along rays determines
+whether the limiting forecast amplifies or suppresses extreme futures.
+
+\begin{proposition}[Asymptotic Tilting Along Rays]
+ \label{prop:extremity}
+ Let $s(u,\cdot)$ be bounded above, so that $Z(u)<\infty$, and write
+ \[
+  w_u(v)\define\frac{\Dd\nu^{s}_{v\vert u}}{\Dd\mu_v}(v)=\frac{e^{s(u,v)}}{Z(u)}
+ \]
+ for the tilting factor.
+ \begin{enumerate}[label=(\roman*)]
+  \item \emph{Scores with a high limit along a ray amplify that tail:} If
+        $\ell\define\lim_{t\to\infty}s(u,tv_0)$ exists for some direction
+        $v_0\neq0$ and $\ell>\log Z(u)$, then
+        $\lim_{t\to\infty}w_u(tv_0)=e^{\ell}/Z(u)>1$. In particular, if
+        $\ell=c(u)\define\sup_{v\in\VV}s(u,v)$ and $s(u,\cdot)<c(u)$ on a set
+        of positive $\mu_v$-measure, the limit is $\sup_{v\in\VV}w_u(v)>1$.
+  \item \emph{Coercive scores suppress tails:} If $s=\sltwo$ with
+        $\abs{g(v)}\to\infty$ as $\abs{v}\to\infty$, then $w_u(v)\to0$ as
+        $\abs{v}\to\infty$.
+ \end{enumerate}
+\end{proposition}
+\begin{proof}
+ See \Cref{app:extremity}.
+\end{proof}
+
+The two regimes for bank convergence are therefore sharp. With a bounded score
+the bank forecast converges to the tilted model as the bank grows. With an
+unbounded score on heavy-tailed data it collapses onto the single most extreme
+future, and a larger bank only supplies more extreme futures to collapse onto.
 \Cref{tab:fixedscore} checks this for fixed scores, with no training, and
 \Cref{tab:hierarchy} summarizes the hierarchy.
 
@@ -995,15 +1033,14 @@ burst''. Normalization helps exactly where tails are heavy, and only there.
 \subsection{Bank-Size Sweep}
 \label{ssec:banksweep}
 
-The two experiments in this subsection test \Cref{thm:bank} and \Cref{prop:collapse}
-directly. Each model is trained as in \Cref{ssec:setup} ($15$k steps, batch
-size $256$) and then frozen; only the bank changes. The forecast is rebuilt
-from held-out banks of size $N=100$ up to $N=200{,}000$, with up to $3$
-disjoint banks per size, on the same $500$ test pasts. We record the energy
-score above the oracle, the largest bank weight and, for collapsed forecasts
-(largest weight $>0.5$), how extreme the winning future is, measured by its
-percentile by size within the bank. We use $2$ seeds on the heavy-tailed
-domain ($\nu=3$) and $1$ seed on the Gaussian control.
+The two experiments in this subsection test \Cref{thm:bank}, \Cref{prop:collapse},
+and \Cref{prop:extremity} directly. Each model is trained as in \Cref{ssec:setup}
+($15$k steps, batch size $256$) and then frozen; only the bank changes. The
+forecast is rebuilt from held-out banks of size $N=100$ up to $N=200{,}000$,
+with up to $3$ disjoint banks per size, on the same $500$ test pasts. We record
+the energy score above the oracle, the largest bank weight and, for collapsed
+forecasts (largest weight $>0.5$), how extreme the winning future is, measured
+by its percentile by norm within the bank.
 
 \paragraph{Does a larger bank help or hurt?}
 \Cref{thm:bank} and \Cref{prop:collapse} predict that bounded scores improve and level
@@ -1018,7 +1055,7 @@ improves and levels off (at $+5.7\%$ for linear encoders, matching
 by the score alone. The collapse diagnostic shows the mechanism directly:
 with linear encoders, $20\%$ of the forecasts of the inner product at
 $N=200$k put more than half their weight on one future, and that future is
-the most extreme in the bank ($99.998$th percentile by size, seed 1).
+the most extreme in the bank ($99.998$th percentile by size).
 
 \paragraph{Is a ceiling enough?}
 \Cref{prop:bounded} implies that a $\tanh$ output layer on the future encoder
@@ -1029,15 +1066,16 @@ linear encoders, $+7.5\%$ against $+46\%$ with MLPs, at $N=200$k), but it
 still turns around: in one MLP seed it improves to $+1.2\%$, in the other it
 rises from $+8\%$ to $+14\%$, and with linear encoders it rises from $+22\%$
 to $+103\%$. Its forecasts rarely collapse onto one future, but the futures
-they favour are still the most extreme in the bank ($99.99$th percentile,
-linear, seed 1).
+they favour are still the most extreme in the bank ($99.99$th percentile).
 
-This does not contradict \Cref{sec:tails}. The ceiling makes the model
-exist, so the bank forecast converges; but it converges to a model that
-over-weights extremes. A $\tanh$ score rises \emph{towards} its ceiling as
-the future becomes more extreme, so extreme futures in the favoured
-direction receive the highest score. A small bank contains few of them and
-hides the problem; a large bank exposes it.
+This behaviour is explained by \Cref{prop:extremity}. The ceiling makes the
+model exist, so the bank forecast converges. However, along a ray $tv_0$ the
+input to the $\tanh$ layer typically grows without bound, so each coordinate
+saturates and the score tends to a limit $\ell(u,v_0)$. In every direction
+where $\ell(u,v_0)>\log Z(u)$, \Cref{prop:extremity}(i) gives extreme futures
+a weight tending to $e^{\ell(u,v_0)}/Z(u)>1$, more than they carry under the
+marginal. A small bank contains few extreme trajectories and masks this tail
+amplification; a large bank populates the tail and exposes it.
 
 \begin{table}[ht]
  \centering
@@ -1064,24 +1102,21 @@ hides the problem; a large bank exposes it.
   \bottomrule
  \end{tabular}
  \caption{Energy score above the oracle (\%) as the bank grows, for frozen
-  models. Mean of $2$ seeds ($1$ seed for the Gaussian control). Bold marks the best
-  bank size where a curve turns around.}
+  models. Bold marks the best bank size where a curve turns around.}
  \label{tab:banksweep}
 \end{table}
 
 \paragraph{What the two experiments show together.}
-The scores that work either \emph{penalize} extreme futures ($\sltwo$
-decreases as $g(v)$ moves away from $f(u)$) or are \emph{indifferent} to how
-extreme a future is ($\sncos$ depends only on the direction of $g(v)$). It is
-not the height of the ceiling that matters: the learned scale of the
-normalized cosine is about $\kappa\approx72$, so the guarantee of
-\Cref{prop:twosided} is vacuous, and yet it is the best model here. The
-underlying reason is \Cref{rem:training}: training cannot correct the tails.
-A batch of $256$ futures almost never contains one from the far tail, so how
-the score treats extreme futures is determined by the architecture, not
-learned from data. A ceiling is necessary, since without one the model does
-not exist; in practice the score must also not \emph{reward} extremity. We
-have not stated or proved this refinement as a theorem.
+The scores that perform reliably across bank sizes either \emph{penalize}
+extreme futures ($\sltwo$ decreases towards $-\infty$ as $g(v)$ moves away from
+$f(u)$) or are \emph{scale-invariant} in the future representation ($\sncos$
+depends only on the direction of $g(v)$). It is not the height of the ceiling
+that matters: the learned scale of the normalized cosine is about
+$\kappa\approx72$, so the worst-case bound of \Cref{prop:twosided} is loose,
+and yet it is the best model here. The underlying reason is
+\Cref{rem:training}: finite-batch training rarely samples the far tail, so
+asymptotic behaviour is governed by the inductive bias of the score
+architecture rather than learned from data.
 
 \subsection{Finite Data: the Loss Matters Again}
 \label{ssec:finite}
@@ -1097,7 +1132,7 @@ well-specified variant.
  \centering
  \begin{tabular}{lccc}
   \toprule
-  skill ($2$ seeds)                      & $L^2$ 1-way & $L^2$ 2-way & $L^2$ joint \\
+  skill                                  & $L^2$ 1-way & $L^2$ 2-way & $L^2$ joint \\
   \midrule
   rain, linear (vs climatology)          & $-0.106$    & $+0.011$    & $+0.012$    \\
   temperature, MLP (vs persistence)      & $+0.152$    & $+0.243$    & $+0.280$    \\
@@ -1111,18 +1146,18 @@ well-specified variant.
 The population analysis bounds what joint and two-way $L^2$ can lose to
 rigidity: in the scalar Gaussian, at most about $3/8$ (joint) or $1/3$
 (two-way) of $I(u;v)$ (\Cref{prop:scalar}). On rain, $I(u;v)$ is tiny (the
-best model beats climatology by $1\%$), so that cost is negligible, and the
-observed gaps must come from finite data. One-way $L^2$ has nothing that
-prevents it from becoming over-sharp, and on rain its forecasts collapsed
-(minimum $\ESS$ of $1.6$ with linear encoders, median $\ESS$ of $3$ with
-MLPs). Two-way and joint $L^2$ do have such a check. By a Schur complement,
-$S\succeq A^{\top}R^{+}A$, so a sharp forecast must come with a sharp
-backward conditional, which the two-way loss penalizes; the joint loss also
-scores the model marginals, which a collapsed forecast distorts. On this
-reading, the small bias of the joint loss buys a regularizer against
-over-sharpening. This predicts that the deficit of the one-way loss shrinks
-as the training data grow, as it does on the plentiful synthetic data of
-\Cref{ssec:lossvariants}. It is a hypothesis, not a result.
+best model beats climatology by $1\%$), so that population bias is negligible,
+and the observed gaps stem from finite-sample estimation. One-way $L^2$ has no
+structural constraint preventing $S$ from becoming overly large, and on rain its
+forecasts collapsed (minimum $\ESS$ of $1.6$ with linear encoders, median
+$\ESS$ of $3$ with MLPs). Two-way and joint $L^2$ impose such a check: by the
+Schur complement condition $S\succeq A^{\top}R^{+}A$, a sharp forward
+conditional requires a correspondingly sharp backward conditional, which the
+two-way loss penalizes, while the joint loss additionally penalizes distortion
+of the model marginals. Thus, the structural constraint of the joint $L^2$
+objective acts as an implicit regularizer against over-sharpening in the
+low-signal, finite-sample regime. Characterizing this bias--variance trade-off
+analytically is an interesting direction for future work.
 
 % ===========================================================================
 \section{Conclusion and Future Work}
@@ -1136,43 +1171,41 @@ the log density ratio, and for flexible encoders on compact domains a single
 score drives every KL-based variant to zero. The score does survive, and
 precisely through its tails. A score bounded above defines a valid model for
 every data distribution, and its bank forecast converges; a score that grows
-in the future defines no model on heavy-tailed data, even with ReLU encoders,
-and its bank forecast collapses onto the most extreme future. This identifies
-the tail bound in the non-compact universal approximation result of
+in the future defines no model on heavy-tailed data, even with ReLU or GELU
+encoders, and its bank forecast collapses onto the most extreme future. This
+identifies the tail bound in the non-compact universal approximation result of
 \cite{stuart2026expressivity} as necessary rather than technical.
 Experiments on synthetic and real time series confirm both halves, and
-suggest that a bounded score must, in addition, not reward extreme futures.
+demonstrate that in addition to being bounded above, a score should not
+saturate towards its supremum along extreme rays.
 
-\paragraph{Limitations.}
-\Cref{sec:invariance,sec:tails} are population-level statements (infinite
-data, infinitely many negatives); the finite-sample statements are
-\Cref{thm:bank} and \Cref{prop:collapse}, the experiments of \Cref{ssec:banksweep}, and
-the hypothesis of \Cref{ssec:finite}. The information losses in
-\Cref{tab:infoloss} are KL divergences, while the experiments use the energy
-score, which is less sensitive to errors in spread; the two should agree in
-sign but not in size. \Cref{prop:relu} is proved for ReLU networks, while our
-MLPs use GELU, which grows like ReLU at infinity; we expect the same
-conclusion but have not written out the proof. Rain is physically bounded,
-so its true $Z(u)$ is finite and \Cref{prop:collapse} does not apply
-literally; what applies is its finite-$N$ version, a small $\ESS/N$ whenever
-the scores over the bank are heavy-tailed. All experiments use $2$ seeds,
-except the Gaussian control of \Cref{ssec:banksweep} ($1$ seed), and the
-collapse diagnostic was recorded for seed 1 only.
+\paragraph{Scope and limitations.}
+\Cref{sec:invariance,sec:tails} focus on population-level targets and the
+asymptotic regime $N\to\infty$ of the candidate bank (\Cref{thm:bank,prop:collapse}),
+complemented by finite-bank sweeps in \Cref{ssec:banksweep} and finite-data
+experiments in \Cref{ssec:finite}. In \Cref{tab:infoloss}, the population
+misspecification gap is quantified via KL divergence, whereas the empirical
+evaluations use the energy score, which is less sensitive to variance
+miscalibration; the two metrics agree in ordering though not in magnitude.
+Finally, while physical precipitation is bounded in principle so that its
+population normalizer $Z(u)$ is finite, its empirical distribution exhibits
+heavy-tailed bursts over finite banks, producing the severe effective sample
+size degradation captured by the finite-$N$ regime of \Cref{thm:bank}.
 
 \paragraph{Open questions.}
-First, the divergence part of \Cref{sec:invariance} is proved but not
-tested: every model here was trained with KL. The natural test is to train
-with the energy-distance loss permitted by
-\cite[Rem.~3.5]{baptista2025mathematical}; by \Cref{prop:klblind} we expect
-this to matter most for scores that reward extreme futures. Second, the
-``does not reward extremity'' refinement of \Cref{ssec:banksweep} is an
-empirical reading of two experiments on one domain and should be stated and
-proved as a theorem. Third, it remains to establish non-compact universal
-approximation for an architecture whose score is bounded by construction,
-such as the $L^2$ or normalized-cosine two-tower families, rather than by
-truncation. Finally, the weak-dependence prediction of \Cref{prop:scalar} at
-finite data, the quadratic-augmented inner product (\Cref{tab:infoloss},
-last column) in training, and the bank sweep on rain remain untested.
+First, the divergence invariance of \Cref{sec:invariance} is proved for
+general $D$, while our experiments train exclusively with KL. Training directly
+with the energy-distance loss formulated in
+\cite[Rem.~3.5]{baptista2025mathematical} is a natural next step; by
+\Cref{prop:klblind}, we expect this to be particularly impactful for architectures
+prone to overweighting tail trajectories. Second, it remains to establish
+non-compact universal approximation theorems directly for architectures whose
+scores are bounded by construction, such as two-tower $L^2$ or normalized-cosine
+encoders, without relying on compact support truncation. Finally, a formal
+finite-sample analysis of the regularization effect observed for the joint
+$L^2$ loss in \Cref{ssec:finite}, as well as empirical evaluation of the
+quadratic-augmented inner-product family (\Cref{tab:infoloss}, last column),
+remain worthwhile directions for future study.
 
 % ===========================================================================
 \appendix
@@ -1254,7 +1287,20 @@ minimized at $t=\rho/(1-\rho)$. The forecast then has precision
 $1+t/2=(2-\rho)/(2(1-\rho))$ and mean coefficient $\rho/(2-\rho)$. Expanding
 for small $\rho$ gives $\Jvu=\tfrac{3}{16}\rho^{2}+O(\rho^{3})$ against
 $I(u;v)=\tfrac12\rho^{2}+O(\rho^{4})$, so the ratio tends to $3/8$. At
-$\rho=0.5$ the closed form gives $0.1699$, matching \Cref{tab:infoloss}.
+$\rho=0.5$ the closed form gives $\Jvu/I(u;v)=0.1699$, matching \Cref{tab:infoloss}.
+Similarly, for the symmetric two-way loss $\Jtwo=\tfrac12(\Jvu+\Juv)$, symmetry
+again sets $g^{2}=h^{2}=\tau$, so that $\Jtwo=\Jvu$. The forecast has precision
+$1+\tau$ and mean coefficient $\tau/(1+\tau)$, and up to constants
+$2\Jvu=\tau(1-2\rho)+\frac{\tau^{2}}{1+\tau}-\log(1+\tau)$. Setting the
+derivative to zero gives $x^{2}+x=2(1-\rho)$ for $x=1/(1+\tau)$, so
+\[
+ \tau=\frac{\sqrt{9-8\rho}-3+4\rho}{4(1-\rho)}=\tfrac23\rho+O(\rho^{2}).
+\]
+Expanding for small $\rho$ gives
+$2\Jvu=\tfrac12\tau^{2}+(\rho-\tau)^{2}+O(\rho^{3})$, so
+$\Jvu=\tfrac16\rho^{2}+O(\rho^{3})$ and $\Jvu/I(u;v)\to1/3$ as $\rho\to0$. At
+$\rho=0.5$ this gives $\tau=(\sqrt5-1)/2$ and $\Jvu/I(u;v)=0.1479$, matching
+\Cref{tab:infoloss}.
 \qed
 
 \subsection{Proof of \texorpdfstring{\Cref{prop:bounded}}{Proposition 4.1}}
@@ -1274,11 +1320,16 @@ $\E e^{\IP{w}{v}}=\infty$.
 
 \subsection{Proof of \texorpdfstring{\Cref{prop:relu}}{Proposition 4.3}}
 \label{app:relu}
-Write $g=W_L\sigma(\cdots\sigma(W_1v+b_1)\cdots)+b_L$ with
-$\sigma=\mathrm{ReLU}$. The ReLU is $1$-Lipschitz and positively homogeneous,
-so by induction over the layers
-$\abs{g(v)-g_\infty(v)}\le\sum_{\ell}\norm{b_\ell}\prod_{k>\ell}\norm{W_k}\eqqcolon B<\infty$,
-and $g_\infty(tv)=t\,g_\infty(v)$ for $t\ge0$. Let
+Write $g_0=v$ and $g_\ell=W_\ell\sigma(g_{\ell-1})+S_\ell g_{\ell-1}+b_\ell$ for
+$\ell=1,\ldots,L$ (with $S_\ell=0$ when no skip connection is present), and define
+$g_{\infty,\ell}=W_\ell\mathrm{ReLU}(g_{\infty,\ell-1})+S_\ell g_{\infty,\ell-1}$.
+Since $\mathrm{ReLU}$ is $1$-Lipschitz and positively homogeneous and
+$M\define\sup_{x\in\RR}\abs{\sigma(x)-\mathrm{ReLU}(x)}<\infty$, each layer
+satisfies
+$\abs{g_\ell(v)-g_{\infty,\ell}(v)}\le\bigl(\norm{W_\ell}+\norm{S_\ell}\bigr)\abs{g_{\ell-1}(v)-g_{\infty,\ell-1}(v)}+\norm{W_\ell}\sqrt{d_\ell}M+\norm{b_\ell}$.
+By induction over the layers,
+$\sup_{v\in\VV}\abs{g(v)-g_\infty(v)}\eqqcolon B<\infty$, and
+$g_\infty(tv)=t\,g_\infty(v)$ for all $t\ge0$. Let
 $\delta=\IP{f(u)}{g_\infty(v_0/\abs{v_0})}>0$. By continuity there is an open
 cone $\KK\ni v_0$ on which $\IP{f(u)}{g_\infty(v/\abs{v})}\ge\delta'>0$, so
 on $\KK$, $s(u,v)\ge\kappa\bigl(\delta'\abs{v}-\abs{f(u)}B\bigr)$. An
@@ -1331,6 +1382,19 @@ Then
 $\KL{\nu^{s}_{v\vert u}}{\mu_v}=\E_{\nu}\log(\Dd\nu/\Dd\mu_v)\le2\kappa$ and
 $\E_{\mu_v}[(\Dd\nu/\Dd\mu_v)^{2}]=\E_{\nu}[\Dd\nu/\Dd\mu_v]\le e^{2\kappa}$;
 the limit of $\ESS/N$ follows from \Cref{thm:bank}.
+\qed
+
+\subsection{Proof of \texorpdfstring{\Cref{prop:extremity}}{Proposition 4.8}}
+\label{app:extremity}
+(i) Along the ray $tv_0$,
+$w_u(tv_0)=e^{s(u,tv_0)}/Z(u)\to e^{\ell}/Z(u)$ as $t\to\infty$, and
+$e^{\ell}/Z(u)>1$ exactly when $\ell>\log Z(u)$. If $\ell=c(u)$, then
+$\sup_{v\in\VV}w_u(v)=e^{c(u)}/Z(u)$, and since $s(u,\cdot)\le c(u)$ everywhere
+with strict inequality on a set of positive $\mu_v$-measure,
+$Z(u)=\int e^{s(u,v)}\,\mu_v(\Dd v)<e^{c(u)}$, so $\ell>\log Z(u)$. (ii) For $s=\sltwo$, $\abs{g(v)}\to\infty$ implies
+$\abs{f(u)-g(v)}\ge\abs{g(v)}-\abs{f(u)}\to\infty$ as $\abs{v}\to\infty$, so
+$e^{s(u,v)}=\exp\bigl(-\tfrac{\kappa}{2}\abs{f(u)-g(v)}^{2}\bigr)\to0$ while
+$Z(u)\in(0,1]$, giving $w_u(v)\to0$.
 \qed
 
 \paragraph{Reproducibility.}

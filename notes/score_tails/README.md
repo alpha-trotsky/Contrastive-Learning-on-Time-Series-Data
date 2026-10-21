@@ -9,7 +9,6 @@ matter: the loss, the divergence, or the score.
 |---|---|
 | `main.tex`, `main.pdf` | Paper-style rewrite, in the style of Baptista–Stuart–Tran and Stuart–Wolf. Theory first, then experiments, with proofs in the appendix. |
 | `original_note.pdf` | The original note, *"For flexible encoders, neither the contrastive loss nor the divergence matters; the score matters only through its tails"*. |
-| `references/stuart_wolf_2026_expressivity.tex` | LaTeX source of Stuart & Wolf, *Expressivity in Multimodal Contrastive Learning*, arXiv:2608.17203 (Aug 2026), kept for reference. |
 
 Rebuild the PDF with `pdflatex main.tex` (run it twice).
 
