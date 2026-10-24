@@ -233,35 +233,33 @@ def main():
         ns = [32, 64, 128, 256, 512, 1024, 2048]
         base = args.reps
 
+    # one file per (d, rho), so an interrupted sweep resumes where it stopped
+    out_dir = OUT / args.tag
+    out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
-    pop, tasks = {}, []
-    for d, rho in settings:
-        g = Gaussian(d, rho)
-        starts = {}
-        for fam in FAMILIES:
-            for loss in LOSSES:
-                p, bias = population_fit(g, fam, loss)
-                starts[(fam, loss)] = p
-                pop[f'{d}/{rho}/{fam}/{loss}'] = bias
-        for n in ns:
-            if n <= 2 * d:
-                continue
-            for rep in range(reps_for(n, base)):
-                tasks.append((d, rho, n, rep, starts))
-    print(f'population fits done in {time.time() - t0:.0f}s; {len(tasks)} training sets', flush=True)
-
-    raw = []
     with Pool(args.workers) as pool:
-        for k, (d, rho, n, rep, out) in enumerate(pool.imap_unordered(run_one, tasks, chunksize=1)):
-            raw.append({'d': d, 'rho': rho, 'n': n, 'rep': rep, 'err': out})
-            if (k + 1) % 100 == 0:
-                print(f'{k + 1}/{len(tasks)}  {time.time() - t0:.0f}s', flush=True)
-
-    mi = {f'{d}/{rho}': Gaussian(d, rho).mi for d, rho in settings}
-    OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / f'{args.tag}.json'
-    path.write_text(json.dumps({'population_bias': pop, 'mutual_information': mi, 'runs': raw}))
-    print(f'wrote {path} in {time.time() - t0:.0f}s')
+        for d, rho in settings:
+            path = out_dir / f'd{d}_rho{rho}.json'
+            if path.exists():
+                print(f'skip {path} (exists)', flush=True)
+                continue
+            g = Gaussian(d, rho)
+            pop, starts = {}, {}
+            for fam in FAMILIES:
+                for loss in LOSSES:
+                    p, bias = population_fit(g, fam, loss)
+                    starts[(fam, loss)] = p
+                    pop[f'{fam}/{loss}'] = bias
+            tasks = [(d, rho, n, rep, starts) for n in ns if n > 2 * d
+                     for rep in range(reps_for(n, base))]
+            raw = []
+            for k, (_, _, n, rep, out) in enumerate(pool.imap_unordered(run_one, tasks, chunksize=1)):
+                raw.append({'n': n, 'rep': rep, 'err': out})
+                if (k + 1) % 200 == 0:
+                    print(f'd={d} rho={rho}: {k + 1}/{len(tasks)}  {time.time() - t0:.0f}s', flush=True)
+            path.write_text(json.dumps({'d': d, 'rho': rho, 'mutual_information': g.mi,
+                                        'population_bias': pop, 'runs': raw}))
+            print(f'wrote {path}  {time.time() - t0:.0f}s', flush=True)
 
 
 if __name__ == '__main__':
