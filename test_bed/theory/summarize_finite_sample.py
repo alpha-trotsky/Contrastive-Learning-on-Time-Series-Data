@@ -100,7 +100,8 @@ def plot(pop, mi, runs, settings):
     axes = [axes] if len(panels) == 1 else axes
     for ax, (d, rho) in zip(axes, panels):
         I = mi[f'{d}/{rho}']
-        ns = sorted(n for dd, rr, n in runs if (dd, rr) == (d, rho))
+        # below n = number of forecast parameters every loss blows up; not shown
+        ns = sorted(n for dd, rr, n in runs if (dd, rr) == (d, rho) and n >= n_params('l2', d))
         for loss in LOSSES:
             ms, ses = [], []
             for n in ns:
@@ -121,7 +122,7 @@ def plot(pop, mi, runs, settings):
             ax.spines[s].set_visible(False)
     axes[0].set_ylabel('forecast error / I(u;v)')
     axes[0].legend(frameon=False, fontsize=8, title='L² score', title_fontsize=8)
-    fig.text(0.5, -0.04, 'Dashed: population bias of the same loss (n = ∞). Bars: ±2 s.e.',
+    fig.text(0.5, -0.04, 'Dashed: population bias of the same loss (n = ∞). Bars: ±2 s.e. Sizes n below the number of forecast parameters are omitted.',
              ha='center', fontsize=8, color='#555555')
     fig.tight_layout()
     fig.savefig(RES / 'finite_sample_gaussian.png', dpi=160, bbox_inches='tight')
