@@ -15,7 +15,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from analysis.summarize_tail_sweep import load, ms, row_at, of_factor, of_oracle
+from analysis.summarize_tail_sweep import load, ms, row_at, of_factor, of_oracle, MODELS
 
 NOTE = Path('../notes/score_tails')
 FIGS = NOTE / 'figs'
@@ -157,9 +157,127 @@ def fig_amplification():
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# generated table rows
+# ---------------------------------------------------------------------------
+
+SIZES = [100, 1000, 10000, 30000, 100000, 200000]
+SYN_ROWS = [k for k, _ in MODELS]
+LAB = dict(MODELS)
+LAB.update({('dot', 'twoway', 'kl'): 'inner product', ('dot', 'twoway', 'hyb10'): 'inner product $+$ bank energy',
+            ('tanh', 'twoway', 'hyb10'): '$\\tanh$ future $+$ bank energy',
+            ('ncos', 'twoway', 'hyb10'): 'normalized cosine $+$ bank energy',
+            ('l2', 'oneway', 'hyb10'): '$L^2$ one-way $+$ bank energy'})
+
+
+def num(x, signed=True):
+    if x != x:
+        return '--'
+    if abs(x) >= 1000:
+        return f'${x:+,.0f}$'.replace(',', '{,}') if signed else f'{x:,.0f}'.replace(',', '{,}')
+    if signed:
+        return f'${x:+.1f}$'
+    return f'{x:.2f}' if x < 10 else f'{x:.1f}' if x < 100 else f'{x:.0f}'
+
+
+def rows_banksweep(runs, data, enc, keys, sizes=SIZES, bold_turn=True):
+    out = []
+    for key in keys:
+        rs = runs.get((data, enc, key))
+        if not rs:
+            continue
+        m = [ms([row_at(r, B)['excess_pct'] for r in rs if row_at(r, B)])[0] for B in sizes]
+        i = min(range(len(m)), key=m.__getitem__)
+        cells = [num(x) for x in m]
+        if bold_turn and i < len(m) - 1 and m[-1] - m[i] > 0.5:       # a turnaround: bold the best bank size
+            cells[i] = '$\\mathbf{' + cells[i].strip('$') + '}$'
+        out.append(f'  {LAB[key]} & {len(rs)} & ' + ' & '.join(cells) + ' \\\\')
+    return out
+
+
+def rows_overforecast(runs, data, enc, keys, sizes=SIZES):
+    out = []
+    rs0 = None
+    for key in keys:
+        rs = runs.get((data, enc, key))
+        if not rs:
+            continue
+        rs0 = rs0 or rs
+        m = [ms([of_factor(r, B, 1) for r in rs if row_at(r, B)])[0] for B in sizes]
+        pr = [r['ray_probe']['1000'] for r in rs]
+        share = ms([p['frac_pasts_mean_amp_gt1'] for p in pr])[0]
+        med = ms([p['log10_mean_amp_median'] for p in pr])[0]
+        q90 = ms([p['log10_mean_amp_q90'] for p in pr])[0]
+        clip = lambda x: f'${max(x, -99):.1f}$' if x > -99 else '$<-99$'
+        out.append(f'  {LAB[key]} & ' + ' & '.join(num(x, signed=False) for x in m) + f' & {share:.2f} & {clip(med)} & {clip(q90)} \\\\')
+    if rs0 and rs0[0].get('p_true_mean'):
+        o = ms([of_oracle(r, 1) for r in rs0])[0]
+        out.append('  \\midrule')
+        out.append(f'  oracle forecast & \\multicolumn{{{len(sizes)}}}{{c}}{{{o:.3f}}} & & & \\\\')
+    return out
+
+
+def table_blocks(runs):
+    b = {}
+    kl = [k for k in SYN_ROWS if k[2] == 'kl']
+    en = [k for k in SYN_ROWS if k[2] != 'kl']
+    for enc in ('mlp', 'linear'):
+        b[f'banksweep_{enc}'] = '\n'.join(rows_banksweep(runs, 't3', enc, kl) + ['  \\midrule'] + rows_banksweep(runs, 't3', enc, en))
+        b[f'overforecast_{enc}'] = '\n'.join(rows_overforecast(runs, 't3', enc, kl + en))
+    g = []
+    for enc in ('mlp', 'linear'):
+        for key in (('dot', 'twoway', 'kl'), ('tanh', 'twoway', 'kl')):
+            rr = rows_banksweep(runs, 'tinf', enc, [key], bold_turn=False)
+            g += [r.replace('  ', f"  {'MLP' if enc == 'mlp' else 'linear'}, ", 1) for r in rr]
+    b['gaussian'] = '\n'.join(g)
+    real_keys = [k for k in SYN_ROWS if k not in (('tk', 'joint', 'kl'), ('tk2', 'joint', 'kl'), ('dot', 'twoway', 'es'), ('tanh', 'twoway', 'es'),
+                                                    ('ncos', 'twoway', 'hyb10'), ('l2', 'oneway', 'hyb10'))]
+    for data in ('btc', 'rain', 'flow'):
+        rows = []
+        for enc in ('mlp', 'linear'):
+            any_rs = [rs for (d, e, _), rs in runs.items() if (d, e) == (data, enc)]
+            if not any_rs:
+                continue
+            Bmax = max(x['bank'] for x in any_rs[0][0]['rows'])
+            sizes = [1000, 10000, Bmax]
+            for key in real_keys:
+                rs = runs.get((data, enc, key))
+                if not rs:
+                    continue
+                ex = [ms([row_at(r, B)['excess_pct'] for r in rs])[0] for B in sizes]
+                of = [ms([of_factor(r, B, 1) for r in rs])[0] for B in (1000, Bmax)]
+                share = ms([r['ray_probe']['1000']['frac_pasts_mean_amp_gt1'] for r in rs])[0]
+                rows.append(f"  {'MLP' if enc == 'mlp' else 'linear'} & {LAB[key]} & " + ' & '.join(num(x) for x in ex) + ' & '
+                            + ' & '.join(num(x, signed=False) for x in of) + f' & {share:.2f} \\\\')
+            if enc == 'mlp':
+                rows.append('  \\midrule')
+        b[f'real_{data}'] = '\n'.join(rows)
+    return b
+
+
+def text_blocks(runs):
+    b = {}
+    fs = sorted(Path('results/amplification').glob('*.json'))
+    if fs:
+        r = json.load(open(fs[0]))
+        b['spearman'] = f"${r['spearman_logA_vs_OF']['0.001']:.2f}$ ($p=10^{{-3}}$) and ${r['spearman_logA_vs_OF']['0.0001']:.2f}$ ($p=10^{{-4}}$)"
+    parts = []
+    rs = runs.get(('t3', 'mlp', ('tk', 'oneway', 'kl')))
+    if rs:
+        parts.append(f"$b\\approx{ms([r['beta'] for r in rs])[0]:.0f}$ for the one-way Student-$t$ kernel with MLP encoders")
+    rs = runs.get(('t3', 'linear', ('tk2', 'oneway', 'kl')))
+    if rs:
+        parts.append(f"$b-b_v\\approx{ms([r['beta'] - r['beta_uv'][1] for r in rs])[0]:.0f}$ for the one-way log-quadratic family with linear encoders")
+    if parts:
+        b['exponents'] = '(' + ' and '.join(parts) + ', against $d_u=50$),'
+    return b
+
+
 def fill(tex, name, body):
     pat = re.compile(rf'(%%BEGIN:{name}\n).*?(%%END:{name})', re.S)
-    assert pat.search(tex), name
+    if not pat.search(tex):
+        print(f'(no block {name} in main.tex)')
+        return tex
     return pat.sub(lambda m: m.group(1) + body + '\n' + m.group(2), tex)
 
 
@@ -168,7 +286,14 @@ def main():
     tex = (NOTE / 'main.tex').read_text()
     tex = fill(tex, 'plateau', fig_plateau())
     runs = load()
+    for name, body in table_blocks(runs).items():
+        tex = fill(tex, name, body)
+    for name, body in text_blocks(runs).items():
+        tex = fill(tex, name, body)
     fig_sweep(runs)
+    for data in ('btc', 'rain', 'flow'):
+        if any(d == data for d, _, _ in runs):
+            fig_sweep(runs, data)
     fig_amplification()
     (NOTE / 'main.tex').write_text(tex)
 

@@ -274,7 +274,7 @@
 \newlabel{tab:plateau@cref}{{[table][5][]5}{[1][18][]19}}
 \@writefile{toc}{\contentsline {paragraph}{Why training does not remove a plateau, and what would.}{19}{section*.12}\protected@file@percent }
 \newlabel{prop:klvsenergy}{{4.25}{19}{KL Charges for Mass, Energy for Mass Times Distance}{theorem.4.25}{}}
-\newlabel{prop:klvsenergy@cref}{{[proposition][25][4]4.25}{[1][18][]19}}
+\newlabel{prop:klvsenergy@cref}{{[proposition][25][4]4.25}{[1][19][]19}}
 \citation{baptista2025mathematical}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces The data of \Cref  {tab:plateau}. Left: the over-forecast factor follows $\min (N,A)$; the grey lines are the ceiling $N$ of \Cref  {thm:exposure}(i) and the two plateau heights. Right: the excess energy score of a plateau score has a bump at $N\approx A$, that of the unbounded score grows like a power of $N$ (\Cref  {cor:collapsecost}), and that of the exact score decays like $1/N$.}}{20}{figure.1}\protected@file@percent }
 \newlabel{fig:plateau}{{1}{20}{The data of \Cref {tab:plateau}. Left: the over-forecast factor follows $\min (N,A)$; the grey lines are the ceiling $N$ of \Cref {thm:exposure}(i) and the two plateau heights. Right: the excess energy score of a plateau score has a bump at $N\approx A$, that of the unbounded score grows like a power of $N$ (\Cref {cor:collapsecost}), and that of the exact score decays like $1/N$}{figure.1}{}}
@@ -316,107 +316,128 @@
 \newlabel{ssec:banksweep}{{5.4}{22}{Bank-Size Sweep}{subsection.5.4}{}}
 \newlabel{ssec:banksweep@cref}{{[subsection][4][5]5.4}{[1][22][]22}}
 \@writefile{toc}{\contentsline {paragraph}{Does a larger bank help or hurt?}{22}{section*.19}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Is a ceiling enough?}{23}{section*.20}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Energy score above the oracle (\%) as the bank grows, for frozen models. Bold marks the best bank size where a curve turns around.}}{23}{table.8}\protected@file@percent }
-\newlabel{tab:banksweep}{{8}{23}{Energy score above the oracle (\%) as the bank grows, for frozen models. Bold marks the best bank size where a curve turns around}{table.8}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Heavy tails ($\nu =3$): energy score above the oracle (\%) as the bank grows, for frozen models; mean over $n$ seeds. Bold marks the best bank size where a curve turns around by more than half a point. The upper rows of each block are trained with the contrastive loss, the lower rows with the bank energy loss added (\Cref  {ssec:energytraining}).}}{23}{table.8}\protected@file@percent }
+\newlabel{tab:banksweep}{{8}{23}{Heavy tails ($\nu =3$): energy score above the oracle (\%) as the bank grows, for frozen models; mean over $n$ seeds. Bold marks the best bank size where a curve turns around by more than half a point. The upper rows of each block are trained with the contrastive loss, the lower rows with the bank energy loss added (\Cref {ssec:energytraining})}{table.8}{}}
 \newlabel{tab:banksweep@cref}{{[table][8][]8}{[1][23][]23}}
-\@writefile{toc}{\contentsline {paragraph}{What the two experiments show together.}{23}{section*.21}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Gaussian control ($\nu =\infty $): energy score above the oracle (\%) as the bank grows.}}{23}{table.9}\protected@file@percent }
+\newlabel{tab:gaussiancontrol}{{9}{23}{Gaussian control ($\nu =\infty $): energy score above the oracle (\%) as the bank grows}{table.9}{}}
+\newlabel{tab:gaussiancontrol@cref}{{[table][9][]9}{[1][23][]23}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}The $\min (N,A)$ Law in Trained Models}{23}{subsection.5.5}\protected@file@percent }
+\newlabel{ssec:amplification}{{5.5}{23}{The \texorpdfstring {$\min (N,A)$}{min(N,A)} Law in Trained Models}{subsection.5.5}{}}
+\newlabel{ssec:amplification@cref}{{[subsection][5][5]5.5}{[1][23][]23}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Heavy tails ($\nu =3$), frozen models, mean over seeds. Top: energy score above the oracle. Bottom: over-forecast factor of the event $\{\left \lvert v \right \rvert >t_p\}$ with marginal probability $p=10^{-3}$, that is, the bank weight on the event averaged over the test pasts, divided by $p$; the grey lines are the ceiling $N$ of \Cref  {thm:exposure}(i) and the value for the oracle forecast on the same pasts.}}{24}{figure.2}\protected@file@percent }
+\newlabel{fig:sweep}{{2}{24}{Heavy tails ($\nu =3$), frozen models, mean over seeds. Top: energy score above the oracle. Bottom: over-forecast factor of the event $\{\abs {v}>t_p\}$ with marginal probability $p=10^{-3}$, that is, the bank weight on the event averaged over the test pasts, divided by $p$; the grey lines are the ceiling $N$ of \Cref {thm:exposure}(i) and the value for the oracle forecast on the same pasts}{figure.2}{}}
+\newlabel{fig:sweep@cref}{{[figure][2][]2}{[1][23][]24}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Heavy tails ($\nu =3$), frozen models, mean over seeds. Left: over-forecast factor of the event $\{\left \lvert v \right \rvert >t_p\}$, $p=10^{-3}$, as the bank grows; a forecast that is calibrated on these test pasts has the value in the last row. Right: the tail amplification $\bar  A(u)$ measured by the ray probe: the share of test pasts with $\bar  A(u)>1$, and the median and $90\%$ quantile over pasts of $\log _{10}\bar  A(u)$.}}{25}{table.10}\protected@file@percent }
+\newlabel{tab:overforecast}{{10}{25}{Heavy tails ($\nu =3$), frozen models, mean over seeds. Left: over-forecast factor of the event $\{\abs {v}>t_p\}$, $p=10^{-3}$, as the bank grows; a forecast that is calibrated on these test pasts has the value in the last row. Right: the tail amplification $\bar A(u)$ measured by the ray probe: the share of test pasts with $\bar A(u)>1$, and the median and $90\%$ quantile over pasts of $\log _{10}\bar A(u)$}{table.10}{}}
+\newlabel{tab:overforecast@cref}{{[table][10][]10}{[1][23][]25}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}Scores with a Logarithmic Tail}{25}{subsection.5.6}\protected@file@percent }
+\newlabel{ssec:logtail}{{5.6}{25}{Scores with a Logarithmic Tail}{subsection.5.6}{}}
+\newlabel{ssec:logtail@cref}{{[subsection][6][5]5.6}{[1][25][]25}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces The tail theorems past by past, for the linear $\tanh $ inner product (one seed, $500$ test pasts, banks drawn from $10^{6}$ futures). Left: the population over-forecast factor of $\{\left \lvert v \right \rvert >t_p\}$, $p=10^{-3}$, against the tail amplification $\bar  A(u)$ from the ray probe; the line is the limit $t_p\to \infty $ of \Cref  {thm:tail}. Right: over-forecast factor against bank size for the pasts grouped by $\bar  A(u)$, with the ceiling $N$.}}{26}{figure.3}\protected@file@percent }
+\newlabel{fig:amplification}{{3}{26}{The tail theorems past by past, for the linear $\tanh $ inner product (one seed, $500$ test pasts, banks drawn from $10^{6}$ futures). Left: the population over-forecast factor of $\{\abs {v}>t_p\}$, $p=10^{-3}$, against the tail amplification $\bar A(u)$ from the ray probe; the line is the limit $t_p\to \infty $ of \Cref {thm:tail}. Right: over-forecast factor against bank size for the pasts grouped by $\bar A(u)$, with the ceiling $N$}{figure.3}{}}
+\newlabel{fig:amplification@cref}{{[figure][3][]3}{[1][24][]26}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}Training with the Bank Energy Loss}{26}{subsection.5.7}\protected@file@percent }
+\newlabel{ssec:energytraining}{{5.7}{26}{Training with the Bank Energy Loss}{subsection.5.7}{}}
+\newlabel{ssec:energytraining@cref}{{[subsection][7][5]5.7}{[1][25][]26}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.8}Real Heavy-Tailed Data}{26}{subsection.5.8}\protected@file@percent }
+\newlabel{ssec:realheavy}{{5.8}{26}{Real Heavy-Tailed Data}{subsection.5.8}{}}
+\newlabel{ssec:realheavy@cref}{{[subsection][8][5]5.8}{[1][26][]26}}
 \citation{stuart2026expressivity}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Real heavy-tailed series: energy score relative to climatology (\%, negative is better) at three bank sizes, over-forecast factor of the event $\{\left \lvert v \right \rvert >t_p\}$, $p=10^{-3}$, at the smallest and the largest bank, and the share of test pasts whose tail amplification from the ray probe exceeds one. Mean over seeds.}}{27}{table.11}\protected@file@percent }
+\newlabel{tab:real}{{11}{27}{Real heavy-tailed series: energy score relative to climatology (\%, negative is better) at three bank sizes, over-forecast factor of the event $\{\abs {v}>t_p\}$, $p=10^{-3}$, at the smallest and the largest bank, and the share of test pasts whose tail amplification from the ray probe exceeds one. Mean over seeds}{table.11}{}}
+\newlabel{tab:real@cref}{{[table][11][]11}{[1][27][]27}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.9}Finite Data: the Loss Matters Again}{27}{subsection.5.9}\protected@file@percent }
+\newlabel{ssec:finite}{{5.9}{27}{Finite Data: the Loss Matters Again}{subsection.5.9}{}}
+\newlabel{ssec:finite@cref}{{[subsection][9][5]5.9}{[1][27][]27}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Skill of the $L^2$ score on Jena weather data (higher is better).}}{27}{table.12}\protected@file@percent }
+\newlabel{tab:weather}{{12}{27}{Skill of the $L^2$ score on Jena weather data (higher is better)}{table.12}{}}
+\newlabel{tab:weather@cref}{{[table][12][]12}{[1][27][]27}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion and Future Work}{27}{section.6}\protected@file@percent }
+\newlabel{sec:conclusion}{{6}{27}{Conclusion and Future Work}{section.6}{}}
+\newlabel{sec:conclusion@cref}{{[section][6][]6}{[1][27][]27}}
 \citation{baptista2025mathematical}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}Finite Data: the Loss Matters Again}{24}{subsection.5.5}\protected@file@percent }
-\newlabel{ssec:finite}{{5.5}{24}{Finite Data: the Loss Matters Again}{subsection.5.5}{}}
-\newlabel{ssec:finite@cref}{{[subsection][5][5]5.5}{[1][23][]24}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Skill of the $L^2$ score on Jena weather data (higher is better).}}{24}{table.9}\protected@file@percent }
-\newlabel{tab:weather}{{9}{24}{Skill of the $L^2$ score on Jena weather data (higher is better)}{table.9}{}}
-\newlabel{tab:weather@cref}{{[table][9][]9}{[1][24][]24}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Conclusion and Future Work}{24}{section.6}\protected@file@percent }
-\newlabel{sec:conclusion}{{6}{24}{Conclusion and Future Work}{section.6}{}}
-\newlabel{sec:conclusion@cref}{{[section][6][]6}{[1][24][]24}}
-\@writefile{toc}{\contentsline {paragraph}{Scope and limitations.}{24}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Scope and limitations.}{28}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Open questions.}{28}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Proofs}{28}{appendix.A}\protected@file@percent }
+\newlabel{app:proofs}{{A}{28}{Proofs}{appendix.A}{}}
+\newlabel{app:proofs@cref}{{[appendix][1][2147483647]A}{[1][28][]28}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Proof of \Cref  {prop:target}}{28}{subsection.A.1}\protected@file@percent }
+\newlabel{app:target}{{A.1}{28}{Proof of \texorpdfstring {\Cref {prop:target}}{Proposition 3.1}}{subsection.A.1}{}}
+\newlabel{app:target@cref}{{[subappendix][1][2147483647,1]A.1}{[1][28][]28}}
 \citation{stuart2026expressivity}
 \citation{stuart2026expressivity}
 \citation{stuart2026expressivity}
 \citation{stuart2026expressivity}
-\@writefile{toc}{\contentsline {paragraph}{Open questions.}{25}{section*.23}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {A}Proofs}{25}{appendix.A}\protected@file@percent }
-\newlabel{app:proofs}{{A}{25}{Proofs}{appendix.A}{}}
-\newlabel{app:proofs@cref}{{[appendix][1][2147483647]A}{[1][25][]25}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Proof of \Cref  {prop:target}}{25}{subsection.A.1}\protected@file@percent }
-\newlabel{app:target}{{A.1}{25}{Proof of \texorpdfstring {\Cref {prop:target}}{Proposition 3.1}}{subsection.A.1}{}}
-\newlabel{app:target@cref}{{[subappendix][1][2147483647,1]A.1}{[1][25][]25}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Proof of \Cref  {thm:approxagreement}}{25}{subsection.A.2}\protected@file@percent }
-\newlabel{app:approxagreement}{{A.2}{25}{Proof of \texorpdfstring {\Cref {thm:approxagreement}}{Theorem 3.4}}{subsection.A.2}{}}
-\newlabel{app:approxagreement@cref}{{[subappendix][2][2147483647,1]A.2}{[1][25][]25}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Proof of \Cref  {prop:klblind}}{25}{subsection.A.3}\protected@file@percent }
-\newlabel{app:klblind}{{A.3}{25}{Proof of \texorpdfstring {\Cref {prop:klblind}}{Proposition 3.5}}{subsection.A.3}{}}
-\newlabel{app:klblind@cref}{{[subappendix][3][2147483647,1]A.3}{[1][25][]25}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Proof of \Cref  {prop:l2rigid}}{25}{subsection.A.4}\protected@file@percent }
-\newlabel{app:l2rigid}{{A.4}{25}{Proof of \texorpdfstring {\Cref {prop:l2rigid}}{Proposition 3.6}}{subsection.A.4}{}}
-\newlabel{app:l2rigid@cref}{{[subappendix][4][2147483647,1]A.4}{[1][25][]25}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Proof of \Cref  {prop:scalar}}{26}{subsection.A.5}\protected@file@percent }
-\newlabel{app:scalar}{{A.5}{26}{Proof of \texorpdfstring {\Cref {prop:scalar}}{Proposition 3.7}}{subsection.A.5}{}}
-\newlabel{app:scalar@cref}{{[subappendix][5][2147483647,1]A.5}{[1][26][]26}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Proof of \Cref  {prop:bounded}}{26}{subsection.A.6}\protected@file@percent }
-\newlabel{app:bounded}{{A.6}{26}{Proof of \texorpdfstring {\Cref {prop:bounded}}{Proposition 4.1}}{subsection.A.6}{}}
-\newlabel{app:bounded@cref}{{[subappendix][6][2147483647,1]A.6}{[1][26][]26}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.7}Proof of \Cref  {prop:linear}}{26}{subsection.A.7}\protected@file@percent }
-\newlabel{app:linear}{{A.7}{26}{Proof of \texorpdfstring {\Cref {prop:linear}}{Proposition 4.2}}{subsection.A.7}{}}
-\newlabel{app:linear@cref}{{[subappendix][7][2147483647,1]A.7}{[1][26][]26}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.8}Proof of \Cref  {prop:relu}}{26}{subsection.A.8}\protected@file@percent }
-\newlabel{app:relu}{{A.8}{26}{Proof of \texorpdfstring {\Cref {prop:relu}}{Proposition 4.3}}{subsection.A.8}{}}
-\newlabel{app:relu@cref}{{[subappendix][8][2147483647,1]A.8}{[1][26][]26}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.9}Proof of \Cref  {prop:price}}{26}{subsection.A.9}\protected@file@percent }
-\newlabel{app:price}{{A.9}{26}{Proof of \texorpdfstring {\Cref {prop:price}}{Proposition 4.4}}{subsection.A.9}{}}
-\newlabel{app:price@cref}{{[subappendix][9][2147483647,1]A.9}{[1][26][]26}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Proof of \Cref  {thm:approxagreement}}{29}{subsection.A.2}\protected@file@percent }
+\newlabel{app:approxagreement}{{A.2}{29}{Proof of \texorpdfstring {\Cref {thm:approxagreement}}{Theorem 3.4}}{subsection.A.2}{}}
+\newlabel{app:approxagreement@cref}{{[subappendix][2][2147483647,1]A.2}{[1][29][]29}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}Proof of \Cref  {prop:klblind}}{29}{subsection.A.3}\protected@file@percent }
+\newlabel{app:klblind}{{A.3}{29}{Proof of \texorpdfstring {\Cref {prop:klblind}}{Proposition 3.5}}{subsection.A.3}{}}
+\newlabel{app:klblind@cref}{{[subappendix][3][2147483647,1]A.3}{[1][29][]29}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Proof of \Cref  {prop:l2rigid}}{29}{subsection.A.4}\protected@file@percent }
+\newlabel{app:l2rigid}{{A.4}{29}{Proof of \texorpdfstring {\Cref {prop:l2rigid}}{Proposition 3.6}}{subsection.A.4}{}}
+\newlabel{app:l2rigid@cref}{{[subappendix][4][2147483647,1]A.4}{[1][29][]29}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Proof of \Cref  {prop:scalar}}{29}{subsection.A.5}\protected@file@percent }
+\newlabel{app:scalar}{{A.5}{29}{Proof of \texorpdfstring {\Cref {prop:scalar}}{Proposition 3.7}}{subsection.A.5}{}}
+\newlabel{app:scalar@cref}{{[subappendix][5][2147483647,1]A.5}{[1][29][]29}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.6}Proof of \Cref  {prop:bounded}}{30}{subsection.A.6}\protected@file@percent }
+\newlabel{app:bounded}{{A.6}{30}{Proof of \texorpdfstring {\Cref {prop:bounded}}{Proposition 4.1}}{subsection.A.6}{}}
+\newlabel{app:bounded@cref}{{[subappendix][6][2147483647,1]A.6}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.7}Proof of \Cref  {prop:linear}}{30}{subsection.A.7}\protected@file@percent }
+\newlabel{app:linear}{{A.7}{30}{Proof of \texorpdfstring {\Cref {prop:linear}}{Proposition 4.2}}{subsection.A.7}{}}
+\newlabel{app:linear@cref}{{[subappendix][7][2147483647,1]A.7}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.8}Proof of \Cref  {prop:relu}}{30}{subsection.A.8}\protected@file@percent }
+\newlabel{app:relu}{{A.8}{30}{Proof of \texorpdfstring {\Cref {prop:relu}}{Proposition 4.3}}{subsection.A.8}{}}
+\newlabel{app:relu@cref}{{[subappendix][8][2147483647,1]A.8}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.9}Proof of \Cref  {prop:price}}{30}{subsection.A.9}\protected@file@percent }
+\newlabel{app:price}{{A.9}{30}{Proof of \texorpdfstring {\Cref {prop:price}}{Proposition 4.4}}{subsection.A.9}{}}
+\newlabel{app:price@cref}{{[subappendix][9][2147483647,1]A.9}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.10}Proof of \Cref  {thm:bank}}{30}{subsection.A.10}\protected@file@percent }
+\newlabel{app:bank}{{A.10}{30}{Proof of \texorpdfstring {\Cref {thm:bank}}{Theorem 4.5}}{subsection.A.10}{}}
+\newlabel{app:bank@cref}{{[subappendix][10][2147483647,1]A.10}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.11}Proof of \Cref  {prop:collapse}}{30}{subsection.A.11}\protected@file@percent }
+\newlabel{app:collapse}{{A.11}{30}{Proof of \texorpdfstring {\Cref {prop:collapse}}{Proposition 4.6}}{subsection.A.11}{}}
+\newlabel{app:collapse@cref}{{[subappendix][11][2147483647,1]A.11}{[1][30][]30}}
 \citation{billingsley1968convergence}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.10}Proof of \Cref  {thm:bank}}{27}{subsection.A.10}\protected@file@percent }
-\newlabel{app:bank}{{A.10}{27}{Proof of \texorpdfstring {\Cref {thm:bank}}{Theorem 4.5}}{subsection.A.10}{}}
-\newlabel{app:bank@cref}{{[subappendix][10][2147483647,1]A.10}{[1][26][]27}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.11}Proof of \Cref  {prop:collapse}}{27}{subsection.A.11}\protected@file@percent }
-\newlabel{app:collapse}{{A.11}{27}{Proof of \texorpdfstring {\Cref {prop:collapse}}{Proposition 4.6}}{subsection.A.11}{}}
-\newlabel{app:collapse@cref}{{[subappendix][11][2147483647,1]A.11}{[1][27][]27}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.12}Proof of \Cref  {prop:twosided}}{27}{subsection.A.12}\protected@file@percent }
-\newlabel{app:twosided}{{A.12}{27}{Proof of \texorpdfstring {\Cref {prop:twosided}}{Proposition 4.7}}{subsection.A.12}{}}
-\newlabel{app:twosided@cref}{{[subappendix][12][2147483647,1]A.12}{[1][27][]27}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.13}Proofs of \Cref  {thm:tail} and \Cref  {cor:tailindex}}{27}{subsection.A.13}\protected@file@percent }
-\newlabel{app:tail}{{A.13}{27}{Proofs of \texorpdfstring {\Cref {thm:tail}}{Theorem 4.12} and \texorpdfstring {\Cref {cor:tailindex}}{Corollary 4.13}}{subsection.A.13}{}}
-\newlabel{app:tail@cref}{{[subappendix][13][2147483647,1]A.13}{[1][27][]27}}
 \citation{kotz2004multivariate}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.12}Proof of \Cref  {prop:twosided}}{31}{subsection.A.12}\protected@file@percent }
+\newlabel{app:twosided}{{A.12}{31}{Proof of \texorpdfstring {\Cref {prop:twosided}}{Proposition 4.7}}{subsection.A.12}{}}
+\newlabel{app:twosided@cref}{{[subappendix][12][2147483647,1]A.12}{[1][30][]31}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.13}Proofs of \Cref  {thm:tail} and \Cref  {cor:tailindex}}{31}{subsection.A.13}\protected@file@percent }
+\newlabel{app:tail}{{A.13}{31}{Proofs of \texorpdfstring {\Cref {thm:tail}}{Theorem 4.12} and \texorpdfstring {\Cref {cor:tailindex}}{Corollary 4.13}}{subsection.A.13}{}}
+\newlabel{app:tail@cref}{{[subappendix][13][2147483647,1]A.13}{[1][31][]31}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.14}Proofs of \Cref  {lem:tprocess} and \Cref  {cor:trichotomy}}{31}{subsection.A.14}\protected@file@percent }
+\newlabel{app:tprocess}{{A.14}{31}{Proofs of \texorpdfstring {\Cref {lem:tprocess}}{Lemma 4.14} and \texorpdfstring {\Cref {cor:trichotomy}}{Corollary 4.15}}{subsection.A.14}{}}
+\newlabel{app:tprocess@cref}{{[subappendix][14][2147483647,1]A.14}{[1][31][]31}}
 \citation{kotz2004multivariate}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.14}Proofs of \Cref  {lem:tprocess} and \Cref  {cor:trichotomy}}{28}{subsection.A.14}\protected@file@percent }
-\newlabel{app:tprocess}{{A.14}{28}{Proofs of \texorpdfstring {\Cref {lem:tprocess}}{Lemma 4.14} and \texorpdfstring {\Cref {cor:trichotomy}}{Corollary 4.15}}{subsection.A.14}{}}
-\newlabel{app:tprocess@cref}{{[subappendix][14][2147483647,1]A.14}{[1][28][]28}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.15}Proofs of \Cref  {prop:logquad}, \Cref  {prop:clip} and \Cref  {cor:floor}}{28}{subsection.A.15}\protected@file@percent }
-\newlabel{app:logquad}{{A.15}{28}{Proofs of \texorpdfstring {\Cref {prop:logquad}}{Proposition 4.16}, \texorpdfstring {\Cref {prop:clip}}{Proposition 4.17} and \texorpdfstring {\Cref {cor:floor}}{Corollary 4.18}}{subsection.A.15}{}}
-\newlabel{app:logquad@cref}{{[subappendix][15][2147483647,1]A.15}{[1][28][]28}}
-\newlabel{app:clip}{{A.15}{28}{Proofs of \texorpdfstring {\Cref {prop:logquad}}{Proposition 4.16}, \texorpdfstring {\Cref {prop:clip}}{Proposition 4.17} and \texorpdfstring {\Cref {cor:floor}}{Corollary 4.18}}{subsection.A.15}{}}
-\newlabel{app:clip@cref}{{[subappendix][15][2147483647,1]A.15}{[1][28][]28}}
-\newlabel{app:linearsat}{{A.15}{29}{Proofs of \texorpdfstring {\Cref {prop:logquad}}{Proposition 4.16}, \texorpdfstring {\Cref {prop:clip}}{Proposition 4.17} and \texorpdfstring {\Cref {cor:floor}}{Corollary 4.18}}{subsection.A.15}{}}
-\newlabel{app:linearsat@cref}{{[subappendix][15][2147483647,1]A.15}{[1][29][]29}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.16}Proof of \Cref  {thm:exposure}}{29}{subsection.A.16}\protected@file@percent }
-\newlabel{app:exposure}{{A.16}{29}{Proof of \texorpdfstring {\Cref {thm:exposure}}{Theorem 4.21}}{subsection.A.16}{}}
-\newlabel{app:exposure@cref}{{[subappendix][16][2147483647,1]A.16}{[1][29][]29}}
-\newlabel{eq:condweight}{{22}{29}{Proof of \texorpdfstring {\Cref {thm:exposure}}{Theorem 4.21}}{equation.A.22}{}}
-\newlabel{eq:condweight@cref}{{[equation][22][2147483647]22}{[1][29][]29}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.15}Proofs of \Cref  {prop:logquad}, \Cref  {prop:clip} and \Cref  {cor:floor}}{32}{subsection.A.15}\protected@file@percent }
+\newlabel{app:logquad}{{A.15}{32}{Proofs of \texorpdfstring {\Cref {prop:logquad}}{Proposition 4.16}, \texorpdfstring {\Cref {prop:clip}}{Proposition 4.17} and \texorpdfstring {\Cref {cor:floor}}{Corollary 4.18}}{subsection.A.15}{}}
+\newlabel{app:logquad@cref}{{[subappendix][15][2147483647,1]A.15}{[1][32][]32}}
+\newlabel{app:clip}{{A.15}{32}{Proofs of \texorpdfstring {\Cref {prop:logquad}}{Proposition 4.16}, \texorpdfstring {\Cref {prop:clip}}{Proposition 4.17} and \texorpdfstring {\Cref {cor:floor}}{Corollary 4.18}}{subsection.A.15}{}}
+\newlabel{app:clip@cref}{{[subappendix][15][2147483647,1]A.15}{[1][32][]32}}
+\newlabel{app:linearsat}{{A.15}{32}{Proofs of \texorpdfstring {\Cref {prop:logquad}}{Proposition 4.16}, \texorpdfstring {\Cref {prop:clip}}{Proposition 4.17} and \texorpdfstring {\Cref {cor:floor}}{Corollary 4.18}}{subsection.A.15}{}}
+\newlabel{app:linearsat@cref}{{[subappendix][15][2147483647,1]A.15}{[1][32][]32}}
 \citation{sejdinovic2013equivalence}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.17}Proof of \Cref  {lem:energytail}}{30}{subsection.A.17}\protected@file@percent }
-\newlabel{app:energytail}{{A.17}{30}{Proof of \texorpdfstring {\Cref {lem:energytail}}{Lemma 4.22}}{subsection.A.17}{}}
-\newlabel{app:energytail@cref}{{[subappendix][17][2147483647,1]A.17}{[1][30][]30}}
-\newlabel{eq:witness}{{23}{30}{Proof of \texorpdfstring {\Cref {lem:energytail}}{Lemma 4.22}}{equation.A.23}{}}
-\newlabel{eq:witness@cref}{{[equation][23][2147483647]23}{[1][30][]30}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.18}Proofs of \Cref  {thm:energycost} and \Cref  {cor:collapsecost}}{30}{subsection.A.18}\protected@file@percent }
-\newlabel{app:energycost}{{A.18}{30}{Proofs of \texorpdfstring {\Cref {thm:energycost}}{Theorem 4.23} and \texorpdfstring {\Cref {cor:collapsecost}}{Corollary 4.24}}{subsection.A.18}{}}
-\newlabel{app:energycost@cref}{{[subappendix][18][2147483647,1]A.18}{[1][30][]30}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.16}Proof of \Cref  {thm:exposure}}{33}{subsection.A.16}\protected@file@percent }
+\newlabel{app:exposure}{{A.16}{33}{Proof of \texorpdfstring {\Cref {thm:exposure}}{Theorem 4.21}}{subsection.A.16}{}}
+\newlabel{app:exposure@cref}{{[subappendix][16][2147483647,1]A.16}{[1][33][]33}}
+\newlabel{eq:condweight}{{22}{33}{Proof of \texorpdfstring {\Cref {thm:exposure}}{Theorem 4.21}}{equation.A.22}{}}
+\newlabel{eq:condweight@cref}{{[equation][22][2147483647]22}{[1][33][]33}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.17}Proof of \Cref  {lem:energytail}}{33}{subsection.A.17}\protected@file@percent }
+\newlabel{app:energytail}{{A.17}{33}{Proof of \texorpdfstring {\Cref {lem:energytail}}{Lemma 4.22}}{subsection.A.17}{}}
+\newlabel{app:energytail@cref}{{[subappendix][17][2147483647,1]A.17}{[1][33][]33}}
+\newlabel{eq:witness}{{23}{34}{Proof of \texorpdfstring {\Cref {lem:energytail}}{Lemma 4.22}}{equation.A.23}{}}
+\newlabel{eq:witness@cref}{{[equation][23][2147483647]23}{[1][33][]34}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.18}Proofs of \Cref  {thm:energycost} and \Cref  {cor:collapsecost}}{34}{subsection.A.18}\protected@file@percent }
+\newlabel{app:energycost}{{A.18}{34}{Proofs of \texorpdfstring {\Cref {thm:energycost}}{Theorem 4.23} and \texorpdfstring {\Cref {cor:collapsecost}}{Corollary 4.24}}{subsection.A.18}{}}
+\newlabel{app:energycost@cref}{{[subappendix][18][2147483647,1]A.18}{[1][34][]34}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.19}Proof of \Cref  {prop:klvsenergy}}{34}{subsection.A.19}\protected@file@percent }
+\newlabel{app:klvsenergy}{{A.19}{34}{Proof of \texorpdfstring {\Cref {prop:klvsenergy}}{Proposition 4.25}}{subsection.A.19}{}}
+\newlabel{app:klvsenergy@cref}{{[subappendix][19][2147483647,1]A.19}{[1][34][]34}}
 \citation{hoeffding1961strong}
 \bibcite{baptista2025mathematical}{{1}{}{{}}{{}}}
 \bibcite{stuart2026expressivity}{{2}{}{{}}{{}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.19}Proof of \Cref  {prop:klvsenergy}}{31}{subsection.A.19}\protected@file@percent }
-\newlabel{app:klvsenergy}{{A.19}{31}{Proof of \texorpdfstring {\Cref {prop:klvsenergy}}{Proposition 4.25}}{subsection.A.19}{}}
-\newlabel{app:klvsenergy@cref}{{[subappendix][19][2147483647,1]A.19}{[1][31][]31}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.20}Proof of \Cref  {prop:bankenergy}}{31}{subsection.A.20}\protected@file@percent }
-\newlabel{app:bankenergy}{{A.20}{31}{Proof of \texorpdfstring {\Cref {prop:bankenergy}}{Proposition 4.27}}{subsection.A.20}{}}
-\newlabel{app:bankenergy@cref}{{[subappendix][20][2147483647,1]A.20}{[1][31][]31}}
-\@writefile{toc}{\contentsline {paragraph}{Reproducibility.}{31}{section*.24}\protected@file@percent }
 \bibcite{radford2021clip}{{3}{}{{}}{{}}}
 \bibcite{oord2018cpc}{{4}{}{{}}{{}}}
 \bibcite{poole2019variational}{{5}{}{{}}{{}}}
@@ -424,6 +445,10 @@
 \bibcite{sordoni2021decomposed}{{7}{}{{}}{{}}}
 \bibcite{song2020limitations}{{8}{}{{}}{{}}}
 \bibcite{chen2020simclr}{{9}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.20}Proof of \Cref  {prop:bankenergy}}{35}{subsection.A.20}\protected@file@percent }
+\newlabel{app:bankenergy}{{A.20}{35}{Proof of \texorpdfstring {\Cref {prop:bankenergy}}{Proposition 4.27}}{subsection.A.20}{}}
+\newlabel{app:bankenergy@cref}{{[subappendix][20][2147483647,1]A.20}{[1][34][]35}}
+\@writefile{toc}{\contentsline {paragraph}{Reproducibility.}{35}{section*.22}\protected@file@percent }
 \bibcite{wang2020understanding}{{10}{}{{}}{{}}}
 \bibcite{chou2024embedding}{{11}{}{{}}{{}}}
 \bibcite{bengtsson2008curse}{{12}{}{{}}{{}}}
@@ -443,4 +468,4 @@
 \bibcite{sejdinovic2013equivalence}{{26}{}{{}}{{}}}
 \bibcite{hoeffding1961strong}{{27}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\gdef \@abspage@last{33}
+\gdef \@abspage@last{37}

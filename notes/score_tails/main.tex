@@ -1610,8 +1610,12 @@ We test the predictions of \Cref{sec:invariance,sec:tails} on synthetic
 processes, each of which relaxes one assumption of the Gaussian setting, and
 on real weather data. \Cref{ssec:setup} describes the setup.
 \Cref{ssec:lossvariants} tests the loss invariance of
-\Cref{sec:invariance}, \Cref{ssec:heavytails,ssec:banksweep} test the tail
-results of \Cref{sec:tails}, and \Cref{ssec:finite} discusses finite data.
+\Cref{sec:invariance}, \Cref{ssec:heavytails,ssec:banksweep} test the
+admissibility results of \Cref{sec:tails},
+\Cref{ssec:amplification,ssec:logtail,ssec:energytraining} test the results
+on saturating scores of \Cref{ssec:saturation},
+\Cref{ssec:realheavy} repeats the tail experiments on real heavy-tailed
+series, and \Cref{ssec:finite} discusses finite data.
 
 \subsection{Setup}
 \label{ssec:setup}
@@ -1642,12 +1646,15 @@ is this Gaussian process, the setting of \cite{baptista2025mathematical}:
 \end{itemize}
 Each synthetic setting uses $200$k training pairs, a bank of $50$k held-out
 futures, $500$ test cases and $2$ seeds, so that differences below about
-$1\%$ are noise.
+$1\%$ are noise. The tail experiments of
+\Cref{ssec:banksweep,ssec:amplification,ssec:logtail,ssec:energytraining}
+use banks of up to $200$k futures and more seeds, as stated there.
 
 \paragraph{Real data.}
 We use one year (2020) of 10-minute readings from the Jena weather station. We
 forecast the next 6\,h of temperature from the last day of six variable
 groups, and the next 6\,h of rain from past pressure, wind and moisture.
+Three larger heavy-tailed series are introduced in \Cref{ssec:realheavy}.
 
 \paragraph{Encoders.}
 Linear encoders reproduce the setting of \cite{baptista2025mathematical}.
@@ -1726,90 +1733,319 @@ burst''. Normalization helps exactly where tails are heavy, and only there.
 \subsection{Bank-Size Sweep}
 \label{ssec:banksweep}
 
-The two experiments in this subsection test \Cref{thm:bank}, \Cref{prop:collapse},
-and \Cref{prop:extremity} directly. Each model is trained as in \Cref{ssec:setup}
-($15$k steps, batch size $256$) and then frozen; only the bank changes. The
-forecast is rebuilt from held-out banks of size $N=100$ up to $N=200{,}000$,
-with up to $3$ disjoint banks per size, on the same $500$ test pasts. We record
-the energy score above the oracle, the largest bank weight and, for collapsed
-forecasts (largest weight $>0.5$), how extreme the winning future is, measured
-by its percentile by norm within the bank.
+The experiments in this and the next three subsections test the tail results
+of \Cref{sec:tails} on the heavy-tailed domain ($\nu=3$). Each model is
+trained as in \Cref{ssec:setup} ($15$k steps, batch size $256$) and then
+frozen; only the bank changes. The forecast is rebuilt from held-out banks of
+size $N=100$ up to $N=200{,}000$, with up to $4$ disjoint banks per size, on
+the same $500$ test pasts. Every seed has its own training set, test pasts
+and banks, and the tables report the mean over the seeds available (column
+$n$). Besides the scores of \Cref{ex:scores} and the $\tanh$ inner product,
+we train the two scores with a logarithmic tail suggested by
+\Cref{ssec:saturation}: the Student-$t$ kernel score \eqref{eq:tkernel} with a
+learnable exponent $b$, and the log-quadratic family
+\eqref{eq:logquadfamily} with learnable $b,b_u,b_v$ and linear maps $f_0,g_0$.
 
 \paragraph{Does a larger bank help or hurt?}
-\Cref{thm:bank} and \Cref{prop:collapse} predict that bounded scores improve and level
-off as the bank grows, and that the unbounded inner product turns around and
-gets worse. The prediction holds (\Cref{tab:banksweep}). On heavy tails, the
-unbounded inner product is best at a small bank and then gets steadily worse:
-with MLP encoders from $+7\%$ at $3$k futures to $+46\%$ at $200$k, and with
-linear encoders from $+33\%$ to over $+3000\%$. Every bounded score improves
-and levels off. On the Gaussian control the same unbounded score also
-improves and levels off (at $+5.7\%$ for linear encoders, matching
-\Cref{ssec:lossvariants}), so the turnaround is caused by the tails and not
-by the score alone. The collapse diagnostic shows the mechanism directly:
-with linear encoders, $20\%$ of the forecasts of the inner product at
-$N=200$k put more than half their weight on one future, and that future is
-the most extreme in the bank ($99.998$th percentile by size).
-
-\paragraph{Is a ceiling enough?}
-\Cref{prop:bounded} implies that a $\tanh$ output layer on the future encoder
-makes the inner product admissible without normalizing anything. The result
-is only a partial fix (\Cref{tab:banksweep}, second row of each block). It is
-far better than the uncapped inner product ($+103\%$ against $+3358\%$ with
-linear encoders, $+7.5\%$ against $+46\%$ with MLPs, at $N=200$k), but it
-still turns around: in one MLP seed it improves to $+1.2\%$, in the other it
-rises from $+8\%$ to $+14\%$, and with linear encoders it rises from $+22\%$
-to $+103\%$. Its forecasts rarely collapse onto one future, but the futures
-they favour are still the most extreme in the bank ($99.99$th percentile).
-
-This behaviour is explained by \Cref{prop:extremity}. The ceiling makes the
-model exist, so the bank forecast converges. However, along a ray $tv_0$ the
-input to the $\tanh$ layer typically grows without bound, so each coordinate
-saturates and the score tends to a limit $\ell(u,v_0)$. In every direction
-where $\ell(u,v_0)>\log Z(u)$, \Cref{prop:extremity}(i) gives extreme futures
-a weight tending to $e^{\ell(u,v_0)}/Z(u)>1$, more than they carry under the
-marginal. A small bank contains few extreme trajectories and masks this tail
-amplification; a large bank populates the tail and exposes it.
+\Cref{thm:bank} and \Cref{prop:collapse} predict that the unbounded inner
+product turns around and gets worse as the bank grows;
+\Cref{thm:exposure,thm:energycost} predict the same, more mildly, for a score
+that saturates high, and no turnaround for coercive and logarithmic scores.
+\Cref{tab:banksweep} and the top row of \Cref{fig:sweep} confirm all three.
+The unbounded inner product is best at a small bank and then deteriorates
+steadily, by orders of magnitude with linear encoders, as
+\Cref{cor:collapsecost} predicts. The inner product with a $\tanh$ future
+encoder exists as a model and is far better, but it also turns around. The
+normalized cosine with MLP encoders, joint $L^2$, and both logarithmic scores
+improve monotonically and level off. On the Gaussian control the unbounded
+and the $\tanh$ inner products also improve and level off
+(\Cref{tab:gaussiancontrol}), so the turnaround is caused by the tails and
+not by the score alone.
 
 \begin{table}[ht]
  \centering
  \footnotesize
  \setlength{\tabcolsep}{3.5pt}
- \begin{tabular}{llrrrrrr}
+ \begin{tabular}{lcrrrrrr}
   \toprule
-                            & model                         & $N=100$          & 1k               & 3k              & 30k             & 100k    & 200k    \\
+  model & $n$ & $N=100$ & 1k & 10k & 30k & 100k & 200k \\
   \midrule
-  heavy tails, MLP          & inner product (unbounded)     & $+33.6$          & $+8.7$           & $\mathbf{+7.1}$ & $+17.5$         & $+34.5$ & $+46.3$ \\
-                            & inner product, $\tanh$ future & $+37.0$          & $+9.7$           & $+6.7$          & $\mathbf{+3.2}$ & $+5.4$  & $+7.5$  \\
-                            & $L^2$ one-way                 & $+36.8$          & $+11.8$          & $+8.0$          & $+4.5$          & $+3.8$  & $+2.9$  \\
-                            & $L^2$ joint                   & $+31.5$          & $+6.2$           & $+3.2$          & $+0.9$          & $+0.7$  & $+0.6$  \\
-                            & normalized cosine             & $+41.8$          & $+8.0$           & $+3.5$          & $+1.0$          & $+0.8$  & $+0.8$  \\
+  \multicolumn{8}{l}{\emph{MLP encoders}} \\
+%%BEGIN:banksweep_mlp
+  inner product & 1 & $+31.8$ & $\mathbf{+11.4}$ & $+22.6$ & $+24.3$ & $+34.7$ & $+44.9$ \\
+  inner product, $\tanh$ future & 1 & $+37.1$ & $+13.7$ & $+7.2$ & $\mathbf{+6.7}$ & $+7.0$ & $+9.3$ \\
+  normalized cosine & 1 & $+40.1$ & $+9.2$ & $+1.7$ & $+1.1$ & $+0.9$ & $+0.8$ \\
+  $L^2$ one-way & 1 & $+35.4$ & $+16.2$ & $+9.5$ & $+7.8$ & $\mathbf{+6.9}$ & $+7.7$ \\
+  $L^2$ joint & 1 & $+34.2$ & $+8.8$ & $+1.8$ & $+1.1$ & $+0.6$ & $+0.5$ \\
+  Student-$t$ kernel, one-way & 1 & $+34.7$ & $+11.2$ & $+3.1$ & $+1.5$ & $+0.9$ & $+0.7$ \\
+  Student-$t$ kernel, joint & 1 & $+29.3$ & $+7.9$ & $+2.2$ & $+1.7$ & $+1.0$ & $+0.8$ \\
   \midrule
-  heavy tails, linear       & inner product (unbounded)     & $\mathbf{+33.2}$ & $+38.7$          & $+70.2$         & $+1253$         & $+2705$ & $+3358$ \\
-                            & inner product, $\tanh$ future & $+28.0$          & $\mathbf{+22.1}$ & $+24.5$         & $+64.1$         & $+92.3$ & $+102.6$\\
-                            & $L^2$ one-way                 & $+22.8$          & $+8.1$           & $+5.8$          & $+4.6$          & $+4.3$  & $+4.2$  \\
-                            & $L^2$ joint                   & $+21.5$          & $+7.8$           & $+5.7$          & $+4.5$          & $+4.5$  & $+4.5$  \\
-                            & normalized cosine             & $+25.4$          & $+23.5$          & $+23.2$         & $+23.1$         & $+23.0$ & $+23.1$ \\
+  inner product $+$ bank energy & 1 & $+21.6$ & $\mathbf{+4.5}$ & $+9.4$ & $+8.4$ & $+16.6$ & $+15.6$ \\
+  $\tanh$ future $+$ bank energy & 1 & $+22.7$ & $+3.2$ & $+1.1$ & $+1.0$ & $+0.9$ & $+0.9$ \\
+  normalized cosine $+$ bank energy & 1 & $+27.0$ & $+3.6$ & $+1.1$ & $+1.0$ & $+0.9$ & $+0.8$ \\
+  inner product, bank energy only & 1 & $+11.2$ & $+3.1$ & $+2.0$ & $+1.9$ & $+1.9$ & $+1.9$ \\
+%%END:banksweep_mlp
   \midrule
-  Gaussian, MLP             & inner product (unbounded)     & $+13.7$          & $+2.9$           & $+1.5$          & $+2.0$          & $+1.8$  & $+1.8$  \\
-  Gaussian, linear          & inner product (unbounded)     & $+9.9$           & $+6.4$           & $+6.1$          & $+5.8$          & $+5.7$  & $+5.7$  \\
+  \multicolumn{8}{l}{\emph{linear encoders}} \\
+%%BEGIN:banksweep_linear
+  inner product & 1 & $+31.8$ & $\mathbf{+31.8}$ & $+281.4$ & $+1{,}077$ & $+2{,}857$ & $+4{,}830$ \\
+  inner product, $\tanh$ future & 1 & $+26.3$ & $\mathbf{+23.1}$ & $+24.5$ & $+28.1$ & $+31.3$ & $+31.2$ \\
+  normalized cosine & 1 & $+25.1$ & $+23.2$ & $+22.9$ & $+22.9$ & $+22.7$ & $+22.8$ \\
+  $L^2$ one-way & 1 & $+21.1$ & $+8.9$ & $+5.8$ & $\mathbf{+5.4}$ & $+5.8$ & $+6.4$ \\
+  $L^2$ joint & 1 & $+19.6$ & $+8.2$ & $+5.7$ & $+5.4$ & $+5.2$ & $+5.3$ \\
+  Student-$t$ kernel, one-way & 1 & $+17.2$ & $+6.7$ & $+5.1$ & $+4.9$ & $+4.9$ & $+4.9$ \\
+  Student-$t$ kernel, joint & 1 & $+18.3$ & $+8.2$ & $+5.6$ & $+5.2$ & $+5.0$ & $+5.0$ \\
+  \midrule
+  inner product $+$ bank energy & 1 & $+33.3$ & $\mathbf{+30.8}$ & $+123.1$ & $+751.5$ & $+1{,}962$ & $+3{,}252$ \\
+  $\tanh$ future $+$ bank energy & 1 & $+23.5$ & $+14.5$ & $+13.3$ & $\mathbf{+13.1}$ & $+14.7$ & $+15.2$ \\
+%%END:banksweep_linear
   \bottomrule
  \end{tabular}
- \caption{Energy score above the oracle (\%) as the bank grows, for frozen
-  models. Bold marks the best bank size where a curve turns around.}
+ \caption{Heavy tails ($\nu=3$): energy score above the oracle (\%) as the
+  bank grows, for frozen models; mean over $n$ seeds. Bold marks the best
+  bank size where a curve turns around by more than half a point. The upper
+  rows of each block are trained with the contrastive loss, the lower rows
+  with the bank energy loss added (\Cref{ssec:energytraining}).}
  \label{tab:banksweep}
 \end{table}
 
-\paragraph{What the two experiments show together.}
-The scores that perform reliably across bank sizes either \emph{penalize}
-extreme futures ($\sltwo$ decreases towards $-\infty$ as $g(v)$ moves away from
-$f(u)$) or are \emph{scale-invariant} in the future representation ($\sncos$
-depends only on the direction of $g(v)$). It is not the height of the ceiling
-that matters: the learned scale of the normalized cosine is about
-$\kappa\approx72$, so the worst-case bound of \Cref{prop:twosided} is loose,
-and yet it is the best model here. The underlying reason is
-\Cref{rem:training}: finite-batch training rarely samples the far tail, so
-asymptotic behaviour is governed by the inductive bias of the score
-architecture rather than learned from data.
+\begin{table}[ht]
+ \centering
+ \footnotesize
+ \setlength{\tabcolsep}{3.5pt}
+ \begin{tabular}{lcrrrrrr}
+  \toprule
+  model & $n$ & $N=100$ & 1k & 10k & 30k & 100k & 200k \\
+  \midrule
+%%BEGIN:gaussian
+
+%%END:gaussian
+  \bottomrule
+ \end{tabular}
+ \caption{Gaussian control ($\nu=\infty$): energy score above the oracle (\%)
+  as the bank grows.}
+ \label{tab:gaussiancontrol}
+\end{table}
+
+\begin{figure}[ht]
+ \centering
+ \includegraphics[width=\textwidth]{figs/sweep_t3.pdf}
+ \caption{Heavy tails ($\nu=3$), frozen models, mean over seeds. Top: energy
+  score above the oracle. Bottom: over-forecast factor of the event
+  $\{\abs{v}>t_p\}$ with marginal probability $p=10^{-3}$, that is, the bank
+  weight on the event averaged over the test pasts, divided by $p$; the grey
+  lines are the ceiling $N$ of \Cref{thm:exposure}(i) and the value for the
+  oracle forecast on the same pasts.}
+ \label{fig:sweep}
+\end{figure}
+
+\subsection{The \texorpdfstring{$\min(N,A)$}{min(N,A)} Law in Trained Models}
+\label{ssec:amplification}
+
+\Cref{thm:exposure} is a statement about the weight on extreme futures, and
+it can be tested directly. For each frozen model we record two quantities.
+The first is the \emph{over-forecast factor} of the event
+$T_p=\{\abs{v}>t_p\}$, where $t_p$ is the $(1-p)$ quantile of $\abs{v}$ under
+the marginal: the bank weight on $T_p$, averaged over the test pasts, divided
+by $p$. The second is a \emph{ray probe} of the tail amplification, which
+needs no tail data: we evaluate the frozen score on $1000$ bank futures
+multiplied by $c=1000$, subtract the estimate of $\log Z(u)$ from the largest
+bank, and average over the directions to obtain $\bar A(u)$ of
+\eqref{eq:amplification}.
+
+\begin{table}[ht]
+ \centering
+ \footnotesize
+ \setlength{\tabcolsep}{3pt}
+ \begin{tabular}{lrrrrrr|ccc}
+  \toprule
+        & \multicolumn{6}{c|}{over-forecast factor, $p=10^{-3}$} & \multicolumn{3}{c}{ray probe of $\bar A(u)$} \\
+  model & $N=100$ & 1k & 10k & 30k & 100k & 200k & share $>1$ & median & $90\%$ \\
+  \midrule
+  \multicolumn{10}{l}{\emph{MLP encoders}} \\
+%%BEGIN:overforecast_mlp
+  inner product & 0.00 & 0.00 & 8.61 & 11.4 & 12.3 & 15.2 & 0.04 & $<-99$ & $<-99$ \\
+  inner product, $\tanh$ future & 0.00 & 0.00 & 1.01 & 1.83 & 2.74 & 2.81 & 0.02 & $-17.8$ & $-7.8$ \\
+  normalized cosine & 0.00 & 0.00 & 0.41 & 0.37 & 0.38 & 0.38 & 0.01 & $-35.0$ & $-14.7$ \\
+  $L^2$ one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $<-99$ & $<-99$ \\
+  $L^2$ joint & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $<-99$ & $<-99$ \\
+  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.01 & 0.01 & 0.01 & 0.00 & $-77.5$ & $-68.0$ \\
+  Student-$t$ kernel, joint & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $-19.0$ & $-18.9$ \\
+  inner product $+$ bank energy & 0.00 & 0.00 & 5.03 & 4.05 & 7.29 & 8.41 & 0.02 & $<-99$ & $<-99$ \\
+  $\tanh$ future $+$ bank energy & 0.00 & 0.15 & 0.51 & 0.47 & 0.53 & 0.54 & 0.04 & $-14.6$ & $-2.2$ \\
+  normalized cosine $+$ bank energy & 0.00 & 0.13 & 0.53 & 0.52 & 0.51 & 0.51 & 0.03 & $-18.3$ & $-3.1$ \\
+  inner product, bank energy only & 0.00 & 0.12 & 0.10 & 0.07 & 0.08 & 0.08 & 0.14 & $<-99$ & $16.8$ \\
+  \midrule
+  oracle forecast & \multicolumn{6}{c}{0.011} & & & \\
+%%END:overforecast_mlp
+  \midrule
+  \multicolumn{10}{l}{\emph{linear encoders}} \\
+%%BEGIN:overforecast_linear
+  inner product & 0.00 & 6.83 & 107 & 164 & 299 & 428 & 1.00 & $463.7$ & $1595.3$ \\
+  inner product, $\tanh$ future & 0.00 & 0.46 & 3.91 & 4.98 & 7.18 & 7.87 & 1.00 & $0.5$ & $2.2$ \\
+  normalized cosine & 0.00 & 0.35 & 1.36 & 1.23 & 1.23 & 1.23 & 0.58 & $0.0$ & $0.0$ \\
+  $L^2$ one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $<-99$ & $<-99$ \\
+  $L^2$ joint & 0.00 & 0.00 & 0.19 & 0.18 & 0.13 & 0.13 & 0.00 & $-14.0$ & $-8.6$ \\
+  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $-34.5$ & $-28.8$ \\
+  Student-$t$ kernel, joint & 0.00 & 0.00 & 0.15 & 0.16 & 0.12 & 0.12 & 0.00 & $-6.8$ & $-6.0$ \\
+  inner product $+$ bank energy & 0.00 & 2.15 & 45.2 & 105 & 207 & 300 & 1.00 & $297.3$ & $990.0$ \\
+  $\tanh$ future $+$ bank energy & 0.00 & 0.56 & 2.51 & 2.64 & 3.32 & 3.72 & 1.00 & $0.2$ & $1.0$ \\
+  \midrule
+  oracle forecast & \multicolumn{6}{c}{0.011} & & & \\
+%%END:overforecast_linear
+  \bottomrule
+ \end{tabular}
+ \caption{Heavy tails ($\nu=3$), frozen models, mean over seeds. Left:
+  over-forecast factor of the event $\{\abs{v}>t_p\}$, $p=10^{-3}$, as the
+  bank grows; a forecast that is calibrated on these test pasts has the value
+  in the last row. Right: the tail amplification $\bar A(u)$ measured by the
+  ray probe: the share of test pasts with $\bar A(u)>1$, and the median and
+  $90\%$ quantile over pasts of $\log_{10}\bar A(u)$.}
+ \label{tab:overforecast}
+\end{table}
+
+The left half of \Cref{tab:overforecast} and the bottom row of
+\Cref{fig:sweep} show the three regimes of \Cref{thm:exposure}. For the
+unbounded inner product the factor keeps growing with the bank. For the
+$\tanh$ inner product it grows and then bends over. For the normalized cosine
+it settles near or below one. For $L^2$ and for the logarithmic scores it
+stays near the value of the oracle forecast, far below one: on a typical
+past, the event is far less likely than it is a priori, which is
+\Cref{lem:tprocess}. The right half shows where the regimes come from. With
+linear encoders every past has $\bar A(u)>1$ under the inner product and its
+$\tanh$ version, in line with \Cref{prop:linearsat}(ii), the linear normalized
+cosine has $\bar A(u)=1$ up to sampling error, which is
+\Cref{prop:linearsat}(i), and the coercive and logarithmic scores have
+$\bar A(u)=0$. With MLP encoders the amplification of the saturating scores
+is below one for most pasts and above one for a few: the turnaround of
+\Cref{tab:banksweep} is driven by a small fraction of pasts with a very
+large amplification.
+
+\begin{figure}[ht]
+ \centering
+ \includegraphics[width=\textwidth]{figs/amplification.pdf}
+ \caption{The tail theorems past by past, for the linear $\tanh$ inner
+  product (one seed, $500$ test pasts, banks drawn from $10^{6}$ futures).
+  Left: the population over-forecast factor of $\{\abs{v}>t_p\}$, $p=10^{-3}$,
+  against the tail amplification $\bar A(u)$ from the ray probe; the line is
+  the limit $t_p\to\infty$ of \Cref{thm:tail}. Right: over-forecast factor
+  against bank size for the pasts grouped by $\bar A(u)$, with the ceiling
+  $N$.}
+ \label{fig:amplification}
+\end{figure}
+
+\Cref{fig:amplification} checks the theorems past by past for one model. By
+\Cref{thm:tail}, the population over-forecast factor of $\{\abs{v}>t\}$ at a
+past $u$ tends to $\bar A(u)$ as $t\to\infty$. The amplification measured by
+the ray probe, which uses no extreme futures, predicts the over-forecast
+factor measured with a bank of $10^{6}$ futures with a rank correlation of
+%%BEGIN:spearman
+$0.96$ ($p=10^{-3}$) and $0.97$ ($p=10^{-4}$)
+%%END:spearman
+across pasts; at these finite thresholds the factor is still below its
+limit, and it increases towards it as $p$ decreases. Grouping the pasts by
+$\bar A(u)$, the groups with a small amplification reach their plateau at the
+smallest banks, while for the group with the largest amplification the
+factor is still growing at $N=10^{6}$, as the $\min(N,A)$ law requires.
+
+\subsection{Scores with a Logarithmic Tail}
+\label{ssec:logtail}
+
+\Cref{cor:trichotomy} and \Cref{prop:logquad} say that on this data the
+score should decay logarithmically in the future, and that the log-quadratic
+family contains the truth with \emph{linear} encoders. Both predictions hold
+(\Cref{tab:banksweep}). With linear encoders, the log-quadratic family is
+the only one that comes close to the oracle; linear $L^2$, the well-specified
+family of the Gaussian case, levels off several points above it. With MLP
+encoders, the Student-$t$ kernel score trained with the \emph{one-way} loss
+matches the best models, whereas one-way $L^2$ does not; the one-way loss is
+the well-specified variant for forecasting, and with a score that has the
+right tail it no longer needs the regularizing effect of the joint loss
+discussed in \Cref{ssec:finite}. The learned exponents are finite and of the
+order of the dimension of the past
+%%BEGIN:exponents
+($b\approx28$ for the one-way Student-$t$ kernel with MLP encoders, against $d_u=50$),
+%%END:exponents
+so the models choose a polynomial, not a Gaussian, tail.
+
+\subsection{Training with the Bank Energy Loss}
+\label{ssec:energytraining}
+
+Finally we train with the loss $J_{\mathrm{KL}}+\lambda J^{\mathrm{E}}_{K}$ of
+\Cref{ssec:saturation}: the contrastive loss of each score, plus the energy
+score of the bank forecast built from $K=512$ training futures drawn afresh
+at every step, in units of the climatological spread
+$\E\abs{v-v'}$, with $\lambda=10$. Nothing else changes. The lower rows of
+each block of \Cref{tab:banksweep,tab:overforecast} give the result.
+
+For the $\tanh$ inner product with MLP encoders the turnaround disappears:
+the model now improves monotonically with the bank and ends within about a
+point of the oracle, next to the best models, and its over-forecast factor
+drops below one. The loss has taught the encoders to place extreme futures
+low. With linear encoders the improvement is partial, as it must be: by
+\Cref{prop:linearsat}(ii) and \Cref{rem:corners} no parameter of that family
+places them low for every past. The same holds for the unbounded inner
+product, for which the energy term reduces the damage but cannot remove it:
+a bank of $K=512$ futures exposes a plateau or a growth direction only up to
+amplification of order $K$ (\Cref{thm:energycost}), and the family has no
+admissible informative member (\Cref{prop:relu}). Training with the bank
+energy loss alone, without the contrastive term, also removes the turnaround
+but gives a flatter forecast that levels off slightly higher, as anticipated
+after \Cref{prop:bankenergy}. For scores that already have a harmless tail
+the added term changes little.
+
+\subsection{Real Heavy-Tailed Data}
+\label{ssec:realheavy}
+
+We repeat the sweep on three real series with heavy-tailed futures, chosen
+from different fields and large enough to vary the bank over three orders of
+magnitude: one-minute log returns of the BTC/USDT exchange rate
+(2019--2024, $3.2$ million minutes), ten-minute rainfall at the Jena station
+(2003--2025), and fifteen-minute discharge of an urban stream (USGS gauge
+02336300, 1986--2025). In each case the past is a window of $64$ steps of the
+target (plus traded volume for the returns, and humidity and pressure for
+the rain) and the future the next $16$ steps; time is split chronologically
+into a training period, a bank period and a test period, separated by gaps.
+No oracle is available, so the energy score is reported relative to
+climatology, the unweighted bank, and negative values are better; the
+over-forecast factor is relative to the marginal frequency of the event in
+the training and bank periods.
+
+\begin{table}[ht]
+ \centering
+ \footnotesize
+ \setlength{\tabcolsep}{3.5pt}
+ \begin{tabular}{llrrr|rr|c}
+  \toprule
+           &       & \multicolumn{3}{c|}{energy vs.\ climatology (\%)} & \multicolumn{2}{c|}{over-forecast, $p=10^{-3}$} & $\bar A>1$ \\
+  encoders & model & $N=1$k & 10k & all & $N=1$k & all & share \\
+  \midrule
+  \multicolumn{8}{l}{\emph{BTC/USDT one-minute returns} (bank of $118$k futures)} \\
+%%BEGIN:real_btc
+
+%%END:real_btc
+  \midrule
+  \multicolumn{8}{l}{\emph{Jena ten-minute rainfall} (bank of $87$k futures)} \\
+%%BEGIN:real_rain
+
+%%END:real_rain
+  \midrule
+  \multicolumn{8}{l}{\emph{Peachtree Creek fifteen-minute discharge} (bank of $95$k futures)} \\
+%%BEGIN:real_flow
+
+%%END:real_flow
+  \bottomrule
+ \end{tabular}
+ \caption{Real heavy-tailed series: energy score relative to climatology
+  (\%, negative is better) at three bank sizes, over-forecast factor of the
+  event $\{\abs{v}>t_p\}$, $p=10^{-3}$, at the smallest and the largest bank,
+  and the share of test pasts whose tail amplification from the ray probe
+  exceeds one. Mean over seeds.}
+ \label{tab:real}
+\end{table}
+
+%%BEGIN:realtext
+%%END:realtext
 
 \subsection{Finite Data: the Loss Matters Again}
 \label{ssec:finite}
@@ -1868,37 +2104,58 @@ in the future defines no model on heavy-tailed data, even with ReLU or GELU
 encoders, and its bank forecast collapses onto the most extreme future. This
 identifies the tail bound in the non-compact universal approximation result of
 \cite{stuart2026expressivity} as necessary rather than technical.
-Experiments on synthetic and real time series confirm both halves, and
-demonstrate that in addition to being bounded above, a score should not
-saturate towards its supremum along extreme rays.
+
+Between these two cases lie the scores that are bounded but level off along
+extreme futures, and for them boundedness is not enough. The tail of the
+forecast is the tail of the marginal times the tail amplification of the
+score, so the forecast has the tail index of climatology for every past,
+while heavy-tailed data with a random scale have a conditional that is
+lighter by one unit of tail index per observed coordinate. A bank of size
+$N$ reveals an amplification $A$ only once $N\gtrsim A$: the weight on
+extreme futures follows a $\min(N,A)$ law, and the excess energy score grows
+linearly in $N$ up to that point. The population optimum of the contrastive
+loss over bounded scores is the clipped log density ratio, which saturates
+at its floor, so a score that saturates high does so because of its
+architecture: an inner product with a bounded future encoder sends extreme
+futures to the vertices of its range. The scores with the right tail decay
+logarithmically, and a log-quadratic family is well-specified on elliptical
+heavy-tailed data with linear encoders. Experiments on synthetic and real
+series confirm the $\min(N,A)$ law, the benefit of a logarithmic tail, and
+the effect of adding the energy score of the bank forecast to the training
+loss.
 
 \paragraph{Scope and limitations.}
-\Cref{sec:invariance,sec:tails} focus on population-level targets and the
-asymptotic regime $N\to\infty$ of the candidate bank (\Cref{thm:bank,prop:collapse}),
-complemented by finite-bank sweeps in \Cref{ssec:banksweep} and finite-data
-experiments in \Cref{ssec:finite}. In \Cref{tab:infoloss}, the population
-misspecification gap is quantified via KL divergence, whereas the empirical
-evaluations use the energy score, which is less sensitive to variance
-miscalibration; the two metrics agree in ordering though not in magnitude.
-Finally, while physical precipitation is bounded in principle so that its
-population normalizer $Z(u)$ is finite, its empirical distribution exhibits
-heavy-tailed bursts over finite banks, producing the severe effective sample
-size degradation captured by the finite-$N$ regime of \Cref{thm:bank}.
+\Cref{sec:invariance,sec:tails} are population-level statements about the
+score, complemented by finite-bank results
+(\Cref{thm:bank,prop:collapse,thm:exposure,thm:energycost}); they do not
+describe the optimization that produces the score. In particular, that a
+trained $\tanh$ inner product saturates high for the pasts that matter is
+explained (\Cref{rem:corners}) and measured (\Cref{ssec:amplification}) but
+not proved. \Cref{thm:tail} assumes regularly varying futures and scores with
+a limit along rays; this covers elliptical heavy tails and encoders that are
+positively homogeneous at infinity, but not, for instance, futures with a
+point mass at zero such as rainfall, for which only the finite-bank results
+apply. The constants in \Cref{thm:energycost} are not sharp. In
+\Cref{tab:infoloss}, the population misspecification gap is quantified via
+the KL divergence, whereas the empirical evaluations use the energy score,
+which is less sensitive to variance miscalibration; the two metrics agree in
+ordering though not in magnitude.
 
 \paragraph{Open questions.}
-First, the divergence invariance of \Cref{sec:invariance} is proved for
-general $D$, while our experiments train exclusively with KL. Training directly
-with the energy-distance loss formulated in
-\cite[Rem.~3.5]{baptista2025mathematical} is a natural next step; by
-\Cref{prop:klblind}, we expect this to be particularly impactful for architectures
-prone to overweighting tail trajectories. Second, it remains to establish
-non-compact universal approximation theorems directly for architectures whose
-scores are bounded by construction, such as two-tower $L^2$ or normalized-cosine
-encoders, without relying on compact support truncation. Finally, a formal
+First, the bank energy loss is the energy-distance loss of
+\cite[Rem.~3.5]{baptista2025mathematical} restricted to the forecasting
+direction and to a bank of fixed size $K$; its minimizer for finite $K$, and
+the two-way and joint analogues, remain to be characterized. Second, it
+remains to establish non-compact universal approximation theorems for
+architectures whose scores have a prescribed tail, such as two-tower $L^2$,
+Student-$t$ kernel or log-quadratic scores, without relying on truncation to
+a compact set. Third, \Cref{lem:tprocess} suggests that the logarithmic decay
+rate of the exact score equals the number of effective degrees of freedom of
+the past that inform the scale of the future; making this precise beyond
+scale mixtures, for instance for stochastic volatility models, would turn the
+tail index of the forecast into a design parameter. Finally, a formal
 finite-sample analysis of the regularization effect observed for the joint
-$L^2$ loss in \Cref{ssec:finite}, as well as empirical evaluation of the
-quadratic-augmented inner-product family (\Cref{tab:infoloss}, last column),
-remain worthwhile directions for future study.
+$L^2$ loss in \Cref{ssec:finite} remains a worthwhile direction.
 
 % ===========================================================================
 \appendix
@@ -2446,9 +2703,14 @@ used in (i).
 
 \paragraph{Reproducibility.}
 \Cref{tab:infoloss,tab:fixedscore} are produced by
-\begin{center}\texttt{test\_bed/theory/misspecification.py},\end{center}
-and the experiments of \Cref{ssec:banksweep} by
-\begin{center}\texttt{test\_bed/analysis/bank\_sweep.py}.\end{center}
+\texttt{test\_bed/theory/misspecification.py}; \Cref{tab:plateau} and
+\Cref{fig:plateau} by \texttt{test\_bed/theory/saturation.py}, with
+numerical checks of the auxiliary results in
+\texttt{test\_bed/theory/check\_lemmas.py}; the experiments of
+\Cref{ssec:banksweep,ssec:amplification,ssec:logtail,ssec:energytraining,ssec:realheavy}
+by \texttt{test\_bed/analysis/tail\_sweep.py} and
+\texttt{test\_bed/analysis/amplification\_check.py}; and the generated tables
+and figures by \texttt{test\_bed/analysis/paper\_assets.py}.
 
 % ===========================================================================
 \begin{thebibliography}{99}
