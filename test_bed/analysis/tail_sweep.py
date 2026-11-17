@@ -265,10 +265,19 @@ def main():
     p.add_argument('--seed', type=int, default=0)
     p.add_argument('--out', default='results/tail_sweep')
     p.add_argument('--save_model', action='store_true')
+    p.add_argument('--force', action='store_true', help='rerun even if the result file exists')
     a = p.parse_args()
     a.loss = a.loss or DEFAULT_LOSS[a.score]
     torch.set_num_threads(1)
     t0 = time.time()
+    out = Path(a.out)
+    tag = f"{a.data}{a.dial:g}_{a.score}-{a.loss}_{a.train}" if a.data == 't' else f"{a.data}_{a.score}-{a.loss}_{a.train}"
+    if a.train == 'hyb':
+        tag += f'{a.lam:g}'
+    tag += f'_{a.encoder}_s{a.seed}'
+    if (out / f'{tag}.json').exists() and not a.force:
+        print(f'{tag}: exists, skipping')
+        return
 
     d = load_data(a)
     u_tr, v_tr = d['u_tr'], d['v_tr']
@@ -351,12 +360,7 @@ def main():
     J = min(1000, v_bk.shape[0])
     probe = ray_probe(score_fn, u_te, v_bk[-J:].float(), last['logZ'])
 
-    out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    tag = f"{a.data}{a.dial:g}_{a.score}-{a.loss}_{a.train}" if a.data == 't' else f"{a.data}_{a.score}-{a.loss}_{a.train}"
-    if a.train == 'hyb':
-        tag += f'{a.lam:g}'
-    tag += f'_{a.encoder}_s{a.seed}'
     res = {'args': vars(a), 'tag': tag, 'ref': ref_name, 'ref_energy': ref_mean, 'es_unit': es_unit,
            'logit_scale': model.logit_scale.exp().item(),
            'beta': (1 + model.log_beta.exp()).item() if a.score in ('tk', 'tk2') else None,

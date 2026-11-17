@@ -4,6 +4,7 @@
 \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm]{geometry}
 \usepackage{amsmath,amssymb,amsthm,mathtools}
 \usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{array}
 \usepackage{enumitem}
 \usepackage[numbers,sort&compress]{natbib}
@@ -87,10 +88,27 @@
  data, even with ReLU or GELU encoders, and its bank forecast collapses onto a
  single future as the bank grows. This identifies the tail condition in existing
  non-compact universal approximation results as necessary rather than
- technical. Numerical experiments on synthetic and real time series confirm
- both halves and motivate one further distinction: a ceiling on the score is
- necessary for bank convergence, but to avoid overweighting tail events the
- score must also not approach its supremum along extreme futures.
+ technical. Our main results concern the scores in between, which are bounded
+ but level off along extreme futures, such as the normalized cosine or an
+ inner product with a bounded future encoder. For regularly varying futures
+ we show that the tail of the model is the tail of the marginal multiplied by
+ a direction-dependent constant, the \emph{tail amplification} of the score.
+ Such a forecast has the tail index of climatology for every past, whereas on
+ heavy-tailed processes with a random scale the true conditional gains one
+ unit of tail index per observed coordinate of the past. A finite bank hides
+ the defect: the weight that the forecast places on a set of extreme futures
+ grows linearly in the bank size $N$ until $N$ reaches the tail amplification
+ $A$ and is constant thereafter, a $\min(N,A)$ law, and over the same range
+ the expected excess energy score grows at least linearly in $N$. The
+ KL-optimal bounded score is the clipped log density ratio, which saturates
+ at its floor; a score saturates high because its architecture, not its
+ bound, sends extreme futures to the top of its range. We identify a
+ log-quadratic family that is well-specified on elliptical heavy-tailed data,
+ and, since the Kullback--Leibler divergence charges a misplaced plateau for
+ its mass while the energy distance charges for mass times distance, a
+ training loss built from the energy score of the bank forecast itself.
+ Numerical experiments on synthetic and real time series confirm the
+ predictions.
 \end{abstract}
 
 \noindent\textbf{Keywords:} Contrastive Learning, CLIP, Probabilistic
@@ -185,6 +203,22 @@ CLIP \cite{chou2024embedding}. To our knowledge none of these works ties
 boundedness to the \emph{existence} of the model, or to the behaviour of a
 reweighted bank.
 
+\paragraph{Tails under exponential tilting, and training with scoring rules.}
+How regular variation transforms under multiplication and tilting is
+classical \cite{resnick2007heavy}; \Cref{ssec:saturation} applies it to the
+tilted model and adds the finite-bank picture. Clipping an importance weight
+or a critic is a standard variance-reduction device
+\cite{ionides2008truncated,song2020limitations}; \Cref{prop:clip} shows that
+the clipped log density ratio is also the population optimum of the
+contrastive loss over bounded scores. Heavy-tailed, Cauchy-type similarity
+kernels are used in neighbour embeddings and in their contrastive variants
+\cite{maaten2008tsne,bohm2023unsupervised}, for geometric rather than
+distributional reasons. Training generative forecasters by minimizing the
+energy score is established practice
+\cite{gneiting2007strictly,pacchiardi2024probabilistic,shen2024engression};
+here the object being trained is a set of weights on observed futures rather
+than a sampler.
+
 \paragraph{Analog forecasting.}
 Forecasting by weighting historical futures is the analog ensemble of
 weather forecasting \cite{dellemonache2013analog} and kernel analog
@@ -232,15 +266,38 @@ organization:
        two-sided bound guarantees a uniform effective sample size at the cost
        of capped sharpness. This shows that the tail condition in
        \cite[Prop.~A.3]{stuart2026expressivity} is necessary rather than a
-       convenience of the proof. We also show why a score that approaches its
-       upper bound along rays overweights extreme futures even when admissible.
+       convenience of the proof.
+ \item \emph{Saturating scores: tail amplification and exposure by the bank}
+       (\Cref{ssec:saturation}).
+       For regularly varying futures we determine the tail of the tilted
+       model from the behaviour of the score along rays
+       (\Cref{thm:tail}): the forecast has tail index $\nu+\beta$, where
+       $\nu$ is the index of the marginal and $\beta$ the logarithmic decay
+       rate of the score, and a score that levels off ($\beta=0$) transmits
+       to the tail only a direction-dependent constant, its tail
+       amplification. On elliptical heavy-tailed data the true conditional
+       has index $\nu+d_u$, so the inner product, the normalized cosine and
+       $L^2$ all have the wrong tail (\Cref{cor:trichotomy}), and we exhibit
+       a log-quadratic family that is well-specified
+       (\Cref{prop:logquad}). We prove a $\min(N,A)$ law for the weight that
+       a bank of size $N$ places on extreme futures under a score with tail
+       amplification $A$ (\Cref{thm:exposure}), and a matching lower bound on
+       the expected excess energy score, which grows linearly in $N$ up to
+       $N\approx A$ (\Cref{thm:energycost}). We show that the KL-optimal
+       bounded score is the clipped log density ratio and hence saturates at
+       its floor (\Cref{prop:clip}), so that saturating high is a property
+       of the architecture, and that the Kullback--Leibler divergence
+       charges a plateau for its mass while the energy distance charges for
+       mass times distance (\Cref{prop:klvsenergy}), which motivates a
+       training loss built from the bank forecast itself
+       (\Cref{prop:bankenergy}).
  \item \emph{Numerical experiments} (\Cref{sec:experiments}).
        On synthetic Gaussian, heavy-tailed, warped and bimodal processes, and
-       on real weather data, we confirm the loss invariance for flexible
-       encoders, the failure of unbounded scores on heavy tails, and the
-       predicted turnaround of the unbounded forecast as the bank grows, while
-       illustrating the contrast between asymptotically coercive scores ($\sltwo$),
-       direction-only scores ($\sncos$), and monotonically saturating scores ($\tanh$).
+       on real weather and financial data, we confirm the loss invariance for
+       flexible encoders, the failure of unbounded scores on heavy tails, the
+       $\min(N,A)$ law and the turnaround of saturating scores as the bank
+       grows, the benefit of scores with a logarithmic tail, and the effect
+       of training with the bank energy loss.
 \end{enumerate}
 \Cref{sec:conclusion} concludes and discusses open directions.
 Proofs are collected in \Cref{app:proofs}.
@@ -854,17 +911,24 @@ future, and a larger bank only supplies more extreme futures to collapse onto.
 
 \begin{table}[ht]
  \centering
- \begin{tabular}{>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}p{3.5cm}>{\raggedright\arraybackslash}p{3.3cm}}
+ \small
+ \begin{tabular}{>{\raggedright\arraybackslash}p{2.9cm}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{3.0cm}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}p{2.6cm}}
   \toprule
-                         & unbounded ($\sdot$)                 & bounded above ($\sltwo$)                                               & bounded on both sides ($\sncos$) \\
+                          & unbounded ($\sdot$)             & saturating ($\sncos$, $\tanh$ inner product)                 & logarithmic ($s_{t,b}$, log-quadratic) & coercive ($\sltwo$) \\
   \midrule
-  model exists           & only with light-tailed futures      & always                                                                 & always                           \\
-  bank forecast converges& only with light-tailed futures      & always                                                                 & always                           \\
-  bank size needed       & can be infinite (collapse)          & finite, $\approx e^{\KL{\nu_{v\vert u}}{\mu_v}}$ \cite{chatterjee2018sample} & uniformly $\lesssim e^{2\kappa}$ \\
-  sharpness              & unlimited                           & unlimited                                                              & capped by $\kappa$               \\
+  model exists            & only with light-tailed futures  & always                                                       & if the forecast index is positive      & always              \\
+  bank forecast converges & only with light-tailed futures  & always                                                       & if the forecast index is positive      & always              \\
+  tail index of the forecast & none                         & $\nu$, that of the marginal                                  & $\nu+b-b_v$, learned                   & lighter than every power \\
+  weight of a bank of size $N$ on extreme futures, relative to the marginal & $\approx N$, until collapse & $\approx\min(N,A)$ & tends to $0$ & tends to $0$ \\
+  well-specified on elliptical heavy tails & no             & no                                                           & yes (log-quadratic)                    & no                  \\
+  sharpness               & unlimited                       & capped by $\kappa$                                           & unlimited                              & unlimited           \\
   \bottomrule
  \end{tabular}
- \caption{The boundedness hierarchy.}
+ \caption{The hierarchy of scores by their behaviour along extreme futures.
+  The first two rows are \Cref{prop:bounded,thm:bank,prop:collapse}; the
+  remaining rows are established in \Cref{ssec:saturation}, where $\nu$ is
+  the tail index of the marginal, $A$ the tail amplification of the score
+  and $b,b_v$ the exponents of the logarithmic scores.}
  \label{tab:hierarchy}
 \end{table}
 
@@ -1215,6 +1279,44 @@ kind.
  size.
 \end{remark}
 
+With linear future encoders and elliptical data, the setting of
+\cite{baptista2025mathematical} extended to heavy tails, these statements
+hold at every radius and not only asymptotically.
+
+\begin{proposition}[Linear Future Encoders Cannot Forecast Size]
+ \label{prop:linearsat}
+ Let $\mu_v$ be elliptical about the origin with scale matrix $\Sigma_{vv}$,
+ so that the radius $R\define\abs{\Sigma_{vv}^{-1/2}v}$ is independent of the
+ direction $\Sigma_{vv}^{-1/2}v/R$, and let $g$ be linear. Fix $u$ with
+ $Z(u)<\infty$.
+ \begin{enumerate}[label=(\roman*)]
+  \item For the normalized cosine $\sncos$, with any past encoder,
+        $\nu^{s}_{v\vert u}(R>t\vert u)=\mu_v(R>t)$ for every $t\ge0$: the
+        forecast of the size of the future is climatology, for every past.
+  \item For $s=\kappa\IP{f(u)}{\hat g(v)}$ with $\hat g=g$ (inner product)
+        or $\hat g=\tanh g$, the score is odd in $v$, and for every
+        symmetric set $B=-B$,
+        \begin{equation*}
+         \nu^{s}_{v\vert u}(B\vert u)=\frac{\E_{\mu_v}\bigl[\cosh s(u,v)\,\indicator_B(v)\bigr]}{\E_{\mu_v}\bigl[\cosh s(u,v)\bigr]}.
+        \end{equation*}
+        If, in addition, $\abs{s(u,rv)}$ is non-decreasing in $r>0$ for every
+        $v$, as it is for the inner product, and for the $\tanh$ inner
+        product when $d_z=1$, then
+        $\nu^{s}_{v\vert u}(R>t\vert u)\ge\mu_v(R>t)$ for every $t\ge0$: the
+        forecast of the size of the future is at least as heavy as
+        climatology, for every past.
+ \end{enumerate}
+\end{proposition}
+\begin{proof}
+ See \Cref{app:linearsat}.
+\end{proof}
+
+Part (i) is the future-side counterpart of the observation in
+\Cref{ssec:lossvariants} that a linear normalized cosine loses the level of
+the past: it has $\bar A(u)=1$ exactly, and its error does not depend on the
+bank size. Part (ii) says that an odd score can lower the weight of extreme
+futures on one side only by raising it on the other.
+
 \paragraph{What a finite bank shows.}
 \Cref{thm:tail} describes the limit $N\to\infty$ of the bank forecast. The
 next result describes how that limit is approached, and explains why the
@@ -1327,13 +1429,14 @@ Taken together, \Cref{thm:exposure,thm:energycost} are the precise form of
 the statement that a larger bank exposes a score which saturates high. For
 bank sizes up to the tail amplification, the expected excess energy score
 contributed by a plateau grows at least linearly in $N$. Beyond it the bound
-\eqref{eq:energycost} decays like $1/N$ towards its limit: once the bank holds
+\eqref{eq:energycost} loses its force, and for a reason: once the bank holds
 many plateau futures they share the excess weight, the forecast stops jumping
-between banks, and what remains is the population error of \Cref{thm:tail}.
-The contribution of a single plateau to the error curve is therefore a bump
-centred at $N\approx A$, on top of the usual $O(1/N)$ decay of the
-self-normalized estimator in the bulk. \Cref{tab:plateau} verifies this for
-fixed scores. In a trained model the amplification $A(u,\theta)$ varies over
+between banks, and the error decreases to the population error of
+\Cref{thm:tail}, for which the last display of \Cref{thm:energycost} is a
+lower bound. The contribution of a single plateau to the error curve is
+therefore a bump centred at $N\approx A$, on top of the usual $O(1/N)$ decay
+of the self-normalized estimator in the bulk. \Cref{tab:plateau} and
+\Cref{fig:plateau} verify this for fixed scores. In a trained model the amplification $A(u,\theta)$ varies over
 many orders of magnitude across pasts and directions
 (\Cref{ssec:amplification}), the bumps overlap, and the error rises over the
 whole range of bank sizes that can be afforded. The same lemma gives the cost
@@ -1360,17 +1463,19 @@ of collapse.
             & \multicolumn{2}{c|}{exact score} & \multicolumn{3}{c|}{plateau, $A=30$} & \multicolumn{3}{c|}{plateau, $A=1000$} & \multicolumn{2}{c}{unbounded, $s=v$} \\
   $N$       & OF & $\mathcal{E}_N$ & OF & bound & $\mathcal{E}_N$ & OF & bound & $\mathcal{E}_N$ & OF & $\mathcal{E}_N$ \\
   \midrule
-  $10$ & 0 & $7.2\!\cdot\!10^{-2}$ & 9.32 & 7.69 & $9.4\!\cdot\!10^{-2}$ & 9.68 & 9.91 & 0.10 & 9.75 & 0.96 \\
-  $30$ & 0 & $1.9\!\cdot\!10^{-2}$ & 16.3 & 15.2 & $4.7\!\cdot\!10^{-2}$ & 23.4 & 29.1 & $8.7\!\cdot\!10^{-2}$ & 28.7 & 1.71 \\
-  $100$ & 0 & $5.4\!\cdot\!10^{-3}$ & 23.1 & 23.1 & $2.4\!\cdot\!10^{-2}$ & 88.1 & 90.5 & 0.27 & 92.7 & 3.37 \\
-  $300$ & 0 & $1.8\!\cdot\!10^{-3}$ & 26.9 & 27.0 & $9.9\!\cdot\!10^{-3}$ & 240 & 228 & 0.63 & 288 & 6.18 \\
-  $1{,}000$ & 0 & $5.3\!\cdot\!10^{-4}$ & 28.7 & 27.7 & $3.4\!\cdot\!10^{-3}$ & 503 & 476 & 0.88 & 930 & 11.3 \\
-  $3{,}000$ & 0 & $1.8\!\cdot\!10^{-4}$ & 29.7 & 25.7 & $1.4\!\cdot\!10^{-3}$ & 764 & 648 & 0.73 & 2{,}497 & 18.2 \\
-  $10{,}000$ & 0 & $5.3\!\cdot\!10^{-5}$ & 29.6 & 18.9 & $5.6\!\cdot\!10^{-4}$ & 924 & 575 & 0.46 & 6{,}270 & 28.7 \\
-  $30{,}000$ & 0 & $1.8\!\cdot\!10^{-5}$ & 30.3 & 9.49 & $3.5\!\cdot\!10^{-4}$ & 974 & 307 & 0.33 & 9{,}401 & 42.7 \\
-  $100{,}000$ & 0 & $5.7\!\cdot\!10^{-6}$ & 30.3 & 3.00 & $2.7\!\cdot\!10^{-4}$ & 989 & 99.0 & 0.28 & 10{,}000 & 63.0 \\
-  $300{,}000$ & 0 & $2.1\!\cdot\!10^{-6}$ & 30.0 & 1.00 & $2.4\!\cdot\!10^{-4}$ & 1{,}002 & 33.2 & 0.27 & 10{,}000 & 91.3 \\
-  $1{,}000{,}000$ & 0 & $7.7\!\cdot\!10^{-7}$ & 29.8 & 0.30 & $2.3\!\cdot\!10^{-4}$ & 999 & 9.99 & 0.26 & 10{,}000 & 134 \\
+%%BEGIN:plateau
+  $10$ & 0 & $7.2\!\cdot\!10^{-2}$ & 8.23 & 7.69 & $9.2\!\cdot\!10^{-2}$ & 10.00 & 9.91 & 0.10 & 9.80 & 0.96 \\
+  $30$ & 0 & $1.9\!\cdot\!10^{-2}$ & 15.4 & 15.2 & $4.6\!\cdot\!10^{-2}$ & 29.5 & 29.1 & 0.11 & 28.3 & 1.71 \\
+  $100$ & 0 & $5.5\!\cdot\!10^{-3}$ & 23.2 & 23.1 & $2.3\!\cdot\!10^{-2}$ & 92.3 & 90.5 & 0.28 & 101 & 3.40 \\
+  $300$ & 0 & $1.8\!\cdot\!10^{-3}$ & 27.7 & 27.0 & $1.0\!\cdot\!10^{-2}$ & 231 & 228 & 0.59 & 292 & 6.19 \\
+  $1{,}000$ & 0 & $5.3\!\cdot\!10^{-4}$ & 29.2 & 27.7 & $3.5\!\cdot\!10^{-3}$ & 498 & 476 & 0.86 & 971 & 11.5 \\
+  $3{,}000$ & 0 & $1.8\!\cdot\!10^{-4}$ & 28.7 & 25.7 & $1.3\!\cdot\!10^{-3}$ & 777 & 648 & 0.74 & 2{,}595 & 18.4 \\
+  $10{,}000$ & 0 & $5.4\!\cdot\!10^{-5}$ & 29.6 & 18.9 & $5.6\!\cdot\!10^{-4}$ & 922 & 575 & 0.46 & 6{,}270 & 28.6 \\
+  $30{,}000$ & 0 & $1.8\!\cdot\!10^{-5}$ & 29.7 & 9.49 & $3.5\!\cdot\!10^{-4}$ & 977 & 307 & 0.33 & 9{,}436 & 42.5 \\
+  $100{,}000$ & 0 & $5.8\!\cdot\!10^{-6}$ & 29.8 & 3.00 & $2.6\!\cdot\!10^{-4}$ & 993 & 99.0 & 0.28 & 9{,}999 & 62.0 \\
+  $300{,}000$ & 0 & $2.0\!\cdot\!10^{-6}$ & 30.2 & 1.00 & $2.5\!\cdot\!10^{-4}$ & 1{,}004 & 33.2 & 0.27 & 10{,}000 & 95.5 \\
+  $1{,}000{,}000$ & 0 & $7.4\!\cdot\!10^{-7}$ & 30.0 & 0.30 & $2.3\!\cdot\!10^{-4}$ & 996 & 9.99 & 0.26 & 10{,}000 & 145 \\
+%%END:plateau
   \bottomrule
  \end{tabular}
  \caption{Fixed-score check of \Cref{thm:exposure,thm:energycost}, with no
@@ -1385,6 +1490,18 @@ of collapse.
   unbounded score.}
  \label{tab:plateau}
 \end{table}
+
+\begin{figure}[ht]
+ \centering
+ \includegraphics[width=\textwidth]{figs/plateau.pdf}
+ \caption{The data of \Cref{tab:plateau}. Left: the over-forecast factor
+  follows $\min(N,A)$; the grey lines are the ceiling $N$ of
+  \Cref{thm:exposure}(i) and the two plateau heights. Right: the excess energy
+  score of a plateau score has a bump at $N\approx A$, that of the unbounded
+  score grows like a power of $N$ (\Cref{cor:collapsecost}), and that of the
+  exact score decays like $1/N$.}
+ \label{fig:plateau}
+\end{figure}
 
 \paragraph{Why training does not remove a plateau, and what would.}
 The following proposition extends \Cref{prop:klblind} from a point mass to an
@@ -2126,7 +2243,29 @@ $\log\rho^{\star}$ is then constant outside a bounded set, so \ref{R1} and
 constant is one.
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{thm:exposure}}{Theorem 4.20}}
+\smallskip
+\noindent\emph{Proof of \Cref{prop:linearsat}.}
+\label{app:linearsat}
+Write $v=R\,\Sigma_{vv}^{1/2}U$ with $U$ on the unit sphere, independent of
+$R$ and symmetric, $U\overset{d}{=}-U$. (i) With $g$ linear,
+$g(v)/\abs{g(v)}$ depends on $v$ only through $U$, so $e^{s(u,v)}=\phi(U)$
+for some function $\phi$, and by independence
+$\nu^{s}_{v\vert u}(R>t\vert u)=\E[\phi(U)\indicator\{R>t\}]/\E[\phi(U)]=\mathbb{P}(R>t)$.
+(ii) Both $g$ and $\tanh g$ are odd, so $s(u,-v)=-s(u,v)$. Since $\mu_v$ is
+symmetric, $\int_Be^{s}\,\Dd\mu_v=\int_{-B}e^{-s}\,\Dd\mu_v$, and for $B=-B$
+this gives $\int_Be^{s}\,\Dd\mu_v=\int_B\cosh s\,\Dd\mu_v$; apply it to $B$
+and to $B=\VV$. For the last claim, condition on $U$: the function
+$r\mapsto\cosh s(u,r\Sigma_{vv}^{1/2}U)$ is non-decreasing because $\cosh$ is
+even and increasing on $[0,\infty)$, and so is $r\mapsto\indicator\{r>t\}$.
+Two non-decreasing functions of the same random variable $R$ are
+non-negatively correlated, so
+$\E[\cosh s\;\indicator\{R>t\}\mid U]\ge\E[\cosh s\mid U]\,\mathbb{P}(R>t)$;
+integrate over $U$ and divide by $\E\cosh s$. For the inner product,
+$\abs{s(u,rv)}=r\abs{s(u,v)}$; for $d_z=1$,
+$\abs{s(u,rv)}=\kappa\abs{f(u)}\tanh(r\abs{g(v)})$.
+\qed
+
+\subsection{Proof of \texorpdfstring{\Cref{thm:exposure}}{Theorem 4.21}}
 \label{app:exposure}
 Write $\rho_j\define\rho(v_j)$, so that
 $\nu^{N}_{v\vert u}(T\vert u)=\sum_{j:v_j\in T}\rho_j\big/\sum_{k}\rho_k$ (the
@@ -2179,7 +2318,7 @@ $\mathrm{OF}_N(T)\ge\tfrac14\min(N,a)$. The upper bound combines (i) and
 (iii).
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{lem:energytail}}{Lemma 4.21}}
+\subsection{Proof of \texorpdfstring{\Cref{lem:energytail}}{Lemma 4.22}}
 \label{app:energytail}
 Let $k(x,y)\define\abs{x}+\abs{y}-\abs{x-y}$. Because the Euclidean distance
 is of negative type, $k$ is a positive semidefinite kernel, the
@@ -2209,7 +2348,7 @@ $\varphi\ge c_0t$ on $H_{t,e}$ and $\int\varphi\,\Dd q\ge c_0t\,q(H_{t,e})$.
 Inserting both bounds into \eqref{eq:witness} gives \eqref{eq:energytail}.
 \qed
 
-\subsection{Proofs of \texorpdfstring{\Cref{thm:energycost}}{Theorem 4.22} and \texorpdfstring{\Cref{cor:collapsecost}}{Corollary 4.23}}
+\subsection{Proofs of \texorpdfstring{\Cref{thm:energycost}}{Theorem 4.23} and \texorpdfstring{\Cref{cor:collapsecost}}{Corollary 4.24}}
 \label{app:energycost}
 \emph{Proof of \Cref{thm:energycost}.}
 For a probability measure $q$ with a finite first moment and $y\sim p$,
@@ -2256,7 +2395,7 @@ The probability of this event tends to one, and for every $\epsilon>0$ there
 is $c>0$ with $\liminf_N\mathbb{P}(\abs{v_{j^{\star}}}\ge cN^{1/\nu})\ge1-\epsilon$.
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{prop:klvsenergy}}{Proposition 4.24}}
+\subsection{Proof of \texorpdfstring{\Cref{prop:klvsenergy}}{Proposition 4.25}}
 \label{app:klvsenergy}
 (i) The model $q_h$ has density
 $e^{-h\indicator_T}/\bigl(1-(1-e^{-h})\varepsilon\bigr)$ with respect to $q$,
@@ -2276,7 +2415,7 @@ $(1-p(T))\log\frac{1-p(T)}{1-\varepsilon}\le-\log(1-\varepsilon)$. (ii) is
 \Cref{lem:energytail} with $q(H_{t,e})\ge q(T)=\varepsilon$.
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{prop:bankenergy}}{Proposition 4.26}}
+\subsection{Proof of \texorpdfstring{\Cref{prop:bankenergy}}{Proposition 4.27}}
 \label{app:bankenergy}
 (i) Condition on $u$ and on the bank, and apply the identity
 $\E_y\mathrm{ES}(q,y)-\E_y\mathrm{ES}(p,y)=\tfrac12\DE(p,q)$ from the proof of
@@ -2411,6 +2550,38 @@ T.~Gneiting and A.~E. Raftery.
 \newblock Strictly proper scoring rules, prediction, and estimation.
 \newblock \emph{Journal of the American Statistical Association},
  102(477):359--378, 2007.
+
+\bibitem{ionides2008truncated}
+E.~L. Ionides.
+\newblock Truncated importance sampling.
+\newblock \emph{Journal of Computational and Graphical Statistics},
+ 17(2):295--311, 2008.
+
+\bibitem{maaten2008tsne}
+L.~van~der Maaten and G.~Hinton.
+\newblock Visualizing data using t-SNE.
+\newblock \emph{Journal of Machine Learning Research}, 9:2579--2605, 2008.
+
+\bibitem{bohm2023unsupervised}
+J.~N. B\"ohm, P.~Berens, and D.~Kobak.
+\newblock Unsupervised visualization of image datasets using contrastive
+ learning.
+\newblock In \emph{International Conference on Learning Representations},
+ 2023.
+
+\bibitem{pacchiardi2024probabilistic}
+L.~Pacchiardi, R.~A. Adewoyin, P.~Dueben, and R.~Dutta.
+\newblock Probabilistic forecasting with generative networks via scoring rule
+ minimization.
+\newblock \emph{Journal of Machine Learning Research}, 25, 2024.
+ arXiv:2112.08217.
+
+\bibitem{shen2024engression}
+X.~Shen and N.~Meinshausen.
+\newblock Engression: extrapolation through the lens of distributional
+ regression.
+\newblock \emph{Journal of the Royal Statistical Society Series B}, 2024.
+ arXiv:2307.00835.
 
 \bibitem{resnick2007heavy}
 S.~I. Resnick.
