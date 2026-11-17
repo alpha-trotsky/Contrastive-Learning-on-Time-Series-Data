@@ -1,0 +1,60 @@
+# config_mlp.yaml -- same field setup as config.yaml, MLP encoders + L2 joint loss
+# (the best-performing combination in docs/goal2_results.md)
+
+experiment:
+  name: mlp_l2_joint
+  output_dir: results/mlp_l2_joint
+  seed: 42
+
+signal:
+  type: gaussian_process_1d
+  alpha: 2
+  tau: 3.0
+  dim_true: 1000
+  zero_mean: true
+
+#modality:
+  #type: field_coeff
+  #   u_index: which of the 1000 grid points form u
+  #   Use evenly-spaced indices spanning the domain.
+  #u_index: [41, 124, 207, 290, 373, 457, 540, 623, 706, 789, 872, 955]
+  #dim_coeff: 5
+  #sigma: 0.05
+
+
+modality:
+    type: PastFuture
+    past_len: 50
+    future_len: 50
+    start: 0
+    sigma_u: 0.05
+    sigma_v: 0.05
+
+model:
+  type: mlp_clip
+  embed_dim: 100
+  hidden: 256               # hidden width of each MLP
+  depth: 2                  # hidden layers
+  skip: true                # add a linear shortcut (model contains the linear one)
+  init_logit_scale: 2.659   # log(1/0.07), the CLIP default
+
+loss:
+  type: joint               # 'conditional' | 'joint' | 'one_sided_u' | 'one_sided_v'
+  inner_product: false      # true = cosine tilting; false = L^2 tilting
+  normalize: false          # true (with inner_product: true) = normalised cosine, as in CLIP
+
+training:
+  batch_size: 256
+  num_steps: 15000          # longer made MLP forecasts over-confident (goal 2)
+  lr: 1.0e-3
+  optimizer: adam
+
+logging:
+  log_every: 100
+  theory_match_every: 500   # linear models only
+  blackbox_every: 1000      # energy score / coverage / ESS on a fixed held-out set
+
+blackbox:
+  n_test: 500               # test queries
+  bank: 20000               # fresh futures the forecast resamples from
+  M: 300                    # forecast samples per query

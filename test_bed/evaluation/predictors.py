@@ -56,13 +56,40 @@ def sir_samples(score_fn, u, bank, M, chunk=256, gen=None):
 # Score functions for the CLIP models in this repo (what the loss trains)
 # ---------------------------------------------------------------------------
 
-def clip_score_fn(model, inner_product):
-    """Model logit s(u, v): cosine/inner-product or L2 tilting."""
+def clip_score_fn(model, inner_product, normalize=False):
+    """Model logit s(u, v): cosine/inner-product (optionally on L2-normalised
+    embeddings, as in real CLIP) or L2 tilting."""
     @torch.no_grad()
     def f(u, v):
         gu, gv = model.encode_u(u.float()), model.encode_v(v.float())
         s = model.logit_scale.exp()
         if inner_product:
+            if normalize:
+                gu = torch.nn.functional.normalize(gu, dim=-1)
+                gv = torch.nn.functional.normalize(gv, dim=-1)
             return s * gu @ gv.T
         return -0.5 * s * torch.cdist(gu, gv) ** 2
     return f
+
+
+# ---------------------------------------------------------------------------
+# Regression baselines (models/mlp_regressor.py)
+# ---------------------------------------------------------------------------
+
+@torch.no_grad()
+def regressor_samples(model, u, u_bank, v_bank, M):
+    """Predictive samples (N, M, d) of a regression baseline, with the noise
+    estimated on the bank (held-out pairs, not training data):
+      MeanRegressor      predicted mean + Gaussian residual noise, one fixed covariance
+      GaussianRegressor  predicted mean + per-step widths from the model, with the
+                         residual correlation across steps (standardised residuals)
+    """
+    from models.mlp_regressor import GaussianRegressor
+    if isinstance(model, GaussianRegressor):
+        mu, sd = (x.double() for x in model.predict(u))
+        mu_b, sd_b = (x.double() for x in model.predict(u_bank))
+        R = torch.corrcoef(((v_bank - mu_b) / sd_b).T)
+        return mu[:, None, :] + sd[:, None, :] * gaussian_samples(torch.zeros_like(mu), R, M)
+    pred = model.predict(u).double()
+    r = v_bank - model.predict(u_bank).double()
+    return gaussian_samples(pred, r.T @ r / r.shape[0], M)

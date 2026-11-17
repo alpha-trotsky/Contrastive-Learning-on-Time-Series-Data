@@ -8,6 +8,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
 from pathlib import Path
 import argparse
+import copy
+import json
 import yaml
 import torch
 import matplotlib.pyplot as plt
@@ -15,11 +17,14 @@ from modalities.past_future import PastFutureModality
 from signals.gaussian_process import GaussianProcess1D
 from modalities.field_coeff import FieldCoeffModality
 from models.linear_clip import LinearCLIP
+from models.mlp_clip import MLPCLIP
+from models.mlp_regressor import MeanRegressor, GaussianRegressor
 from losses.clip_losses import CLIPConditionalLoss, CLIPJointLoss, MSEloss
 from evaluation.theory_match import theory_match_error, theory_match_dir_error
 from evaluation.forecast import forecast_mse, residual_cov_error, model_cov_error, debug_Ahat
 from evaluation.similarity import compute_similarities
 from evaluation.retrieval import evaluate_encoders
+from evaluation.blackbox import BlackBoxEval
 import wandb
 
 
@@ -57,6 +62,21 @@ def build_modality(cfg, gen):
             future_index = future_index,
             sigma_u = cfg.get('sigma_u', 0.0),
             sigma_v = cfg.get('sigma_v', 0.0),)
+    if cfg['type'] == 'weather':
+        # real data (no signal generator): see modalities/weather.py
+        from modalities.weather import WeatherModality
+        return WeatherModality(
+            u_groups=cfg['u_groups'],
+            v_groups=cfg['v_groups'],
+            past_len=cfg.get('past_len', 144),
+            future_len=cfg.get('future_len', 36),
+            past_stride=cfg.get('past_stride', 3),
+            fractions=tuple(cfg.get('fractions', (0.7, 0.1, 0.2))),
+            bank=cfg.get('bank', 'heldout'),
+            bank_block=cfg.get('bank_block', 1008),
+            bank_every=cfg.get('bank_every', 4),
+            v_relative=cfg.get('v_relative', False),
+        )
     raise ValueError(f"Unknown modality type: {cfg['type']}")
 
 
@@ -69,6 +89,21 @@ def build_model(cfg, modality):
             bias=cfg['bias'],
             init_logit_scale=cfg['init_logit_scale'],
         )
+    if cfg['type'] == 'mlp_clip':
+        return MLPCLIP(
+            embed_dim=cfg['embed_dim'],
+            u_dimension=modality.dim_u,
+            v_dimension=modality.dim_v,
+            hidden=cfg.get('hidden', 256),
+            depth=cfg.get('depth', 2),
+            skip=cfg.get('skip', True),
+            init_logit_scale=cfg['init_logit_scale'],
+        )
+    # non-contrastive baselines (loss 'regression'): depth 0 = linear
+    if cfg['type'] in ('mean_regressor', 'gaussian_regressor'):
+        cls = MeanRegressor if cfg['type'] == 'mean_regressor' else GaussianRegressor
+        return cls(modality.dim_u, modality.dim_v, hidden=cfg.get('hidden', 256),
+                   depth=cfg.get('depth', 2), skip=cfg.get('skip', True))
     raise ValueError(f"Unknown model type: {cfg['type']}")
 
 
@@ -119,19 +154,31 @@ def resolve_theory_target(loss_cfg):
 
 
 def build_loss(cfg, model=None):
+    if hasattr(model, 'loss'):
+        # regression baselines carry their own loss (MSE or Gaussian NLL), see run()
+        if cfg['type'] != 'regression':
+            raise ValueError(f"model {type(model).__name__} needs loss type 'regression'")
+        return None
+    normalize = cfg.get('normalize', False)
     if cfg['type'] == 'conditional':
         return CLIPConditionalLoss(
             lambda_u=cfg['lambda_u'],
             lambda_v=cfg['lambda_v'],
             inner_product=cfg['inner_product'],
+            normalize=normalize,
         )
     elif cfg['type'] == 'joint':
-        return CLIPJointLoss(inner_product=cfg['inner_product'])
+        return CLIPJointLoss(inner_product=cfg['inner_product'], normalize=normalize)
     elif cfg['type'] == 'one_sided_u':
-        return CLIPConditionalLoss(lambda_u=1.0, lambda_v=0.0, inner_product=cfg['inner_product'])
+        return CLIPConditionalLoss(lambda_u=1.0, lambda_v=0.0, inner_product=cfg['inner_product'],
+                                   normalize=normalize)
     elif cfg['type'] == 'one_sided_v':
-        return CLIPConditionalLoss(lambda_u=0.0, lambda_v=1.0, inner_product=cfg['inner_product'])
+        return CLIPConditionalLoss(lambda_u=0.0, lambda_v=1.0, inner_product=cfg['inner_product'],
+                                   normalize=normalize)
     elif cfg['type'] == 'mse':
+        if not isinstance(model, LinearCLIP):
+            raise ValueError("loss 'mse' uses the linear head W_u^T W_v; for MLP regression "
+                             "baselines see models/mlp_regressor.py (analysis/domain_sweep.py)")
         return MSEloss(v_encoder=model.v_encoder)
     else:
         raise ValueError(f"Unknown loss type: {cfg['type']}")
@@ -140,6 +187,15 @@ def build_loss(cfg, model=None):
 # ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
+
+def has_closed_form(modality):
+    """True if the modality exposes C_uu / C_vv / C_uv (synthetic data)."""
+    try:
+        modality.C_uu()
+    except NotImplementedError:
+        return False
+    return True
+
 
 def run(cfg):
     torch.manual_seed(cfg['experiment']['seed'])
@@ -153,9 +209,18 @@ def run(cfg):
     # Build everything
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"device: {device}")
-    gen = build_signal(cfg['signal'])
+    gen = build_signal(cfg['signal']) if 'signal' in cfg else None   # real data has none
     modality = build_modality(cfg['modality'], gen)
     model = build_model(cfg['model'], modality).to(device)
+    # Linear-only metrics (theory match, closed-form forecast, similarity, retrieval)
+    # read the weight matrices directly and need the modality's closed-form
+    # covariances; other encoders, and real data, get the black-box metrics only.
+    linear = isinstance(model, LinearCLIP) and has_closed_form(modality)
+    if hasattr(model, 'set_input_stats'):
+        # fixed input standardisation for MLP encoders, without touching the training RNG
+        with torch.random.fork_rng():
+            u0, v0 = modality.sample_pair(20000)
+        model.set_input_stats(u0.float().to(device), v0.float().to(device))
     loss_fn = build_loss(cfg['loss'], model)
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg['training']['lr'])
 
@@ -172,6 +237,8 @@ def run(cfg):
         'model_cov_error': [],
         'logit_scale': [],
         'similarity_ratio': [],
+        'blackbox_steps': [],
+        'blackbox': [],
         #'A_hat' : [],
         #A_entry_00' : [],
     }
@@ -188,18 +255,48 @@ def run(cfg):
     # Resolve which model conditional-mean head the forecast metrics should use
     mean_family = resolve_mean_family(cfg['loss'])
 
+    # Black-box forecast evaluation (any encoder): energy score, coverage, ESS on a
+    # fixed held-out set.  Optional config section `blackbox: {n_test, bank, M}`;
+    # `logging.blackbox_every` (default: theory_match_every, 0 = final eval only).
+    # Modalities with held-out periods (real data) provide split('val'|'test'|'bank'):
+    # validation period during training, test period at the end.
+    bb_cfg = cfg.get('blackbox', {})
+    bb_every = cfg['logging'].get('blackbox_every', cfg['logging']['theory_match_every'])
+    bb_kw = dict(n_test=bb_cfg.get('n_test', 500), bank=bb_cfg.get('bank', 20000), M=bb_cfg.get('M', 300))
+    split = getattr(modality, 'split', None)
+    if split is not None:
+        blackbox = BlackBoxEval(modality, cfg['loss'], test_sampler=split('val'),
+                                bank_sampler=split('bank'), **bb_kw)
+        bb_kw['n_test'] = bb_cfg.get('n_test_final', bb_kw['n_test'])
+        blackbox_final = BlackBoxEval(modality, cfg['loss'], test_sampler=split('test'),
+                                      bank_sampler=split('bank'), **bb_kw)
+    else:
+        blackbox = blackbox_final = BlackBoxEval(modality, cfg['loss'], **bb_kw)
+
+    # Optional early stopping: keep the weights with the best black-box energy
+    # score on the evaluation set used during training (the validation period
+    # for real data), checked every blackbox_every steps.
+    early_stopping = cfg['training'].get('early_stopping', False)
+    if early_stopping and not bb_every:
+        raise ValueError("training.early_stopping needs logging.blackbox_every > 0")
+    best = {'energy': float('inf'), 'step': None, 'state': None}
+
     # Pre-training forecast baseline
-    pre_mse = forecast_mse(model, modality, mean_family, n_samples=500)
-    pre_cov_err = residual_cov_error(model, modality, mean_family, n_samples=1000)
-    wandb.log({'forecast_mse_pre': pre_mse.item(), 'cov_error_pre': pre_cov_err.item()}, step=0)
-    print(f"pre-training | forecast_mse {pre_mse.item():.4f} | cov_error {pre_cov_err.item():.4f}")
+    if linear:
+        pre_mse = forecast_mse(model, modality, mean_family, n_samples=500)
+        pre_cov_err = residual_cov_error(model, modality, mean_family, n_samples=1000)
+        wandb.log({'forecast_mse_pre': pre_mse.item(), 'cov_error_pre': pre_cov_err.item()}, step=0)
+        print(f"pre-training | forecast_mse {pre_mse.item():.4f} | cov_error {pre_cov_err.item():.4f}")
 
     # Training
     for step in range(cfg['training']['num_steps']):
         u, v = modality.sample_pair(cfg['training']['batch_size'])
         u, v = u.to(device), v.to(device)
-        u_features, v_features, logit_scale = model(u.float(), v.float())
-        loss = loss_fn(u_features, v_features, logit_scale, u, v)
+        if loss_fn is None:                     # regression baseline
+            loss = model.loss(u, v)
+        else:
+            u_features, v_features, logit_scale = model(u.float(), v.float())
+            loss = loss_fn(u_features, v_features, logit_scale, u, v)
 
         optimizer.zero_grad()
         loss.backward()
@@ -216,7 +313,7 @@ def run(cfg):
             #print(f"A_hat = {result['A_norm']:.4f} | A_entry_00 = {result['A_entry_00']:.4f} | A - K = {result['A_minus_K']:.4f} ")
 
         # Log theory match error
-        if step % cfg['logging']['theory_match_every'] == 0:
+        if linear and step % cfg['logging']['theory_match_every'] == 0:
             err = theory_match_error(model, modality, theory_target)
             err_val = err.item() if err is not None else float('nan')
             dir_err, scale = theory_match_dir_error(model, modality, theory_target)
@@ -265,24 +362,59 @@ def run(cfg):
             print(f"step {step:6d} | loss {loss.item():.4f} | theory_err {err_val:.4f} | E_dir {dir_err_val:.4f} | scale {scale_val:.4f}")
             print(f"  logit_scale={logit_scale:.4f} | weight_product_norm={wp_norm:.4f} ")
 
+        # Black-box forecast metrics (any encoder)
+        if bb_every and step % bb_every == 0:
+            bb = blackbox(model)
+            history['blackbox_steps'].append(step)
+            history['blackbox'].append(bb)
+            if early_stopping and bb['bb/energy'] < best['energy']:
+                best.update(energy=bb['bb/energy'], step=step,
+                            state=copy.deepcopy(model.state_dict()))
+            if hasattr(model, 'logit_scale'):
+                bb_log = {**bb, 'logit_scale': model.logit_scale.exp().item()}
+            else:
+                bb_log = bb
+            wandb.log(bb_log, step=step)
+            print(f"step {step:6d} | loss {loss.item():.4f} | energy skill {bb['bb/energy_skill']:.3f}"
+                  + (f" | vs oracle {100 * bb['bb/energy_vs_oracle']:+.1f}%" if 'bb/energy_vs_oracle' in bb else '')
+                  + f" | cov90 {bb['bb/cov90']:.3f}"
+                  + (f" | ESS min {bb['bb/ess_min']:.1f}" if 'bb/ess_min' in bb else ''))
+
         # Optional mid-training checkpoint
         if (checkpoint_every and step % checkpoint_every == 0) or step in checkpoint_steps:
             torch.save(model.state_dict(), checkpoint_dir / f'step_{step}.pt')
 
-    # Post-training forecast
-    post_mse = forecast_mse(model, modality, mean_family, n_samples=500)
-    post_cov_err = residual_cov_error(model, modality, mean_family, n_samples=1000)
     final_step = cfg['training']['num_steps'] - 1
-    wandb.log({'forecast_mse_post': post_mse.item(), 'cov_error_post': post_cov_err.item()}, step=final_step)
-    print(f"post-training | forecast_mse {post_mse.item():.4f} | cov_error {post_cov_err.item():.4f}")
+    if early_stopping:
+        model.load_state_dict(best['state'])
+        history['best_step'] = best['step']
+        history['best_val_energy'] = best['energy']
+        wandb.log({'best_step': best['step'], 'best_val_energy': best['energy']}, step=final_step)
+        print(f"early stopping | best validation energy {best['energy']:.4f} at step {best['step']}")
+    if linear:
+        # Post-training forecast
+        post_mse = forecast_mse(model, modality, mean_family, n_samples=500)
+        post_cov_err = residual_cov_error(model, modality, mean_family, n_samples=1000)
+        wandb.log({'forecast_mse_post': post_mse.item(), 'cov_error_post': post_cov_err.item()}, step=final_step)
+        print(f"post-training | forecast_mse {post_mse.item():.4f} | cov_error {post_cov_err.item():.4f}")
 
-    # Post-training retrieval / similarity eval on a fixed test batch
-    eval_metrics = evaluate_encoders(model, modality, n_eval=512, seed=1234)
-    wandb.log(eval_metrics, step=final_step)
-    history['eval'] = eval_metrics
-    print("eval | " + " | ".join(
-        f"{k.split('/')[-1]} {v:.4f}" for k, v in eval_metrics.items()
-    ))
+        # Post-training retrieval / similarity eval on a fixed test batch
+        eval_metrics = evaluate_encoders(model, modality, n_eval=512, seed=1234)
+        wandb.log(eval_metrics, step=final_step)
+        history['eval'] = eval_metrics
+        print("eval | " + " | ".join(
+            f"{k.split('/')[-1]} {v:.4f}" for k, v in eval_metrics.items()
+        ))
+
+    # Final black-box forecast evaluation (any encoder; test period for real data)
+    bb = blackbox_final(model)
+    history['blackbox_final'] = bb
+    if hasattr(modality, 'split'):
+        # real data: per-horizon CRPS, per-query coverage etc. for the write-up
+        history['blackbox_detail'] = blackbox_final.detail(model)
+        history['data'] = modality.describe()
+    wandb.log({f'{k}_final': v for k, v in bb.items()}, step=final_step)
+    print("blackbox | " + " | ".join(f"{k.split('/')[-1]} {v:.4f}" for k, v in bb.items()))
 
     wandb.finish()
     return model, history
@@ -318,6 +450,17 @@ def plot_results(history, output_dir):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _rounded(x, digits=5):
+    """Floats rounded to `digits` significant digits, recursively (small JSON)."""
+    if isinstance(x, float):
+        return float(f'{x:.{digits}g}')
+    if isinstance(x, dict):
+        return {k: _rounded(v, digits) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_rounded(v, digits) for v in x]
+    return x
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='config.yaml')
@@ -339,6 +482,11 @@ def main():
     # Save model + history
     torch.save(model.state_dict(), output_dir / 'model.pt')
     torch.save(history, output_dir / 'history.pt')
+    if 'blackbox_detail' in history:
+        keys = ('blackbox_final', 'blackbox_detail', 'data', 'best_step', 'best_val_energy',
+                'blackbox_steps', 'blackbox')
+        json.dump(_rounded({'config': cfg, **{k: history[k] for k in keys if k in history}}),
+                  open(output_dir / 'results.json', 'w'))
 
     print(f"\nDone. Results in {output_dir}/")
 

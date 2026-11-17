@@ -1,13 +1,16 @@
-"""Goal 1 sweep: train the existing linear models on each non-Gaussian domain and
-score them against that domain's perfect forecaster (oracle).
+"""Goal 1/2 sweep: train a model on one non-Gaussian domain and score it against
+that domain's perfect forecaster (oracle).
 
-One run = (domain, dial, model).  Models: cosine CLIP (two-sided conditional,
-inner product), L2 one-sided on p(v|u), MSE regression.  Contrastive models are
-scored through their own score function only (SIR over a bank of training
-futures); MSE as a point forecast and with Gaussian residual noise.
+One run = (domain, dial, model, encoder, seed).  Models: the {cosine, L2} x
+{one-sided, two-sided, joint} contrastive grid, normalised cosine (real CLIP),
+MSE regression, and a heteroscedastic Gaussian regressor (mean + per-step
+variance, Gaussian NLL).  --encoder picks linear or MLP networks.  Contrastive
+models are scored through their own score function only (SIR over a bank of
+training futures); MSE with Gaussian residual noise; the Gaussian regressor by
+sampling its own predictive.
 
 Usage (from test_bed/):
-    python -m analysis.domain_sweep --domain t --dial 3 --model cosine
+    python -m analysis.domain_sweep --domain t --dial 3 --model cosine --encoder mlp
 """
 import argparse
 import json
@@ -19,7 +22,9 @@ import torch
 import yaml
 
 from experiment import build_signal, build_modality, build_model, build_loss, resolve_theory_target
-from modalities.nonlinear import StudentTPastFuture, WarpedPastFuture, DoubleWellPastFuture
+from modalities.nonlinear import (StudentTPastFuture, WarpedPastFuture, DoubleWellPastFuture,
+                                  _gaussian_conditional)
+from models.mlp_regressor import MeanRegressor, GaussianRegressor
 from evaluation.predictors import (gaussian_samples, point_samples, climatology_samples,
                                    sir_samples, clip_score_fn)
 from evaluation.scoring import score_forecast, add_skills
@@ -34,7 +39,13 @@ LOSSES = {
     'cosine_joint': {'type': 'joint', 'inner_product': True},
     'l2_2s':        {'type': 'conditional', 'inner_product': False, 'lambda_u': 0.5, 'lambda_v': 0.5},
     'l2_joint':     {'type': 'joint', 'inner_product': False},
+    # real CLIP: two-sided, cosine on L2-normalised embeddings
+    'ncos':         {'type': 'conditional', 'inner_product': True, 'normalize': True,
+                     'lambda_u': 0.5, 'lambda_v': 0.5},
+    # heteroscedastic Gaussian regressor (mean + per-step log-variance, Gaussian NLL)
+    'gauss':        {'type': 'gauss'},
 }
+REGRESSORS = ('mse', 'gauss')
 
 
 def build_domain(name, dial, cfg):
@@ -68,11 +79,39 @@ def cond_coverage(samples, y, spread, level=0.9, bins=3):
     return out
 
 
+def r2(X_tr, Y_tr, X_te, Y_te):
+    """Held-out R^2 of a least-squares fit Y ~ X (with intercept)."""
+    one = lambda X: torch.cat([X, torch.ones(X.shape[0], 1, dtype=X.dtype)], 1)
+    B = torch.linalg.lstsq(one(X_tr), Y_tr).solution
+    res = Y_te - one(X_te) @ B
+    return 1 - (res ** 2).sum().item() / ((Y_te - Y_tr.mean(0)) ** 2).sum().item()
+
+
+@torch.no_grad()
+def latent_recovery(model, mod, n=6000, n_fit=5000):
+    """Bent GP: does the u-encoder 'un-bend' the data?  Linear-regress the true
+    latent quantities on the learned u-features (held out) and compare with the
+    same regression on the raw past.  Targets: the latent past x_u itself, and
+    the latent best forecast x_u K (the part of the past that matters)."""
+    u, _ = mod.sample_pair(n)
+    xu = mod.g_inv(u)
+    K, _ = _gaussian_conditional(mod.base.C_uu(), mod.base.C_vv(), mod.base.C_uv())
+    feats = model.encode_u(u.float()).double()
+    out = {}
+    for name, Y in (('latent_past', xu), ('latent_forecast', xu @ K)):
+        out[f'r2_{name}_features'] = r2(feats[:n_fit], Y[:n_fit], feats[n_fit:], Y[n_fit:])
+        out[f'r2_{name}_raw'] = r2(u[:n_fit], Y[:n_fit], u[n_fit:], Y[n_fit:])
+    return out
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--domain', choices=['t', 'warp', 'dwell'], required=True)
     p.add_argument('--dial', type=float, required=True)
     p.add_argument('--model', choices=LOSSES, required=True)
+    p.add_argument('--encoder', choices=['linear', 'mlp'], default='linear')
+    p.add_argument('--hidden', type=int, default=256)
+    p.add_argument('--depth', type=int, default=2)
     p.add_argument('--steps', type=int, default=15000)
     p.add_argument('--lr', type=float, default=1e-3)
     p.add_argument('--batch', type=int, default=256)
@@ -80,6 +119,10 @@ def main():
     p.add_argument('--n_test', type=int, default=500)
     p.add_argument('--M', type=int, default=300)
     p.add_argument('--bank', type=int, default=50000)
+    p.add_argument('--bank_source', choices=['heldout', 'train'], default='heldout',
+                   help='futures to resample from: fresh held-out pairs (default) or the first '
+                        '--bank training pairs (goal-1 runs).  A flexible encoder can memorise '
+                        'training pairs, which makes an in-training bank over-confident.')
     p.add_argument('--seed', type=int, default=0)
     p.add_argument('--out', default='results/domain_sweep')
     a = p.parse_args()
@@ -94,36 +137,72 @@ def main():
     u_te, y = make_data(mod, a.n_test)
     oracle = mod.oracle_samples(u_te, a.M)
     spread = mod.oracle_spread(u_te)
+    # drawn after train/test/oracle so those stay identical to the goal-1 runs
+    u_bk, v_bk = make_data(mod, a.bank) if a.bank_source == 'heldout' else (u_tr[:a.bank], v_tr[:a.bank])
 
     torch.manual_seed(a.seed)
-    model = build_model(cfg['model'], mod)
-    loss_fn = build_loss(cfg['loss'], model)
+    if a.encoder == 'mlp':
+        cfg['model'].update(type='mlp_clip', hidden=a.hidden, depth=a.depth, skip=True)
+    regressor = a.model in REGRESSORS and not (a.model == 'mse' and a.encoder == 'linear')
+    if regressor:
+        depth = a.depth if a.encoder == 'mlp' else 0
+        cls = MeanRegressor if a.model == 'mse' else GaussianRegressor
+        model = cls(mod.dim_u, mod.dim_v, a.hidden, depth)
+        loss_fn = None
+    else:
+        model = build_model(cfg['model'], mod)
+        loss_fn = build_loss(cfg['loss'], model)
+    if hasattr(model, 'set_input_stats'):
+        model.set_input_stats(u_tr.float(), v_tr.float())
     opt = torch.optim.Adam(model.parameters(), lr=a.lr)
     for step in range(a.steps):
         idx = torch.randint(0, a.n_train, (a.batch,))
         u, v = u_tr[idx], v_tr[idx]
-        gu, gv, s = model(u.float(), v.float())
-        loss = loss_fn(gu, gv, s, u, v)
+        if regressor:
+            loss = model.loss(u, v)
+        else:
+            gu, gv, s = model(u.float(), v.float())
+            loss = loss_fn(gu, gv, s, u, v)
         opt.zero_grad()
         loss.backward()
         opt.step()
     model.eval()
 
-    bank = v_tr[:a.bank]
+    bank = v_bk
     S = {'oracle': oracle, 'climatology': climatology_samples(bank, a.n_test, a.M)}
-    extra = {'final_loss': loss.item(), 'logit_scale': model.logit_scale.exp().item()}
-    if a.model == 'mse':
+    extra = {'final_loss': loss.item()}
+    if not regressor:
+        extra['logit_scale'] = model.logit_scale.exp().item()
+    if a.model == 'mse' and regressor:
+        with torch.no_grad():
+            pred = model.predict(u_te).double()
+            r = v_bk - model.predict(u_bk).double()
+        S['model_point'] = point_samples(pred)
+        S['model'] = gaussian_samples(pred, r.T @ r / a.bank, a.M)
+    elif a.model == 'gauss':
+        with torch.no_grad():
+            mu, sd = (x.double() for x in model.predict(u_te))
+            mu_b, sd_b = (x.double() for x in model.predict(u_bk))
+        z = (v_bk - mu_b) / sd_b          # standardised residuals
+        R = torch.corrcoef(z.T)                    # residual correlation across steps
+        S['model'] = mu[:, None, :] + sd[:, None, :] * gaussian_samples(torch.zeros_like(mu), R, a.M)
+        S['model_point'] = point_samples(mu)
+    elif a.model == 'mse':
         W = (model.u_encoder.weight.T @ model.v_encoder.weight).double().detach()
         pred = u_te @ W
         S['model_point'] = point_samples(pred)
-        r = v_tr[:a.bank] - u_tr[:a.bank] @ W
+        r = v_bk - u_bk @ W
         S['model'] = gaussian_samples(pred, r.T @ r / a.bank, a.M)
     else:
-        S['model'], ess = sir_samples(clip_score_fn(model, LOSSES[a.model]['inner_product']),
+        L = LOSSES[a.model]
+        S['model'], ess = sir_samples(clip_score_fn(model, L['inner_product'], L.get('normalize', False)),
                                       u_te, bank.float(), a.M)
         extra['ess_median'] = ess.median().item()
         extra['ess_min'] = ess.min().item()
-    if a.domain == 't':
+        extra['ess_p05'] = ess.quantile(0.05).item()
+        if a.domain == 'warp':
+            extra.update(latent_recovery(model, mod))
+    if a.domain == 't' and a.encoder == 'linear' and not regressor and not LOSSES[a.model].get('normalize'):
         # same covariances as the GP, so the Gaussian theory's A* still applies
         target = resolve_theory_target(cfg['loss'])
         w = theory_match_whitened_error(model, mod, target)
@@ -135,7 +214,9 @@ def main():
 
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    tag = f'{a.domain}_{a.dial:g}_{a.model}_s{a.seed}'
+    # linear runs keep the goal-1 file names
+    enc = '' if a.encoder == 'linear' else f'_{a.encoder}'
+    tag = f'{a.domain}_{a.dial:g}_{a.model}{enc}_s{a.seed}'
     json.dump({'args': vars(a), 'scores': table, 'extra': extra}, open(out / f'{tag}.json', 'w'), indent=1)
     m, o = table['model'], table['oracle']
     print(f"{tag}: energy model {m['energy']:.4f} oracle {o['energy']:.4f} clim {table['climatology']['energy']:.4f} "
