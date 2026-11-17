@@ -8,6 +8,9 @@ the KL losses) with
       tanh   k <f(u), tanh(g(v))>            bounded, saturates along rays
       tk     -(b/2) log(1 + k |f-g|^2 / b)   Student-t kernel: decays like
                                              -b log|v|  (b learnable, b -> inf is L2)
+      tk2    tk + (b_u/2) log(1+|G0 u|^2) + (b_v/2) log(1+|H0 v|^2)
+                                             log-quadratic family: contains log r of an
+                                             elliptical t-process with LINEAR maps
   * energy-score training.  --train es replaces the KL (InfoNCE) loss by the
     energy score of the model's own bank forecast, built from a bank of K
     training futures drawn afresh at every step; --train hyb adds it to the KL
@@ -48,7 +51,7 @@ BANK_SIZES = [100, 300, 1000, 3000, 10000, 30000, 100000, 200000]
 TAIL_P = [1e-2, 1e-3, 1e-4]
 RAY_C = [1, 3, 10, 100, 1000]
 # default KL loss per score: the variants used in the note's tables
-DEFAULT_LOSS = {'dot': 'twoway', 'tanh': 'twoway', 'ncos': 'twoway', 'l2': 'oneway', 'tk': 'oneway'}
+DEFAULT_LOSS = {'dot': 'twoway', 'tanh': 'twoway', 'ncos': 'twoway', 'l2': 'oneway', 'tk': 'oneway', 'tk2': 'oneway'}
 
 
 # ---------------------------------------------------------------------------
@@ -64,13 +67,21 @@ def logits_fn(model, kind, gu, gv):
         return k * gu @ torch.tanh(gv).T
     if kind == 'ncos':
         return k * F.normalize(gu, dim=-1) @ F.normalize(gv, dim=-1).T
+    eu = ev = None
+    if kind == 'tk2':          # last columns of the embeddings carry G0 u and H0 v
+        gu, eu = gu[:, :model.k], gu[:, model.k:]
+        gv, ev = gv[:, :model.k], gv[:, model.k:]
     d2 = (gu * gu).sum(-1, keepdim=True) - 2 * gu @ gv.T + (gv * gv).sum(-1)[None, :]
     d2 = d2.clamp_min(0)
     if kind == 'l2':
         return -0.5 * k * d2
-    if kind == 'tk':
+    if kind in ('tk', 'tk2'):
         b = 1 + model.log_beta.exp()
-        return -0.5 * b * torch.log1p(k * d2 / b)
+        s = -0.5 * b * torch.log1p(k * d2 / b)
+        if kind == 'tk2':
+            s = s + 0.5 * model.log_bu.exp() * torch.log1p((eu * eu).sum(-1))[:, None] \
+                  + 0.5 * model.log_bv.exp() * torch.log1p((ev * ev).sum(-1))[None, :]
+        return s
     raise ValueError(kind)
 
 
@@ -143,6 +154,37 @@ def load_data(a):
     thr = torch.stack([torch.kthvalue(ref, int(round((1 - p) * ref.numel()))).values for p in TAIL_P])
     return dict(u_tr=d['u_train'], v_tr=d['v_train'], u_te=d['u_test'][te], y=d['v_test'][te], v_bk=v_bk,
                 oracle=None, thr=thr, p_true=None, dim_u=d['u_train'].shape[1], dim_v=d['v_train'].shape[1])
+
+
+class LogQuadratic(nn.Module):
+    """Wrap a CLIP model with a past-only and a future-only linear map (score 'tk2')."""
+
+    def __init__(self, base, du, dv):
+        super().__init__()
+        self.base, self.k = base, None
+        self.hu = nn.Linear(du, du, bias=False)
+        self.hv = nn.Linear(dv, dv, bias=False)
+        self.log_beta = nn.Parameter(torch.tensor(math.log(4.0)))
+        self.log_bu = nn.Parameter(torch.tensor(0.0))
+        self.log_bv = nn.Parameter(torch.tensor(0.0))
+
+    @property
+    def logit_scale(self):
+        return self.base.logit_scale
+
+    def set_input_stats(self, u, v):
+        if hasattr(self.base, 'set_input_stats'):
+            self.base.set_input_stats(u, v)
+
+    def encode_u(self, u):
+        g = self.base.encode_u(u)
+        self.k = g.shape[1]
+        return torch.cat([g, self.hu(u)], 1)
+
+    def encode_v(self, v):
+        g = self.base.encode_v(v)
+        self.k = g.shape[1]
+        return torch.cat([g, self.hv(v)], 1)
 
 
 class _Dims:
@@ -239,6 +281,8 @@ def main():
     model = build_model(cfg, _Dims(d['dim_u'], d['dim_v']))
     if a.score == 'tk':
         model.log_beta = nn.Parameter(torch.tensor(math.log(4.0)))
+    if a.score == 'tk2':
+        model = LogQuadratic(model, d['dim_u'], d['dim_v'])
     if hasattr(model, 'set_input_stats'):
         model.set_input_stats(u_tr.float(), v_tr.float())
     # energy scores are reported in units of the climatological spread E|v - v'|
@@ -315,7 +359,8 @@ def main():
     tag += f'_{a.encoder}_s{a.seed}'
     res = {'args': vars(a), 'tag': tag, 'ref': ref_name, 'ref_energy': ref_mean, 'es_unit': es_unit,
            'logit_scale': model.logit_scale.exp().item(),
-           'beta': (1 + model.log_beta.exp()).item() if a.score == 'tk' else None,
+           'beta': (1 + model.log_beta.exp()).item() if a.score in ('tk', 'tk2') else None,
+           'beta_uv': [model.log_bu.exp().item(), model.log_bv.exp().item()] if a.score == 'tk2' else None,
            'tail_p': TAIL_P, 'thr': thr.tolist(),
            'p_true_mean': d['p_true'].mean(0).tolist() if d['p_true'] is not None else None,
            'p_true_calm': d['p_true'][calm].mean(0).tolist() if d['p_true'] is not None else None,

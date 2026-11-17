@@ -1075,6 +1075,146 @@ $\mu_{v\vert u}(\abs{v}>t\vert u)$ decays like $t^{-(\nu+d_u)}$. A saturating
 score errs by placing mass of order $\bar A(u)\,t^{-\nu}$ where there should
 be almost none.
 
+\paragraph{A family with the right tail.}
+In the Gaussian case, adding past-only and future-only quadratic terms to the
+inner product made every loss well-specified (\Cref{tab:families}). The
+heavy-tailed counterpart replaces quadratics by their logarithms.
+
+\begin{proposition}[A Well-Specified Family on Heavy Tails]
+ \label{prop:logquad}
+ Let $(u,v)$ be jointly elliptical Student-$t$ with $\nu$ degrees of freedom
+ and scale matrix $\Sigma$, and let $d=d_u+d_v$. Split the symmetric square
+ root of $\Sigma^{-1}/\nu$ into its first $d_u$ and last $d_v$ columns,
+ $(\Sigma^{-1}/\nu)^{1/2}=[\,G,\,-H\,]$, and let
+ $G_0=(\nu\Sigma_{uu})^{-1/2}$, $H_0=(\nu\Sigma_{vv})^{-1/2}$. Then
+ \begin{equation}
+  \log r(u,v)=-\frac{\nu+d}{2}\log\bigl(1+\abs{Gu-Hv}^{2}\bigr)
+  +\frac{\nu+d_u}{2}\log\bigl(1+\abs{G_0u}^{2}\bigr)
+  +\frac{\nu+d_v}{2}\log\bigl(1+\abs{H_0v}^{2}\bigr)+\mathrm{const}.
+  \label{eq:logquad}
+ \end{equation}
+ Consequently the family of \emph{log-quadratic scores}
+ \begin{equation}
+  s(u,v)=-\frac{b}{2}\log\bigl(1+\abs{f(u)-g(v)}^{2}\bigr)
+  +\frac{b_u}{2}\log\bigl(1+\abs{f_0(u)}^{2}\bigr)
+  +\frac{b_v}{2}\log\bigl(1+\abs{g_0(v)}^{2}\bigr),
+  \qquad b,b_u,b_v\ge0,
+  \label{eq:logquadfamily}
+ \end{equation}
+ with \emph{linear} encoders $f,g,f_0,g_0$, is well-specified for the one-way,
+ two-way and joint losses under every divergence. With injective linear
+ encoders $g,g_0$, its members with $b\ge b_v$ have log-decay rate $b-b_v$,
+ so by \Cref{thm:tail} the forecast has tail index $\nu+b-b_v$; for the data
+ this is $\nu+d_u$.
+\end{proposition}
+\begin{proof}
+ See \Cref{app:logquad}.
+\end{proof}
+
+The first term of \eqref{eq:logquadfamily} is the Student-$t$ kernel score
+\eqref{eq:tkernel}; the other two play the role of the quadratic terms of
+\Cref{tab:families}, to which the family reduces as $\nu\to\infty$, because
+$\tfrac{\nu+d}{2}\log(1+x/\nu)\to x/2$. On heavy-tailed elliptical data it is
+therefore the logarithm of a quadratic, not the quadratic itself, that a
+score must be able to represent, and it is the difference $b-b_v$ of two
+learned exponents that carries the tail index of the forecast.
+
+\paragraph{Saturating low and saturating high.}
+\Cref{cor:trichotomy} shows that a saturating score cannot have the right
+tail. How wrong the tail is depends on the level at which the score
+saturates, that is, on $\bar A(u)$. For flexible encoders the contrastive
+loss itself chooses the lowest possible level.
+
+\begin{proposition}[The KL-Optimal Bounded Score Is the Clipped Log Ratio]
+ \label{prop:clip}
+ Fix $u$ with $\KL{\mu_{v\vert u}(\cdot\vert u)}{\mu_v}<\infty$, and let $s$ be
+ any score whose tilting factor $\rho=e^{s(u,\cdot)}/Z(u)$ satisfies
+ $m\le\rho\le M$ for constants $0<m\le1\le M$. Then there is $\lambda>0$ such
+ that
+ \begin{equation}
+  \rho^{\star}\define\min\bigl\{\max\{r(u,\cdot)/\lambda,\;m\},\;M\bigr\}
+  \label{eq:clip}
+ \end{equation}
+ integrates to one under $\mu_v$, and the model $\rho^{\star}\mu_v$ satisfies
+ $\KL{\mu_{v\vert u}}{\rho^{\star}\mu_v}\le\KL{\mu_{v\vert u}}{\rho\,\mu_v}$,
+ with equality only if $\rho=\rho^{\star}$ almost everywhere. In terms of
+ scores: for every score whose oscillation $\sup_vs(u,v)-\inf_vs(u,v)$ is at
+ most $2\kappa$ there is a score of the form
+ $s^{\star}(u,v)=\min\{\max\{\log r(u,v)+c(u),\,a(u)\},\,a(u)+2\kappa\}$, the
+ log density ratio clipped to a window of width $2\kappa$, whose one-way loss
+ is no larger.
+\end{proposition}
+\begin{proof}
+ See \Cref{app:clip}.
+\end{proof}
+
+\begin{corollary}[A Flexible Bounded Score Saturates at Its Floor]
+ \label{cor:floor}
+ In the setting of \Cref{prop:clip}, suppose that the past lightens the tail,
+ $r(u,v)\to0$ as $\abs{v}\to\infty$. Then $\rho^{\star}=m=\inf_v\rho^{\star}$
+ outside a bounded set. The clipped score is saturating with constant ray
+ profile and tail amplification $A(u,\theta)\equiv m\le1$: of all scores with
+ the same bounds, the KL-optimal one gives extreme futures the smallest
+ weight that it gives to anything.
+\end{corollary}
+
+Boundedness alone is therefore not what makes a score over-weight extreme
+futures. A flexible score that is bounded on both sides, trained to its
+population optimum, saturates at its floor; the forecast still has the tail
+index $\nu$ of the marginal (\Cref{cor:tailindex}), but with a constant $m$
+that is at most $e^{-2\kappa}$ times the largest tilting factor and is
+negligible when $\kappa$ is large, and the weight that a bank places on a tail
+set converges to at most its marginal mass (\Cref{thm:exposure}(iii) below). This is the population-level reason why the normalized cosine
+with flexible encoders performs well on heavy tails although its learned
+scale $\kappa$, and with it the worst-case bound of \Cref{prop:twosided}, is
+large (\Cref{ssec:banksweep}). A score saturates \emph{high}
+when its architecture cannot place extreme futures at the floor. The next
+remark shows that the inner product with a bounded future encoder is of this
+kind.
+
+\begin{remark}[Where Extreme Futures Land in Embedding Space]
+ \label{rem:corners}
+ For a two-tower score, the ray profile records where the future encoder
+ sends extreme futures. Let $g$ be as in \Cref{ex:profiles} and let
+ $\sigma(\theta)\define\operatorname{sign}g_\infty(\theta)\in\{\pm1\}^{d_z}$.
+ \begin{enumerate}[label=(\roman*)]
+  \item \emph{Unbounded inner product.} $g(t\theta)$ leaves every bounded
+        set, and the score is unbounded.
+  \item \emph{$L^2$.} $g(t\theta)$ leaves every bounded set, hence moves
+        away from every $f(u)$, and the score tends to $-\infty$.
+  \item \emph{Normalized cosine.} $g(t\theta)/\abs{g(t\theta)}$ converges to
+        a point of the unit sphere, on which all embeddings lie. Extreme
+        futures have no special position: $\ell(u,\theta)$ equals the
+        supremum $\kappa$ of the score only if $f(u)$ is exactly parallel to
+        $g_\infty(\theta)$. If $g$ is linear the score is constant along
+        rays, $A(u,\theta)=\rho(u,t\theta)$ for all $t>0$, and the tail is
+        over-weighted exactly as much as the bulk in the same direction.
+  \item \emph{Inner product with a $\tanh$ future encoder.}
+        $\tanh g(t\theta)$ converges to the vertex $\sigma(\theta)$ of the
+        cube $[-1,1]^{d_z}$ that contains all future embeddings. A vertex
+        maximizes a linear functional over the cube, so the profile
+        $\ell(u,\theta)=\kappa\IP{f(u)}{\sigma(\theta)}$ equals the supremum
+        $\kappa\abs{f(u)}_{1}$ of the score for every past with
+        $\operatorname{sign}f(u)=\sigma(\theta)$. For such a past
+        $A(u,\theta)=\sup_v\rho(u,v)>1$: the most extreme futures in
+        direction $\theta$ are, at every radius beyond the saturation scale,
+        the most over-weighted futures in the whole space. Moreover
+        $\ell(u,\theta)$ is linear in $f(u)$, so a direction that sits at the
+        floor for one past sits at the ceiling for a past with the opposite
+        embedding; with an odd past encoder, such as a linear one, the two
+        pasts $u$ and $-u$ are of this kind, and the clipped optimum of
+        \Cref{prop:clip}, which sits at the floor in every direction for
+        every past, is out of reach.
+ \end{enumerate}
+ The contrastive loss makes case (iv) the typical one for the pasts that
+ matter. A matched pair whose future is extreme, $v=t\theta$ beyond the
+ saturation scale, has score $\kappa\IP{f(u)}{\sigma(\theta)}$, and
+ increasing it aligns the signs of $f(u)$ with $\sigma(\theta)$. The pasts
+ that precede extreme futures are thereby trained to point at the vertex
+ that \emph{all} extreme futures in that direction share, whatever their
+ size.
+\end{remark}
+
 \paragraph{What a finite bank shows.}
 \Cref{thm:tail} describes the limit $N\to\infty$ of the bank forecast. The
 next result describes how that limit is approached, and explains why the
@@ -1220,7 +1360,17 @@ of collapse.
             & \multicolumn{2}{c|}{exact score} & \multicolumn{3}{c|}{plateau, $A=30$} & \multicolumn{3}{c|}{plateau, $A=1000$} & \multicolumn{2}{c}{unbounded, $s=v$} \\
   $N$       & OF & $\mathcal{E}_N$ & OF & bound & $\mathcal{E}_N$ & OF & bound & $\mathcal{E}_N$ & OF & $\mathcal{E}_N$ \\
   \midrule
-%%PLATEAUROWS%%
+  $10$ & 0 & $7.2\!\cdot\!10^{-2}$ & 9.32 & 7.69 & $9.4\!\cdot\!10^{-2}$ & 9.68 & 9.91 & 0.10 & 9.75 & 0.96 \\
+  $30$ & 0 & $1.9\!\cdot\!10^{-2}$ & 16.3 & 15.2 & $4.7\!\cdot\!10^{-2}$ & 23.4 & 29.1 & $8.7\!\cdot\!10^{-2}$ & 28.7 & 1.71 \\
+  $100$ & 0 & $5.4\!\cdot\!10^{-3}$ & 23.1 & 23.1 & $2.4\!\cdot\!10^{-2}$ & 88.1 & 90.5 & 0.27 & 92.7 & 3.37 \\
+  $300$ & 0 & $1.8\!\cdot\!10^{-3}$ & 26.9 & 27.0 & $9.9\!\cdot\!10^{-3}$ & 240 & 228 & 0.63 & 288 & 6.18 \\
+  $1{,}000$ & 0 & $5.3\!\cdot\!10^{-4}$ & 28.7 & 27.7 & $3.4\!\cdot\!10^{-3}$ & 503 & 476 & 0.88 & 930 & 11.3 \\
+  $3{,}000$ & 0 & $1.8\!\cdot\!10^{-4}$ & 29.7 & 25.7 & $1.4\!\cdot\!10^{-3}$ & 764 & 648 & 0.73 & 2{,}497 & 18.2 \\
+  $10{,}000$ & 0 & $5.3\!\cdot\!10^{-5}$ & 29.6 & 18.9 & $5.6\!\cdot\!10^{-4}$ & 924 & 575 & 0.46 & 6{,}270 & 28.7 \\
+  $30{,}000$ & 0 & $1.8\!\cdot\!10^{-5}$ & 30.3 & 9.49 & $3.5\!\cdot\!10^{-4}$ & 974 & 307 & 0.33 & 9{,}401 & 42.7 \\
+  $100{,}000$ & 0 & $5.7\!\cdot\!10^{-6}$ & 30.3 & 3.00 & $2.7\!\cdot\!10^{-4}$ & 989 & 99.0 & 0.28 & 10{,}000 & 63.0 \\
+  $300{,}000$ & 0 & $2.1\!\cdot\!10^{-6}$ & 30.0 & 1.00 & $2.4\!\cdot\!10^{-4}$ & 1{,}002 & 33.2 & 0.27 & 10{,}000 & 91.3 \\
+  $1{,}000{,}000$ & 0 & $7.7\!\cdot\!10^{-7}$ & 29.8 & 0.30 & $2.3\!\cdot\!10^{-4}$ & 999 & 9.99 & 0.26 & 10{,}000 & 134 \\
   \bottomrule
  \end{tabular}
  \caption{Fixed-score check of \Cref{thm:exposure,thm:energycost}, with no
@@ -1914,7 +2064,69 @@ tail indices, so they differ for every $u$ and the one-way loss is positive
 by \Cref{prop:target}(i).
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{thm:exposure}}{Theorem 4.16}}
+\subsection{Proofs of \texorpdfstring{\Cref{prop:logquad}}{Proposition 4.16}, \texorpdfstring{\Cref{prop:clip}}{Proposition 4.17} and \texorpdfstring{\Cref{cor:floor}}{Corollary 4.18}}
+\label{app:logquad}
+\emph{Proof of \Cref{prop:logquad}.}
+With $z=(u,v)$, the joint density is proportional to
+$(1+z^{\top}\Sigma^{-1}z/\nu)^{-(\nu+d)/2}$ and the marginal densities to
+$(1+u^{\top}\Sigma_{uu}^{-1}u/\nu)^{-(\nu+d_u)/2}$ and
+$(1+v^{\top}\Sigma_{vv}^{-1}v/\nu)^{-(\nu+d_v)/2}$, since the marginals of a
+multivariate $t$ distribution are multivariate $t$ with the same degrees of
+freedom \cite{kotz2004multivariate}. By the definitions of $G,H,G_0,H_0$,
+$z^{\top}\Sigma^{-1}z/\nu=\abs{Gu-Hv}^{2}$,
+$u^{\top}\Sigma_{uu}^{-1}u/\nu=\abs{G_0u}^{2}$ and
+$v^{\top}\Sigma_{vv}^{-1}v/\nu=\abs{H_0v}^{2}$, and
+$\log r=\log p(u,v)-\log p(u)-\log p(v)$ gives \eqref{eq:logquad}. The family
+\eqref{eq:logquadfamily} contains $\log r+\mathrm{const}$, so it is
+well-specified for every loss by \Cref{prop:target}. For the log-decay rate,
+let $g,g_0$ be linear and injective. Then
+$\log(1+\abs{f(u)-g(t\theta')}^{2})=2\log t+\log\abs{g(\theta)}^{2}+o(1)$ and
+$\log(1+\abs{g_0(t\theta')}^{2})=2\log t+\log\abs{g_0(\theta)}^{2}+o(1)$, so
+$s(u,t\theta')+(b-b_v)\log t$ converges to a finite continuous limit, and
+\ref{R1} holds with $\beta=b-b_v$ for the same reason.
+\qed
+
+\smallskip
+\noindent\emph{Proof of \Cref{prop:clip}.}
+\label{app:clip}
+Write $p=\mu_{v\vert u}(\cdot\vert u)$, so that $\Dd p/\Dd\mu_v=r\define r(u,\cdot)$,
+which is positive $\mu_v$-almost everywhere by \Cref{ass:data}\ref{ass:joint}.
+The function
+$\Phi(\lambda)\define\int\min\{\max\{r/\lambda,m\},M\}\,\Dd\mu_v$ is continuous
+and non-increasing on $(0,\infty)$, with limits $M\ge1$ as $\lambda\to0$ and
+$m\le1$ as $\lambda\to\infty$, so $\Phi(\lambda)=1$ for some $\lambda$; this
+defines $\rho^{\star}$. Since $m\le\rho,\rho^{\star}\le M$ and
+$\KL{p}{\mu_v}<\infty$, both divergences are finite and
+\begin{equation*}
+ \KL{p}{\rho\,\mu_v}-\KL{p}{\rho^{\star}\mu_v}
+ =\int r\log\frac{\rho^{\star}}{\rho}\,\Dd\mu_v
+ \ge\int\frac{r}{\rho^{\star}}\bigl(\rho^{\star}-\rho\bigr)\,\Dd\mu_v,
+\end{equation*}
+using $\log x\ge1-1/x$, with equality only at $x=1$. We claim that
+$\frac{r}{\rho^{\star}}(\rho^{\star}-\rho)\ge\lambda(\rho^{\star}-\rho)$
+pointwise. Where $m<\rho^{\star}<M$, $r/\rho^{\star}=\lambda$. Where
+$\rho^{\star}=M$, we have $r/\lambda\ge M$, so $r/\rho^{\star}\ge\lambda$,
+and $\rho^{\star}-\rho=M-\rho\ge0$. Where $\rho^{\star}=m$, we have
+$r/\lambda\le m$, so $r/\rho^{\star}\le\lambda$, and
+$\rho^{\star}-\rho=m-\rho\le0$. Hence the right-hand side is at least
+$\lambda\int(\rho^{\star}-\rho)\,\Dd\mu_v=0$, with equality only if
+$\rho=\rho^{\star}$ almost everywhere. For the statement about scores, a
+score with oscillation at most $2\kappa$ has a tilting factor with
+$\sup\rho\le e^{2\kappa}\inf\rho$; apply the first part with $m=\inf\rho$
+and $M=e^{2\kappa}m$, and take logarithms of \eqref{eq:clip}, with
+$c(u)=-\log\lambda$ and $a(u)=\log m$.
+\qed
+
+\smallskip
+\noindent\emph{Proof of \Cref{cor:floor}.}
+If $r(u,v)\to0$ as $\abs{v}\to\infty$, then $r/\lambda<m$ outside a bounded
+set, where \eqref{eq:clip} gives $\rho^{\star}=m$. The score
+$\log\rho^{\star}$ is then constant outside a bounded set, so \ref{R1} and
+\ref{R2} hold with $\beta=0$ and $\ell\equiv\log m$, and its normalizing
+constant is one.
+\qed
+
+\subsection{Proof of \texorpdfstring{\Cref{thm:exposure}}{Theorem 4.20}}
 \label{app:exposure}
 Write $\rho_j\define\rho(v_j)$, so that
 $\nu^{N}_{v\vert u}(T\vert u)=\sum_{j:v_j\in T}\rho_j\big/\sum_{k}\rho_k$ (the
@@ -1967,7 +2179,7 @@ $\mathrm{OF}_N(T)\ge\tfrac14\min(N,a)$. The upper bound combines (i) and
 (iii).
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{lem:energytail}}{Lemma 4.17}}
+\subsection{Proof of \texorpdfstring{\Cref{lem:energytail}}{Lemma 4.21}}
 \label{app:energytail}
 Let $k(x,y)\define\abs{x}+\abs{y}-\abs{x-y}$. Because the Euclidean distance
 is of negative type, $k$ is a positive semidefinite kernel, the
@@ -1997,7 +2209,7 @@ $\varphi\ge c_0t$ on $H_{t,e}$ and $\int\varphi\,\Dd q\ge c_0t\,q(H_{t,e})$.
 Inserting both bounds into \eqref{eq:witness} gives \eqref{eq:energytail}.
 \qed
 
-\subsection{Proofs of \texorpdfstring{\Cref{thm:energycost}}{Theorem 4.18} and \texorpdfstring{\Cref{cor:collapsecost}}{Corollary 4.19}}
+\subsection{Proofs of \texorpdfstring{\Cref{thm:energycost}}{Theorem 4.22} and \texorpdfstring{\Cref{cor:collapsecost}}{Corollary 4.23}}
 \label{app:energycost}
 \emph{Proof of \Cref{thm:energycost}.}
 For a probability measure $q$ with a finite first moment and $y\sim p$,
@@ -2044,7 +2256,7 @@ The probability of this event tends to one, and for every $\epsilon>0$ there
 is $c>0$ with $\liminf_N\mathbb{P}(\abs{v_{j^{\star}}}\ge cN^{1/\nu})\ge1-\epsilon$.
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{prop:klvsenergy}}{Proposition 4.20}}
+\subsection{Proof of \texorpdfstring{\Cref{prop:klvsenergy}}{Proposition 4.24}}
 \label{app:klvsenergy}
 (i) The model $q_h$ has density
 $e^{-h\indicator_T}/\bigl(1-(1-e^{-h})\varepsilon\bigr)$ with respect to $q$,
@@ -2064,7 +2276,7 @@ $(1-p(T))\log\frac{1-p(T)}{1-\varepsilon}\le-\log(1-\varepsilon)$. (ii) is
 \Cref{lem:energytail} with $q(H_{t,e})\ge q(T)=\varepsilon$.
 \qed
 
-\subsection{Proof of \texorpdfstring{\Cref{prop:bankenergy}}{Proposition 4.22}}
+\subsection{Proof of \texorpdfstring{\Cref{prop:bankenergy}}{Proposition 4.26}}
 \label{app:bankenergy}
 (i) Condition on $u$ and on the bank, and apply the identity
 $\E_y\mathrm{ES}(q,y)-\E_y\mathrm{ES}(p,y)=\tfrac12\DE(p,q)$ from the proof of
