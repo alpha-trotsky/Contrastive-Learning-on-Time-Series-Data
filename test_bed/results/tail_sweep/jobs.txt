@@ -23,6 +23,56 @@
 --score tk2 --loss oneway --encoder linear --seed 0
 --score tk2 --loss joint --encoder linear --seed 0
 --score tk2 --loss oneway --encoder mlp --seed 0
+--data btc --score dot --loss twoway --encoder linear --seed 0
+--data btc --score tanh --loss twoway --encoder linear --seed 0
+--data btc --score ncos --loss twoway --encoder linear --seed 0
+--data btc --score l2 --loss oneway --encoder linear --seed 0
+--data btc --score l2 --loss joint --encoder linear --seed 0
+--data btc --score tk --loss oneway --encoder linear --seed 0
+--data btc --score tk2 --loss oneway --encoder linear --seed 0
+--data rain --score dot --loss twoway --encoder linear --seed 0
+--data rain --score tanh --loss twoway --encoder linear --seed 0
+--data rain --score ncos --loss twoway --encoder linear --seed 0
+--data rain --score l2 --loss oneway --encoder linear --seed 0
+--data rain --score l2 --loss joint --encoder linear --seed 0
+--data rain --score tk --loss oneway --encoder linear --seed 0
+--data rain --score tk2 --loss oneway --encoder linear --seed 0
+--data flow --score dot --loss twoway --encoder linear --seed 0
+--data flow --score tanh --loss twoway --encoder linear --seed 0
+--data flow --score ncos --loss twoway --encoder linear --seed 0
+--data flow --score l2 --loss oneway --encoder linear --seed 0
+--data flow --score l2 --loss joint --encoder linear --seed 0
+--data flow --score tk --loss oneway --encoder linear --seed 0
+--data flow --score tk2 --loss oneway --encoder linear --seed 0
+--data btc --score tanh --encoder linear --seed 0 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --encoder linear --seed 0 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --loss twoway --encoder mlp --seed 0
+--data btc --score tanh --loss twoway --encoder mlp --seed 0
+--data btc --score ncos --loss twoway --encoder mlp --seed 0
+--data btc --score l2 --loss oneway --encoder mlp --seed 0
+--data btc --score l2 --loss joint --encoder mlp --seed 0
+--data btc --score tk --loss oneway --encoder mlp --seed 0
+--data btc --score tk2 --loss oneway --encoder mlp --seed 0
+--data rain --score dot --loss twoway --encoder mlp --seed 0
+--data rain --score tanh --loss twoway --encoder mlp --seed 0
+--data rain --score ncos --loss twoway --encoder mlp --seed 0
+--data rain --score l2 --loss oneway --encoder mlp --seed 0
+--data rain --score l2 --loss joint --encoder mlp --seed 0
+--data rain --score tk --loss oneway --encoder mlp --seed 0
+--data rain --score tk2 --loss oneway --encoder mlp --seed 0
+--data flow --score dot --loss twoway --encoder mlp --seed 0
+--data flow --score tanh --loss twoway --encoder mlp --seed 0
+--data flow --score ncos --loss twoway --encoder mlp --seed 0
+--data flow --score l2 --loss oneway --encoder mlp --seed 0
+--data flow --score l2 --loss joint --encoder mlp --seed 0
+--data flow --score tk --loss oneway --encoder mlp --seed 0
+--data flow --score tk2 --loss oneway --encoder mlp --seed 0
+--data btc --score tanh --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
+--data rain --score tanh --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
+--data rain --score dot --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
+--data flow --score tanh --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
+--data flow --score dot --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
 --score dot --loss twoway --encoder mlp --seed 1
 --score tanh --loss twoway --encoder mlp --seed 1
 --score ncos --loss twoway --encoder mlp --seed 1
@@ -48,6 +98,14 @@
 --score tk2 --loss oneway --encoder linear --seed 1
 --score tk2 --loss joint --encoder linear --seed 1
 --score tk2 --loss oneway --encoder mlp --seed 1
+--dial inf --score dot --encoder mlp --seed 0
+--dial inf --score tanh --encoder mlp --seed 0
+--dial inf --score dot --encoder linear --seed 0
+--dial inf --score tanh --encoder linear --seed 0
+--dial inf --score dot --encoder mlp --seed 1
+--dial inf --score tanh --encoder mlp --seed 1
+--dial inf --score dot --encoder linear --seed 1
+--dial inf --score tanh --encoder linear --seed 1
 --score dot --loss twoway --encoder mlp --seed 2
 --score tanh --loss twoway --encoder mlp --seed 2
 --score ncos --loss twoway --encoder mlp --seed 2
@@ -73,99 +131,13 @@
 --score tk2 --loss oneway --encoder linear --seed 2
 --score tk2 --loss joint --encoder linear --seed 2
 --score tk2 --loss oneway --encoder mlp --seed 2
---data btc --score dot --loss twoway --encoder mlp --seed 0
---data btc --score tanh --loss twoway --encoder mlp --seed 0
---data btc --score ncos --loss twoway --encoder mlp --seed 0
---data btc --score l2 --loss oneway --encoder mlp --seed 0
---data btc --score l2 --loss joint --encoder mlp --seed 0
---data btc --score tk --loss oneway --encoder mlp --seed 0
---data btc --score tanh --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
---data btc --score dot --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
---data btc --score dot --loss twoway --encoder linear --seed 0
---data btc --score tanh --loss twoway --encoder linear --seed 0
---data btc --score ncos --loss twoway --encoder linear --seed 0
---data btc --score l2 --loss oneway --encoder linear --seed 0
---data btc --score l2 --loss joint --encoder linear --seed 0
---data btc --score tk --loss oneway --encoder linear --seed 0
---data btc --score tanh --encoder linear --seed 0 --train hyb --lam 10 --es_bank 512
---data btc --score dot --encoder linear --seed 0 --train hyb --lam 10 --es_bank 512
---data btc --score dot --loss twoway --encoder mlp --seed 1
---data btc --score tanh --loss twoway --encoder mlp --seed 1
---data btc --score ncos --loss twoway --encoder mlp --seed 1
---data btc --score l2 --loss oneway --encoder mlp --seed 1
---data btc --score l2 --loss joint --encoder mlp --seed 1
---data btc --score tk --loss oneway --encoder mlp --seed 1
---data btc --score tanh --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
---data btc --score dot --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
 --data btc --score dot --loss twoway --encoder linear --seed 1
 --data btc --score tanh --loss twoway --encoder linear --seed 1
 --data btc --score ncos --loss twoway --encoder linear --seed 1
 --data btc --score l2 --loss oneway --encoder linear --seed 1
 --data btc --score l2 --loss joint --encoder linear --seed 1
 --data btc --score tk --loss oneway --encoder linear --seed 1
---data btc --score tanh --encoder linear --seed 1 --train hyb --lam 10 --es_bank 512
---data btc --score dot --encoder linear --seed 1 --train hyb --lam 10 --es_bank 512
---data btc --score dot --loss twoway --encoder mlp --seed 2
---data btc --score tanh --loss twoway --encoder mlp --seed 2
---data btc --score ncos --loss twoway --encoder mlp --seed 2
---data btc --score l2 --loss oneway --encoder mlp --seed 2
---data btc --score l2 --loss joint --encoder mlp --seed 2
---data btc --score tk --loss oneway --encoder mlp --seed 2
---data btc --score tanh --encoder mlp --seed 2 --train hyb --lam 10 --es_bank 512
---data btc --score dot --encoder mlp --seed 2 --train hyb --lam 10 --es_bank 512
---data btc --score dot --loss twoway --encoder linear --seed 2
---data btc --score tanh --loss twoway --encoder linear --seed 2
---data btc --score ncos --loss twoway --encoder linear --seed 2
---data btc --score l2 --loss oneway --encoder linear --seed 2
---data btc --score l2 --loss joint --encoder linear --seed 2
---data btc --score tk --loss oneway --encoder linear --seed 2
---data btc --score tanh --encoder linear --seed 2 --train hyb --lam 10 --es_bank 512
---data btc --score dot --encoder linear --seed 2 --train hyb --lam 10 --es_bank 512
---data btc --score tk2 --loss oneway --encoder linear --seed 0
---data btc --score tk2 --loss oneway --encoder mlp --seed 0
 --data btc --score tk2 --loss oneway --encoder linear --seed 1
---data btc --score tk2 --loss oneway --encoder mlp --seed 1
---data btc --score tk2 --loss oneway --encoder linear --seed 2
---data btc --score tk2 --loss oneway --encoder mlp --seed 2
---data rain --score dot --loss twoway --encoder mlp --seed 0
---data rain --score tanh --loss twoway --encoder mlp --seed 0
---data rain --score ncos --loss twoway --encoder mlp --seed 0
---data rain --score l2 --loss oneway --encoder mlp --seed 0
---data rain --score l2 --loss joint --encoder mlp --seed 0
---data rain --score tk --loss oneway --encoder mlp --seed 0
---data rain --score tk2 --loss oneway --encoder mlp --seed 0
---data rain --score dot --loss twoway --encoder linear --seed 0
---data rain --score tanh --loss twoway --encoder linear --seed 0
---data rain --score ncos --loss twoway --encoder linear --seed 0
---data rain --score l2 --loss oneway --encoder linear --seed 0
---data rain --score l2 --loss joint --encoder linear --seed 0
---data rain --score tk --loss oneway --encoder linear --seed 0
---data rain --score tk2 --loss oneway --encoder linear --seed 0
---data rain --score tanh --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
---data rain --score dot --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
---data flow --score dot --loss twoway --encoder mlp --seed 0
---data flow --score tanh --loss twoway --encoder mlp --seed 0
---data flow --score ncos --loss twoway --encoder mlp --seed 0
---data flow --score l2 --loss oneway --encoder mlp --seed 0
---data flow --score l2 --loss joint --encoder mlp --seed 0
---data flow --score tk --loss oneway --encoder mlp --seed 0
---data flow --score tk2 --loss oneway --encoder mlp --seed 0
---data flow --score dot --loss twoway --encoder linear --seed 0
---data flow --score tanh --loss twoway --encoder linear --seed 0
---data flow --score ncos --loss twoway --encoder linear --seed 0
---data flow --score l2 --loss oneway --encoder linear --seed 0
---data flow --score l2 --loss joint --encoder linear --seed 0
---data flow --score tk --loss oneway --encoder linear --seed 0
---data flow --score tk2 --loss oneway --encoder linear --seed 0
---data flow --score tanh --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
---data flow --score dot --encoder mlp --seed 0 --train hyb --lam 10 --es_bank 512
---data rain --score dot --loss twoway --encoder mlp --seed 1
---data rain --score tanh --loss twoway --encoder mlp --seed 1
---data rain --score ncos --loss twoway --encoder mlp --seed 1
---data rain --score l2 --loss oneway --encoder mlp --seed 1
---data rain --score l2 --loss joint --encoder mlp --seed 1
---data rain --score tk --loss oneway --encoder mlp --seed 1
---data rain --score tk2 --loss oneway --encoder mlp --seed 1
 --data rain --score dot --loss twoway --encoder linear --seed 1
 --data rain --score tanh --loss twoway --encoder linear --seed 1
 --data rain --score ncos --loss twoway --encoder linear --seed 1
@@ -173,15 +145,6 @@
 --data rain --score l2 --loss joint --encoder linear --seed 1
 --data rain --score tk --loss oneway --encoder linear --seed 1
 --data rain --score tk2 --loss oneway --encoder linear --seed 1
---data rain --score tanh --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
---data rain --score dot --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
---data flow --score dot --loss twoway --encoder mlp --seed 1
---data flow --score tanh --loss twoway --encoder mlp --seed 1
---data flow --score ncos --loss twoway --encoder mlp --seed 1
---data flow --score l2 --loss oneway --encoder mlp --seed 1
---data flow --score l2 --loss joint --encoder mlp --seed 1
---data flow --score tk --loss oneway --encoder mlp --seed 1
---data flow --score tk2 --loss oneway --encoder mlp --seed 1
 --data flow --score dot --loss twoway --encoder linear --seed 1
 --data flow --score tanh --loss twoway --encoder linear --seed 1
 --data flow --score ncos --loss twoway --encoder linear --seed 1
@@ -189,16 +152,35 @@
 --data flow --score l2 --loss joint --encoder linear --seed 1
 --data flow --score tk --loss oneway --encoder linear --seed 1
 --data flow --score tk2 --loss oneway --encoder linear --seed 1
+--data btc --score tanh --encoder linear --seed 1 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --encoder linear --seed 1 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --loss twoway --encoder mlp --seed 1
+--data btc --score tanh --loss twoway --encoder mlp --seed 1
+--data btc --score ncos --loss twoway --encoder mlp --seed 1
+--data btc --score l2 --loss oneway --encoder mlp --seed 1
+--data btc --score l2 --loss joint --encoder mlp --seed 1
+--data btc --score tk --loss oneway --encoder mlp --seed 1
+--data btc --score tk2 --loss oneway --encoder mlp --seed 1
+--data rain --score dot --loss twoway --encoder mlp --seed 1
+--data rain --score tanh --loss twoway --encoder mlp --seed 1
+--data rain --score ncos --loss twoway --encoder mlp --seed 1
+--data rain --score l2 --loss oneway --encoder mlp --seed 1
+--data rain --score l2 --loss joint --encoder mlp --seed 1
+--data rain --score tk --loss oneway --encoder mlp --seed 1
+--data rain --score tk2 --loss oneway --encoder mlp --seed 1
+--data flow --score dot --loss twoway --encoder mlp --seed 1
+--data flow --score tanh --loss twoway --encoder mlp --seed 1
+--data flow --score ncos --loss twoway --encoder mlp --seed 1
+--data flow --score l2 --loss oneway --encoder mlp --seed 1
+--data flow --score l2 --loss joint --encoder mlp --seed 1
+--data flow --score tk --loss oneway --encoder mlp --seed 1
+--data flow --score tk2 --loss oneway --encoder mlp --seed 1
+--data btc --score tanh --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
+--data rain --score tanh --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
+--data rain --score dot --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
 --data flow --score tanh --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
 --data flow --score dot --encoder mlp --seed 1 --train hyb --lam 10 --es_bank 512
---dial inf --score dot --encoder mlp --seed 0
---dial inf --score tanh --encoder mlp --seed 0
---dial inf --score dot --encoder linear --seed 0
---dial inf --score tanh --encoder linear --seed 0
---dial inf --score dot --encoder mlp --seed 1
---dial inf --score tanh --encoder mlp --seed 1
---dial inf --score dot --encoder linear --seed 1
---dial inf --score tanh --encoder linear --seed 1
 --score dot --loss twoway --encoder mlp --seed 3
 --score tanh --loss twoway --encoder mlp --seed 3
 --score ncos --loss twoway --encoder mlp --seed 3
@@ -217,6 +199,8 @@
 --score tk --loss joint --encoder linear --seed 3
 --score tanh --encoder linear --seed 3 --train hyb --lam 10 --es_bank 512
 --score dot --encoder linear --seed 3 --train hyb --lam 10 --es_bank 512
+--score tk2 --loss oneway --encoder linear --seed 3
+--score tk2 --loss joint --encoder linear --seed 3
 --score dot --loss twoway --encoder mlp --seed 4
 --score tanh --loss twoway --encoder mlp --seed 4
 --score ncos --loss twoway --encoder mlp --seed 4
@@ -235,7 +219,23 @@
 --score tk --loss joint --encoder linear --seed 4
 --score tanh --encoder linear --seed 4 --train hyb --lam 10 --es_bank 512
 --score dot --encoder linear --seed 4 --train hyb --lam 10 --es_bank 512
---score tk2 --loss oneway --encoder linear --seed 3
---score tk2 --loss joint --encoder linear --seed 3
 --score tk2 --loss oneway --encoder linear --seed 4
 --score tk2 --loss joint --encoder linear --seed 4
+--data btc --score dot --loss twoway --encoder mlp --seed 2
+--data btc --score tanh --loss twoway --encoder mlp --seed 2
+--data btc --score ncos --loss twoway --encoder mlp --seed 2
+--data btc --score l2 --loss oneway --encoder mlp --seed 2
+--data btc --score l2 --loss joint --encoder mlp --seed 2
+--data btc --score tk --loss oneway --encoder mlp --seed 2
+--data btc --score tanh --encoder mlp --seed 2 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --encoder mlp --seed 2 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --loss twoway --encoder linear --seed 2
+--data btc --score tanh --loss twoway --encoder linear --seed 2
+--data btc --score ncos --loss twoway --encoder linear --seed 2
+--data btc --score l2 --loss oneway --encoder linear --seed 2
+--data btc --score l2 --loss joint --encoder linear --seed 2
+--data btc --score tk --loss oneway --encoder linear --seed 2
+--data btc --score tanh --encoder linear --seed 2 --train hyb --lam 10 --es_bank 512
+--data btc --score dot --encoder linear --seed 2 --train hyb --lam 10 --es_bank 512
+--data btc --score tk2 --loss oneway --encoder linear --seed 2
+--data btc --score tk2 --loss oneway --encoder mlp --seed 2
