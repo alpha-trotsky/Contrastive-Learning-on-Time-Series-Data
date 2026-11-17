@@ -1,0 +1,103 @@
+--data ar --phi 0.6 --score tanh --encoder linear
+--data ar --phi 0.6 --score ncos --encoder linear
+--data ar --phi 0.6 --score l2 --encoder linear
+--data ar --phi 0.6 --score tk --encoder linear
+--data ar --phi 0.6 --score tk2 --loss joint --encoder linear
+--data ar --phi 0.6 --score tanh --encoder mlp
+--data ar --phi 0.6 --score tk --encoder mlp
+--data ar --phi 0 --score tanh --encoder linear
+--data ar --phi 0 --score ncos --encoder linear
+--data ar --phi 0 --score l2 --encoder linear
+--data ar --phi 0 --score tk --encoder linear
+--data ar --phi 0 --score tk2 --loss joint --encoder linear
+--data ar --phi 0 --score tanh --encoder mlp
+--data ar --phi 0 --score tk --encoder mlp
+--data ar --phi 0.9 --score tanh --encoder linear
+--data ar --phi 0.9 --score ncos --encoder linear
+--data ar --phi 0.9 --score l2 --encoder linear
+--data ar --phi 0.9 --score tk --encoder linear
+--data ar --phi 0.9 --score tk2 --loss joint --encoder linear
+--data ar --phi 0.9 --score tanh --encoder mlp
+--data ar --phi 0.9 --score tk --encoder mlp
+--data ar --phi 0.3 --score tanh --encoder linear
+--data ar --phi 0.3 --score ncos --encoder linear
+--data ar --phi 0.3 --score l2 --encoder linear
+--data ar --phi 0.3 --score tk --encoder linear
+--data ar --phi 0.3 --score tk2 --loss joint --encoder linear
+--data ar --phi 0.3 --score tanh --encoder mlp
+--data ar --phi 0.3 --score tk --encoder mlp
+--data ar --phi 0.99 --score tanh --encoder linear
+--data ar --phi 0.99 --score ncos --encoder linear
+--data ar --phi 0.99 --score l2 --encoder linear
+--data ar --phi 0.99 --score tk --encoder linear
+--data ar --phi 0.99 --score tk2 --loss joint --encoder linear
+--data ar --phi 0.99 --score tanh --encoder mlp
+--data ar --phi 0.99 --score tk --encoder mlp
+--data ar --phi 0.6 --score tk --encoder linear --embed 1
+--data ar --phi 0.6 --score l2 --encoder linear --embed 1
+--data ar --phi 0.6 --score tanh --encoder linear --embed 1
+--data ar --phi 0.6 --score ncos --encoder linear --embed 1
+--data ar --phi 0.6 --score tk --encoder linear --embed 2
+--data ar --phi 0.6 --score l2 --encoder linear --embed 2
+--data ar --phi 0.6 --score tanh --encoder linear --embed 2
+--data ar --phi 0.6 --score ncos --encoder linear --embed 2
+--data ar --phi 0.6 --score tk --encoder linear --embed 4
+--data ar --phi 0.6 --score l2 --encoder linear --embed 4
+--data ar --phi 0.6 --score tanh --encoder linear --embed 4
+--data ar --phi 0.6 --score ncos --encoder linear --embed 4
+--data ar --phi 0.6 --score tk --encoder linear --embed 8
+--data ar --phi 0.6 --score l2 --encoder linear --embed 8
+--data ar --phi 0.6 --score tanh --encoder linear --embed 8
+--data ar --phi 0.6 --score ncos --encoder linear --embed 8
+--data ar --phi 0.6 --score tk --encoder linear --embed 16
+--data ar --phi 0.6 --score l2 --encoder linear --embed 16
+--data ar --phi 0.6 --score tanh --encoder linear --embed 16
+--data ar --phi 0.6 --score ncos --encoder linear --embed 16
+--data ar --phi 0.6 --score tk --encoder linear --embed 32
+--data ar --phi 0.6 --score l2 --encoder linear --embed 32
+--data ar --phi 0.6 --score tanh --encoder linear --embed 32
+--data ar --phi 0.6 --score ncos --encoder linear --embed 32
+--data ar --phi 0.6 --score tk --encoder linear --embed 50
+--data ar --phi 0.6 --score l2 --encoder linear --embed 50
+--data ar --phi 0.6 --score tanh --encoder linear --embed 50
+--data ar --phi 0.6 --score ncos --encoder linear --embed 50
+--data ar --phi 0.6 --score tk --encoder linear --embed 200
+--data ar --phi 0.6 --score l2 --encoder linear --embed 200
+--data ar --phi 0.6 --score tanh --encoder linear --embed 200
+--data ar --phi 0.6 --score ncos --encoder linear --embed 200
+--data ar --phi 0.6 --score tk --encoder mlp --embed 1
+--data ar --phi 0.6 --score tanh --encoder mlp --embed 1
+--data ar --phi 0.6 --score tk --encoder mlp --embed 2
+--data ar --phi 0.6 --score tanh --encoder mlp --embed 2
+--data ar --phi 0.6 --score tk --encoder mlp --embed 4
+--data ar --phi 0.6 --score tanh --encoder mlp --embed 4
+--data ar --phi 0.6 --score tk --encoder mlp --embed 8
+--data ar --phi 0.6 --score tanh --encoder mlp --embed 8
+--data ar --phi 0.6 --score tk --encoder mlp --embed 32
+--data ar --phi 0.6 --score tanh --encoder mlp --embed 32
+--data t --score tk --encoder linear --embed 1
+--data t --score l2 --encoder linear --embed 1
+--data t --score tanh --encoder linear --embed 1
+--data t --score tk --encoder linear --embed 2
+--data t --score l2 --encoder linear --embed 2
+--data t --score tanh --encoder linear --embed 2
+--data t --score tk --encoder linear --embed 4
+--data t --score l2 --encoder linear --embed 4
+--data t --score tanh --encoder linear --embed 4
+--data t --score tk --encoder linear --embed 8
+--data t --score l2 --encoder linear --embed 8
+--data t --score tanh --encoder linear --embed 8
+--data t --score tk --encoder linear --embed 16
+--data t --score l2 --encoder linear --embed 16
+--data t --score tanh --encoder linear --embed 16
+--data t --score tk --encoder linear --embed 32
+--data t --score l2 --encoder linear --embed 32
+--data t --score tanh --encoder linear --embed 32
+--data t --score tk --encoder linear --embed 50
+--data t --score l2 --encoder linear --embed 50
+--data t --score tanh --encoder linear --embed 50
+--data t --score tk --encoder mlp --embed 1
+--data t --score tk --encoder mlp --embed 2
+--data t --score tk --encoder mlp --embed 4
+--data t --score tk --encoder mlp --embed 8
+--data t --score tk --encoder mlp --embed 32

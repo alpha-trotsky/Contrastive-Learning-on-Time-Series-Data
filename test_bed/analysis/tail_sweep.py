@@ -126,11 +126,18 @@ def es_loss(logits, d_pos, D):
 
 def load_data(a):
     """-> dict(u_tr, v_tr, u_te, y, v_bk, oracle or None, ref_norms)."""
-    if a.data == 't':
+    if a.data in ('t', 'ar'):
         cfg = yaml.safe_load(open('config.yaml'))
-        # identical data to analysis.bank_sweep / domain_sweep at the same (dial, seed)
-        torch.manual_seed(1000 * a.seed + zlib.crc32(f't{a.dial}'.encode()) % 1000)
-        mod = build_domain('t', a.dial, cfg)
+        if a.data == 't':
+            # identical data to analysis.bank_sweep / domain_sweep at the same (dial, seed)
+            torch.manual_seed(1000 * a.seed + zlib.crc32(f't{a.dial}'.encode()) % 1000)
+            mod = build_domain('t', a.dial, cfg)
+        else:
+            # Student-t windows of a sum of AR(1) components with lag-one correlations a.phi
+            from modalities.ar_process import ARPastFuture
+            from modalities.nonlinear import StudentTPastFuture
+            torch.manual_seed(1000 * a.seed + zlib.crc32(f'ar{a.phi}{a.dial}'.encode()) % 1000)
+            mod = StudentTPastFuture(ARPastFuture([float(x) for x in a.phi.split(',')]), a.dial)
         u_tr, v_tr = make_data(mod, a.n_train)
         u_te, y = make_data(mod, a.n_test)
         oracle = mod.oracle_samples(u_te, a.M)
@@ -143,7 +150,7 @@ def load_data(a):
         big = torch.cat([mod.oracle_samples(u_te, 2000).norm(dim=-1) for _ in range(2)], 1)   # (n_test, 4000)
         p_true = torch.stack([(big > t).double().mean(1) for t in thr], 1)                # (n_test, 3)
         return dict(u_tr=u_tr, v_tr=v_tr, u_te=u_te, y=y, v_bk=v_bk, oracle=oracle, thr=thr,
-                    p_true=p_true, dim_u=mod.dim_u, dim_v=mod.dim_v)
+                    p_true=p_true, dim_u=mod.dim_u, dim_v=mod.dim_v, mod=mod)
     from modalities.heavy_real import load, DEFAULTS
     kw = dict(DEFAULTS[a.data])
     d = load(a.data, **kw)
@@ -245,6 +252,8 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument('--data', default='t', help="'t' (Student-t process) or a modalities.heavy_real name")
     p.add_argument('--dial', type=float, default=3)
+    p.add_argument('--phi', default='0.6', help="--data ar: lag-one correlation(s) of the AR(1) components, comma-separated")
+    p.add_argument('--embed', type=int, default=None, help='embedding dimension (default: config.yaml, 100)')
     p.add_argument('--score', choices=list(DEFAULT_LOSS), required=True)
     p.add_argument('--loss', choices=['oneway', 'twoway', 'joint'], default=None)
     p.add_argument('--train', choices=['kl', 'es', 'hyb'], default='kl')
@@ -271,10 +280,11 @@ def main():
     torch.set_num_threads(1)
     t0 = time.time()
     out = Path(a.out)
-    tag = f"{a.data}{a.dial:g}_{a.score}-{a.loss}_{a.train}" if a.data == 't' else f"{a.data}_{a.score}-{a.loss}_{a.train}"
+    dtag = {'t': f't{a.dial:g}', 'ar': f'ar{a.phi}'}.get(a.data, a.data)
+    tag = f"{dtag}_{a.score}-{a.loss}_{a.train}"
     if a.train == 'hyb':
         tag += f'{a.lam:g}'
-    tag += f'_{a.encoder}_s{a.seed}'
+    tag += f'_{a.encoder}' + (f'_e{a.embed}' if a.embed else '') + f'_s{a.seed}'
     if (out / f'{tag}.json').exists() and not a.force:
         print(f'{tag}: exists, skipping')
         return
@@ -285,6 +295,8 @@ def main():
 
     torch.manual_seed(a.seed)
     cfg = yaml.safe_load(open('config.yaml'))['model']
+    if a.embed:
+        cfg['embed_dim'] = a.embed
     if a.encoder == 'mlp':
         cfg.update(type='mlp_clip', hidden=a.hidden, depth=a.depth, skip=True)
     model = build_model(cfg, _Dims(d['dim_u'], d['dim_v']))
@@ -356,6 +368,25 @@ def main():
         rows.append(row)
         print(f"B={B:>6}  excess {row['excess_pct']:+8.2f}%  ESS med {row['ess_median']:9.1f}  max w {row['wmax_mean']:.3f}  "
               f"over-forecast x{row['tail_weight'][1] / TAIL_P[1]:8.2f} (p=1e-3)", flush=True)
+    # climatology (uniform weights on the bank) on the same footing
+    cl = v_bk[torch.randint(0, max_bank, (u_te.shape[0], a.M))]
+    clim_excess = 100 * (energy_score(cl.double(), y.double()).mean().item() - ref_mean) / ref_mean
+    # information captured by the score, E[s(u,v) - log Z(u)] in nats, on fresh pairs
+    # (for the one-way loss this is I(u;v) minus the loss)
+    info = None
+    if d.get('mod') is not None:
+        torch.manual_seed(777 + a.seed)
+        uf, vf = make_data(d['mod'], 4000)
+        bk = v_bk[:min(50000, max_bank)]
+        vals = []
+        with torch.no_grad():
+            for i in range(0, 4000, 200):
+                lg = score_fn(uf[i:i + 200], bk).double()
+                pos = score_fn(uf[i:i + 200], vf[i:i + 200]).double().diagonal()
+                vals.append(pos - (torch.logsumexp(lg, 1) - math.log(bk.shape[0])))
+        vals = torch.cat(vals)
+        info = {'mean': vals.mean().item(), 'se': (vals.std() / math.sqrt(len(vals))).item(), 'median': vals.median().item()}
+        print(f'information captured: {info["mean"]:.3f} +- {info["se"]:.3f} nats; climatology excess {clim_excess:+.1f}%', flush=True)
     # ray probe, with log Z(u) from the largest bank
     J = min(1000, v_bk.shape[0])
     probe = ray_probe(score_fn, u_te, v_bk[-J:].float(), last['logZ'])
@@ -368,7 +399,7 @@ def main():
            'tail_p': TAIL_P, 'thr': thr.tolist(),
            'p_true_mean': d['p_true'].mean(0).tolist() if d['p_true'] is not None else None,
            'p_true_calm': d['p_true'][calm].mean(0).tolist() if d['p_true'] is not None else None,
-           'rows': rows, 'ray_probe': probe, 'hist': hist,
+           'rows': rows, 'clim_excess_pct': clim_excess, 'info': info, 'ray_probe': probe, 'hist': hist,
            'time_train': t_train, 'time_total': time.time() - t0}
     json.dump(res, open(out / f'{tag}.json', 'w'), indent=1)
     if a.save_model:

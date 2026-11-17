@@ -1601,6 +1601,268 @@ flatter than $\log r$. In \Cref{ssec:energytraining} we therefore add it to
 the contrastive loss, $J=J_{\mathrm{KL}}+\lambda J^{\mathrm{E}}_{K}$, so that
 the KL term fits the bulk and the energy term disciplines the tails.
 
+\subsection{Embedding Dimension and Correlation}
+\label{ssec:dimension}
+
+The results above concern the form of the score. We now ask how two further
+quantities enter: the embedding dimension $d_z$, and the strength of the
+dependence between past and future. On elliptical heavy-tailed data both
+questions have exact answers, and they are linked, because the past informs
+the future in two different ways: through \emph{correlation}, which moves the
+centre of the forecast, and through a \emph{shared scale}, which sets its
+size. The two are affected differently by the embedding dimension.
+
+Throughout this subsection $(u,v)$ is jointly elliptical Student-$t$ with
+$\nu$ degrees of freedom and a positive definite scale matrix $\Sigma$. Let
+$\rho_1\ge\rho_2\ge\dots\ge0$ be the canonical correlations of past and
+future, the singular values of $\Sigma_{uu}^{-1/2}\Sigma_{uv}\Sigma_{vv}^{-1/2}=U\,\mathrm{diag}(\rho)\,V^{\top}$,
+let $k\define\operatorname{rank}\Sigma_{uv}$ be the number of them that are
+non-zero, and let $a\define U^{\top}\Sigma_{uu}^{-1/2}u$ and
+$b\define V^{\top}\Sigma_{vv}^{-1/2}v$ be the canonical coordinates.
+
+\begin{proposition}[Correlation and Scale Contribute Separately]
+ \label{prop:infosplit}
+ The mutual information of past and future is
+ \begin{equation}
+  I(u;v)=\underbrace{-\frac12\sum_{i=1}^{k}\log\bigl(1-\rho_i^{2}\bigr)}_{\text{correlation}}
+  \;+\;\underbrace{c_\nu(d_u,d_v)}_{\text{shared scale}},
+  \label{eq:infosplit}
+ \end{equation}
+ where, with $\psi$ the digamma function and
+ $e_\nu(j)\define\frac{\nu+j}{2}\bigl[\psi\bigl(\frac{\nu+j}{2}\bigr)-\psi\bigl(\frac{\nu}{2}\bigr)\bigr]$,
+ \begin{equation}
+  c_\nu(m,n)\define\log\frac{\Gamma\bigl(\frac{\nu}{2}\bigr)\,\Gamma\bigl(\frac{\nu+m+n}{2}\bigr)}{\Gamma\bigl(\frac{\nu+m}{2}\bigr)\,\Gamma\bigl(\frac{\nu+n}{2}\bigr)}
+  +e_\nu(m)+e_\nu(n)-e_\nu(m+n).
+  \label{eq:cscale}
+ \end{equation}
+ The first term of \eqref{eq:infosplit} is the mutual information of a
+ Gaussian with the same correlations. The second is the mutual information
+ of an \emph{uncorrelated} Student-$t$ vector split into blocks of sizes $m$
+ and $n$: it does not depend on $\Sigma$, it is positive, and it is strictly
+ increasing in $m$ and in $n$. As $m,n\to\infty$,
+ \begin{equation}
+  c_\nu(m,n)=\frac12\log\frac{mn}{m+n}+C_\nu+o(1),\qquad
+  C_\nu\define\frac\nu2+\log\Gamma\Bigl(\frac\nu2\Bigr)-\frac\nu2\,\psi\Bigl(\frac\nu2\Bigr)-\frac12\log(4\pi e).
+  \label{eq:cscaleasym}
+ \end{equation}
+\end{proposition}
+\begin{proof}
+ See \Cref{app:dimension}.
+\end{proof}
+
+The identity \eqref{eq:infosplit} is known in the literature on elliptical
+copulas \cite{calsaverini2009information,arellano2013shannon}; we use it to
+separate what an embedding must carry. The scale term is not small. For
+$\nu=3$ and windows of length $d_u=d_v=50$, $c_\nu(d_u,d_v)=1.20$ nats, while
+it is small close to the Gaussian case ($0.06$ nats at $\nu=100$). The
+expansion \eqref{eq:cscaleasym} explains its size: the common scale of past
+and future is a single latent number, a window of length $m$ determines it
+to a relative precision of order $m^{-1/2}$, and the information that two
+windows share about it grows like half the logarithm of their length. The
+tail results of \Cref{ssec:saturation} have the same origin and are equally
+insensitive to correlation: by \Cref{lem:tprocess} the true conditional has
+tail index $\nu+d_u$ whatever $\Sigma_{uv}$ is, including
+$\Sigma_{uv}=0$.
+
+\begin{example}[Correlation Between Subsequent Time Steps]
+ \label{ex:ar}
+ Let the underlying Gaussian series be stationary and Markov of order $p$,
+ for instance an autoregression of order $p$, observed with or without
+ independent noise, and let $u$ and $v$ be consecutive windows. The past
+ enters the covariance with the future only through the $p$-dimensional
+ state at the boundary, so $k=\operatorname{rank}\Sigma_{uv}\le p$, whatever
+ the lengths of the windows. For an AR(1) series with lag-one correlation
+ $\varphi$, observed without noise, $k=1$ and $\rho_1=\abs{\varphi}$, so that
+ \begin{equation*}
+  I(u;v)=-\tfrac12\log\bigl(1-\varphi^{2}\bigr)+c_\nu(d_u,d_v).
+ \end{equation*}
+ The correlation between subsequent time steps enters the first term only.
+ With $\nu=3$ and $d_u=d_v=50$ the scale term is the larger of the two for
+ every $\abs{\varphi}<0.95$: unless the series is very strongly correlated,
+ most of what the past says about the future concerns its size, not its
+ path. Lengthening the windows strengthens this, since the first term does
+ not depend on their length and the second grows like its logarithm. At $\varphi=0$, a series of uncorrelated values with a common random
+ scale, which is the elementary model of financial returns with volatility
+ clustering, all of the information is of this kind.
+\end{example}
+
+\paragraph{What an embedding of dimension $d_z$ can carry.}
+The next result holds for any data distribution. It expresses that a model
+whose score sees the future only through an embedding can change the law of
+the embedding and nothing else.
+
+\begin{theorem}[Bottleneck]
+ \label{thm:bottleneck}
+ Let $\mu$ satisfy \Cref{ass:data}, let $h:\VV\to\RR^{d_z}$ be measurable,
+ and let $s(u,v)=S(u,h(v))$ be an admissible score. Write $\mu_h$ for the
+ law of $h(v)$ under $\mu_v$.
+ \begin{enumerate}[label=(\roman*)]
+  \item For every $u$ with $Z(u)<\infty$, the model is a mixture of the
+        climatological conditionals of $v$ given its embedding,
+        \begin{equation*}
+         \nu^{s}_{v\vert u}(\Dd v\vert u)=\int\mu_v\bigl(\Dd v\,\big\vert\,h(v)=w\bigr)\,\pi_u(\Dd w),
+         \qquad\pi_u(\Dd w)\define\frac{e^{S(u,w)}}{Z(u)}\,\mu_h(\Dd w).
+        \end{equation*}
+        Under the model, the law of $v$ given $h(v)$ is the same for every
+        past.
+  \item $\Jvu^{\mathrm{KL}}(s)\ge I(u;v)-I(u;h(v))$, with equality if and only if
+        $S(u,w)=\log r_h(u,w)+c(u)$, where $r_h$ is the density ratio
+        \eqref{eq:ratio} of the pair $(u,h(v))$.
+  \item If, in addition, the score sees the past only through an embedding,
+        $s(u,v)=S(g(u),h(v))$ with $g:\UU\to\RR^{d_z}$ measurable, then
+        $\Jvu^{\mathrm{KL}}(s)\ge I(u;v)-I(g(u);h(v))$.
+ \end{enumerate}
+\end{theorem}
+\begin{proof}
+ See \Cref{app:dimension}.
+\end{proof}
+
+Parts (ii) and (iii) are data processing inequalities, and they apply
+whatever the functional form of the score. On elliptical data the right-hand
+sides can be evaluated.
+
+\begin{corollary}[Linear Encoders Need Full Dimension, Nonlinear Encoders $k+1$]
+ \label{cor:tdimension}
+ Let the data be as in \Cref{prop:infosplit}.
+ \begin{enumerate}[label=(\roman*)]
+  \item Let $s(u,v)=S(u,Hv)$ with $H\in\RR^{d_z\times d_v}$, $d_z\le d_v$.
+        Then
+        \begin{equation}
+         \Jvu^{\mathrm{KL}}(s)\;\ge\;-\frac12\sum_{i>d_z}\log\bigl(1-\rho_i^{2}\bigr)
+         \;+\;c_\nu(d_u,d_v)-c_\nu(d_u,d_z),
+         \label{eq:dimfloor}
+        \end{equation}
+        with equality when the rows of $H\Sigma_{vv}^{1/2}$ span the first
+        $d_z$ canonical directions and $S=\log r_H+c(u)$. The first term
+        vanishes as soon as $d_z\ge k$. The second is positive for every
+        $d_z<d_v$. If the past encoder is linear as well, $s(u,v)=S(Gu,Hv)$
+        with $G\in\RR^{d_z\times d_u}$ and $d_z\le\min(d_u,d_v)$, the bound
+        holds with $c_\nu(d_z,d_z)$ in place of $c_\nu(d_u,d_z)$.
+  \item For the embedding $h(v)=\bigl(b_1,\dots,b_k,\abs{b}^{2}\bigr)$ of
+        dimension $k+1$, $I(u;h(v))=I(u;v)$: the bound of
+        \Cref{thm:bottleneck}(ii) is zero, and $\log r(u,v)$ is a function
+        of $u$ and $h(v)$. By symmetry, it depends on $u$ only through
+        $\bigl(a_1,\dots,a_k,\abs{a}^{2}\bigr)$.
+ \end{enumerate}
+\end{corollary}
+\begin{proof}
+ See \Cref{app:dimension}.
+\end{proof}
+
+In the Gaussian limit only the first term of \eqref{eq:dimfloor} remains, and
+an embedding of dimension $k$ suffices: for an AR(1) series a single
+coordinate. With heavy tails the model must also know the size of the future,
+$\abs{b}^{2}=v^{\top}\Sigma_{vv}^{-1}v$, which is one more number. A nonlinear
+encoder can compute it, so heavy tails cost a nonlinear encoder one
+dimension. A linear encoder cannot: it carries the size of the future only
+if it is injective, so heavy tails cost a linear encoder $d_v-k$ dimensions,
+and the cost of each missing dimension is the increment of $c_\nu(d_u,\cdot)$.
+For $\nu=3$ and $d_u=50$, $c_\nu(d_u,d_z)$ equals $0.16$, $0.45$, $0.88$
+and $1.20$ nats at $d_z=1,4,16,50$, so the loss decreases slowly and steadily
+in $d_z$ instead of dropping to zero at $d_z=k$.
+
+\paragraph{The tail of a model with a narrow linear embedding.}
+The bottleneck also acts on the tail. By \Cref{thm:bottleneck}(i) the model
+leaves the directions that the embedding does not see at their climatological
+law given the ones it does see, and on heavy-tailed data that law is itself
+heavy-tailed.
+
+\begin{theorem}[A Linear Embedding Caps the Tail Index]
+ \label{thm:tailcap}
+ Let the data be as in \Cref{prop:infosplit}, let
+ $H\in\RR^{d_z\times d_v}$ have rank $d_z<d_v$, and let $s(u,v)=S(u,Hv)$ for
+ a measurable $S$. Let $\lambda>0$ be the smallest eigenvalue of
+ $\Sigma_{vv}$ and let $T$ be a standard Student-$t$ vector in
+ $\RR^{d_v-d_z}$ with $\nu+d_z$ degrees of freedom. Then for every $u$ with
+ $Z(u)<\infty$ and every $t\ge0$,
+ \begin{equation}
+  \nu^{s}_{v\vert u}\bigl(\abs{v}>t\,\big\vert\,u\bigr)\;\ge\;
+  \mathbb{P}\Bigl(\abs{T}>t\sqrt{\tfrac{\nu+d_z}{\lambda\nu}}\Bigr)\;\sim\;c\,t^{-(\nu+d_z)}
+  \qquad(t\to\infty),
+  \label{eq:tailcap}
+ \end{equation}
+ with $c>0$ independent of $u$ and of $S$. Consequently the forecast cannot
+ have a tail index larger than $\nu+d_z$, and if $d_z<d_u$ the over-forecast
+ factor of \Cref{cor:trichotomy} satisfies
+ $\varrho_t(u)\ge c(u)\,t^{\,d_u-d_z}\to\infty$ for every past.
+\end{theorem}
+\begin{proof}
+ See \Cref{app:dimension}.
+\end{proof}
+
+\Cref{thm:tailcap} does not follow from \Cref{thm:tail}: the mass in
+\eqref{eq:tailcap} sits near the kernel of $H$, a set of directions of
+angular measure zero on which the convergence \ref{R2} is not uniform. It
+changes the classification of \Cref{cor:trichotomy}. With an injective
+encoder the $L^2$ score is coercive and \emph{under}-forecasts extremes, and
+the Student-$t$ kernel can match the true index $\nu+d_u$. With
+$d_z<\min(d_u,d_v)$ both \emph{over}-forecast extremes, by a factor that
+grows like a power of the threshold, whatever is learned. The true tail index
+$\nu+d_u$ is out of reach of every score with a linear future encoder of
+dimension below $\min(d_u,d_v)$. The past side obeys the same count at the
+optimum: the best model that sees the past through a linear map $Gu$ of rank
+$d_z<d_u$ is the conditional of $v$ given $Gu$, which by \Cref{lem:tprocess}
+has tail index $\nu+d_z$. Each coordinate of the past that a linear encoder
+discards costs one unit of tail index, whereas the nonlinear embedding of
+\Cref{cor:tdimension}(ii), which keeps the radius $\abs{a}^{2}$, costs none.
+
+\paragraph{When correlation is weak.}
+The four standard scores with a linear future encoder share a structural
+property: the past and the future interact only through a term that is odd
+in the future. Such a term can move a forecast but cannot widen or narrow it.
+
+\begin{proposition}[Odd Interactions Cannot Use the Scale]
+ \label{prop:odd}
+ Let $\mu$ satisfy \Cref{ass:data} and suppose that the true conditional is
+ symmetric, $\mu_{v\vert u}(-B\vert u)=\mu_{v\vert u}(B\vert u)$ for every
+ Borel set $B$ and $\mu_u$-almost every $u$. Let
+ \begin{equation*}
+  s(u,v)=\alpha(u)+\gamma(v)+o(u,v),\qquad\gamma(-v)=\gamma(v),\quad o(u,-v)=-o(u,v),
+ \end{equation*}
+ be admissible with $\gamma\in L^{1}(\mu_v)$ and $o\in L^{1}(\mu)$. Then
+ \begin{equation*}
+  \Jvu^{\mathrm{KL}}(s)\;\ge\;I(u;v)+\KL{\mu_v}{e^{\gamma}\mu_v/Z_\gamma}\;\ge\;I(u;v)=\Jvu^{\mathrm{KL}}(0),
+  \qquad Z_\gamma\define\E_{\mu_v}e^{\gamma},
+ \end{equation*}
+ with equality throughout if and only if $o=0$ and $\gamma$ is constant
+ almost everywhere. The best score of this form is the zero score, and its
+ forecast is climatology for every past.
+\end{proposition}
+\begin{proof}
+ See \Cref{app:dimension}.
+\end{proof}
+
+With a linear future encoder without bias, the inner product, the inner
+product with a $\tanh$ future encoder and the normalized cosine are odd in
+the future ($\alpha=\gamma=0$), and the $L^2$ score is
+$-\tfrac\kappa2\abs{f(u)}^{2}+\kappa\IP{f(u)}{g(v)}-\tfrac\kappa2\abs{g(v)}^{2}$,
+of the form required. The past encoder and the embedding dimension are
+arbitrary. The symmetry assumption holds for elliptical data with
+$\Sigma_{uv}=0$. On the uncorrelated series of \Cref{ex:ar} these four
+scores therefore learn nothing, although $c_\nu(d_u,d_v)$ nats are available,
+and no increase of $d_z$ or of the capacity of the past encoder helps. The
+Student-$t$ kernel and the log-quadratic scores are not of this form, and a
+nonlinear future encoder breaks the oddness. For the normalized cosine a
+bound of the same kind holds at every correlation: by
+\Cref{prop:linearsat}(i) its forecast of the radius
+$R=\abs{\Sigma_{vv}^{-1/2}v}$ is climatology, so
+$\Jvu^{\mathrm{KL}}(\sncos)\ge I(u;R)$ by the data processing inequality.
+
+\paragraph{Predictions.}
+Taken together, the results of this subsection make three predictions for a
+heavy-tailed series with $k$ non-zero canonical correlations, which we test
+in \Cref{ssec:dimsweep}.
+\begin{enumerate}[label=(D\arabic*),ref=D\arabic*]
+ \item \label{D1} \emph{Scores with an odd interaction and a linear future
+       encoder} gain nothing from an embedding dimension beyond $k$, and
+       approach climatology as the correlation decreases.
+ \item \label{D2} \emph{Scores that can represent the scale, with a linear
+       future encoder,} improve steadily up to $d_z=d_v$, following
+       \eqref{eq:dimfloor}, and over-forecast extremes when $d_z$ is small.
+ \item \label{D3} \emph{With a nonlinear future encoder} a small embedding
+       dimension, of order $k+1$, suffices.
+\end{enumerate}
+
 % ===========================================================================
 \section{Numerical Experiments}
 \label{sec:experiments}
@@ -2701,6 +2963,145 @@ which equals $J^{\mathrm{E}}_{\star}+\tfrac12\Jvu^{\DE}(s)$ by the identity
 used in (i).
 \qed
 
+\subsection{Proofs for \texorpdfstring{\Cref{ssec:dimension}}{Section 4.4}}
+\label{app:dimension}
+\emph{Proof of \Cref{prop:infosplit}.}
+Mutual information is invariant under invertible linear maps of $u$ and of
+$v$, so we may pass to the canonical coordinates $(a,b)$, whose scale matrix
+$\tilde\Sigma$ has identity diagonal blocks and off-diagonal block
+$\mathrm{diag}(\rho)$; thus $\det\tilde\Sigma=\prod_i(1-\rho_i^{2})$. Let
+$D=d_u+d_v$. The density of a $D$-dimensional Student-$t$ vector $z$ with
+scale matrix $\tilde\Sigma$ is
+$\Gamma(\tfrac{\nu+D}{2})\Gamma(\tfrac\nu2)^{-1}(\nu\pi)^{-D/2}(\det\tilde\Sigma)^{-1/2}(1+q/\nu)^{-(\nu+D)/2}$
+with $q=z^{\top}\tilde\Sigma^{-1}z$, and the marginals of $a$ and $b$ are
+standard Student-$t$ with the same $\nu$ \cite{kotz2004multivariate}. Hence
+\begin{align*}
+ \log r & =\log\frac{\Gamma(\frac{\nu+D}{2})\Gamma(\frac\nu2)}{\Gamma(\frac{\nu+d_u}{2})\Gamma(\frac{\nu+d_v}{2})}
+ -\frac12\sum_i\log(1-\rho_i^{2})                                                                                  \\
+        & \quad-\frac{\nu+D}{2}\log\Bigl(1+\frac q\nu\Bigr)
+ +\frac{\nu+d_u}{2}\log\Bigl(1+\frac{\abs{a}^{2}}{\nu}\Bigr)
+ +\frac{\nu+d_v}{2}\log\Bigl(1+\frac{\abs{b}^{2}}{\nu}\Bigr).
+\end{align*}
+Writing $z=\tilde\Sigma^{1/2}\xi/\sqrt{w}$ with $\xi$ standard Gaussian and
+$\nu w\sim\chi^{2}_{\nu}$ independent, $1+q/\nu=(\chi^{2}_{\nu}+\chi^{2}_{D})/\chi^{2}_{\nu}$
+with independent chi-squared variables, whatever $\tilde\Sigma$ is, and
+$\E\log\chi^{2}_{n}=\psi(n/2)+\log2$. Therefore
+$\E\log(1+q/\nu)=\psi(\tfrac{\nu+D}{2})-\psi(\tfrac\nu2)$, and likewise for
+$\abs{a}^{2}$ and $\abs{b}^{2}$ with $d_u$ and $d_v$ in place of $D$. Taking
+expectations gives \eqref{eq:infosplit}. Setting $\rho=0$ shows that
+$c_\nu(m,n)$ is the mutual information of the two blocks of an uncorrelated
+Student-$t$ vector, which is not a product measure, so $c_\nu(m,n)>0$. For
+$n'<n$, let $v'$ consist of the first $n'$ coordinates of $v$ and $v''$ of
+the others; by the chain rule
+$c_\nu(m,n)-c_\nu(m,n')=I(u;v''\vert v')$, which is positive because the
+conditional scale of $v''$ given $(u,v')$ depends on $\abs{u}$. For
+\eqref{eq:cscaleasym}, write $x_j=(\nu+j)/2$ and insert Stirling's formula
+$\log\Gamma(x)=(x-\tfrac12)\log x-x+\tfrac12\log2\pi+O(1/x)$ and
+$\psi(x)=\log x-\tfrac1{2x}+O(x^{-2})$ into \eqref{eq:cscale}: the terms of
+order $x\log x$ cancel, the terms linear in $x$ combine through
+$x_m+x_n-x_{m+n}=\nu/2$, and what remains is
+$\tfrac12\log\bigl(x_mx_n/x_{m+n}\bigr)+\tfrac\nu2-\tfrac\nu2\psi(\tfrac\nu2)+\log\Gamma(\tfrac\nu2)-\tfrac12\log2\pi-\tfrac12+o(1)$,
+with $x_mx_n/x_{m+n}=\tfrac{mn}{2(m+n)}(1+o(1))$.
+\qed
+
+\smallskip
+\noindent\emph{Proof of \Cref{thm:bottleneck}.}
+(i) For bounded measurable $\phi$, conditioning on $h(v)$ under $\mu_v$,
+\begin{equation*}
+ \int\phi(v)\,\frac{e^{S(u,h(v))}}{Z(u)}\,\mu_v(\Dd v)
+ =\int\E_{\mu_v}\bigl[\phi(v)\,\big\vert\,h(v)=w\bigr]\,\frac{e^{S(u,w)}}{Z(u)}\,\mu_h(\Dd w).
+\end{equation*}
+(ii) Fix $u$ and write $p=\mu_{v\vert u}(\cdot\vert u)$ and
+$q=\nu^{s}_{v\vert u}(\cdot\vert u)$, with $p_h,q_h$ the laws of $h(v)$. By
+the chain rule for the KL divergence and part (i),
+\begin{equation*}
+ \KL{p}{q}=\KL{p_h}{\pi_u}+\E_{w\sim p_h}\KL{p(\cdot\vert h=w)}{\mu_v(\cdot\vert h=w)}.
+\end{equation*}
+The expectation over $u\sim\mu_u$ of the second term is the conditional
+mutual information $I(u;v\vert h(v))$, which equals $I(u;v)-I(u;h(v))$
+because $h(v)$ is a function of $v$; it is finite by \ref{ass:MI}. The first
+term is non-negative and vanishes if and only if $\pi_u$ is the law of
+$h(v)$ given $u$, that is, $e^{S(u,w)}/Z(u)=r_h(u,w)$.
+(iii) The model depends on $u$ through $g(u)$ only; write it as $m_{g(u)}$,
+and let $\bar p_{g(u)}$ be the law of $v$ given $g(u)$, the average of
+$\mu_{v\vert u}(\cdot\vert u)$ over $u$ given $g(u)$. Then
+\begin{equation*}
+ \Jvu^{\mathrm{KL}}(s)=\E_{\mu_u}\KL{\mu_{v\vert u}}{\bar p_{g(u)}}+\E_{\mu_u}\KL{\bar p_{g(u)}}{m_{g(u)}}.
+\end{equation*}
+The first term is $I(u;v\vert g(u))=I(u;v)-I(g(u);v)$, and the second is at
+least $I(g(u);v)-I(g(u);h(v))$ by part (ii) applied to the pair $(g(u),v)$.
+\qed
+
+\smallskip
+\noindent\emph{Proof of \Cref{cor:tdimension}.}
+(i) We may assume that $H$ has rank $d_z$; a smaller rank is a smaller
+$d_z$, and the right-hand side of \eqref{eq:dimfloor} is non-increasing in
+$d_z$. The pair $(u,Hv)$ is again elliptical Student-$t$ with $\nu$ degrees
+of freedom, of dimensions $d_u$ and $d_z$, so by \Cref{prop:infosplit}
+$I(u;Hv)=-\tfrac12\sum_i\log(1-\rho_i(H)^{2})+c_\nu(d_u,d_z)$, where
+$\rho_i(H)$ are the canonical correlations of $u$ and $Hv$. In canonical
+coordinates $Hv=\tilde H b$, and the whitened form of $\tilde Hb$ is $Pb$ with
+$P\in\RR^{d_z\times d_v}$, $PP^{\top}=I$; the $\rho_i(H)$ are the singular
+values of $\mathrm{diag}(\rho)P^{\top}$, which satisfy
+$\rho_i(H)\le\rho_i$ for $i\le d_z$, with equality when $P$ selects the first
+$d_z$ coordinates. Inserting this into \Cref{thm:bottleneck}(ii) and using
+\eqref{eq:infosplit} gives \eqref{eq:dimfloor} and the case of equality. The
+second term is positive for $d_z<d_v$ by the monotonicity of $c_\nu$. With a
+linear past encoder the same argument applies to the pair $(Gu,Hv)$ and
+\Cref{thm:bottleneck}(iii): its canonical correlations are the singular
+values of $P'\,\mathrm{diag}(\rho)P^{\top}$ with $P'P'^{\top}=I$, again
+dominated by the $\rho_i$, and its scale term is $c_\nu(d_z,d_z)$.
+(ii) In the notation of the proof of \Cref{prop:infosplit}, completing the
+square in each canonical pair gives
+\begin{equation*}
+ q=\abs{a}^{2}+\abs{b}^{2}+\sum_{i=1}^{k}\Bigl[\frac{(b_i-\rho_ia_i)^{2}}{1-\rho_i^{2}}-b_i^{2}\Bigr],
+\end{equation*}
+so $\log r$ depends on $v$ only through $b_1,\dots,b_k$ and $\abs{b}^{2}$.
+Then $r(u,v)=r_h(u,h(v))$ and $I(u;h(v))=\E_\mu\log r_h=I(u;v)$.
+\qed
+
+\smallskip
+\noindent\emph{Proof of \Cref{thm:tailcap}.}
+Choose an orthogonal matrix $Q$ whose first $d_z$ rows span the row space of
+$H\Sigma_{vv}^{1/2}$, and write $Q\Sigma_{vv}^{-1/2}v=(w,y)$ with
+$w\in\RR^{d_z}$, $y\in\RR^{d_v-d_z}$. Then $Hv$ is an invertible linear
+function of $w$, so $s$ depends on $v$ through $w$ only, and under $\mu_v$
+the vector $(w,y)$ is standard Student-$t$ with $\nu$ degrees of freedom. The
+conditional law of $y$ given $w$ is Student-$t$ with $\nu+d_z$ degrees of
+freedom, location $0$ and scale matrix $\frac{\nu+\abs{w}^{2}}{\nu+d_z}I$
+\cite{kotz2004multivariate}. Hence
+$T\define y\,\sqrt{(\nu+d_z)/(\nu+\abs{w}^{2})}$ is, given $w$, a standard
+Student-$t$ vector with $\nu+d_z$ degrees of freedom, for every $w$. By
+\Cref{thm:bottleneck}(i) the conditional law of $y$ given $w$ is the same
+under $\nu^{s}_{v\vert u}(\cdot\vert u)$, so $T$ has this law under the model
+as well, for every $u$. Finally
+\begin{equation*}
+ \abs{v}^{2}=(w,y)^{\top}Q\Sigma_{vv}Q^{\top}(w,y)\ge\lambda\abs{y}^{2}
+ =\lambda\,\frac{\nu+\abs{w}^{2}}{\nu+d_z}\,\abs{T}^{2}\ge\frac{\lambda\nu}{\nu+d_z}\,\abs{T}^{2},
+\end{equation*}
+which gives the inequality in \eqref{eq:tailcap}; the asymptotic
+equivalence is the regular variation of the Student-$t$ distribution. By
+\Cref{lem:tprocess},
+$\mu_{v\vert u}(\abs{v}>t\vert u)\sim c(u)\,t^{-(\nu+d_u)}$, which gives the
+bound on $\varrho_t(u)$.
+\qed
+
+\smallskip
+\noindent\emph{Proof of \Cref{prop:odd}.}
+The symmetry of the conditionals implies that of $\mu_v$. The term
+$\alpha(u)$ cancels in $s-\log Z(u)$, so let $\alpha=0$. Then
+\begin{equation*}
+ \Jvu^{\mathrm{KL}}(s)=\E_\mu\bigl[\log r-s\bigr]+\E_{\mu_u}\log Z(u)
+ =I(u;v)-\E_{\mu_v}\gamma-\E_\mu o+\E_{\mu_u}\log Z(u).
+\end{equation*}
+Since $o(u,\cdot)$ is odd and $\mu_{v\vert u}(\cdot\vert u)$ symmetric,
+$\E_\mu o=0$. Since $\gamma$ is even, $o(u,\cdot)$ odd and $\mu_v$ symmetric,
+$Z(u)=\E_{\mu_v}\bigl[e^{\gamma}\cosh o(u,\cdot)\bigr]\ge Z_\gamma$, with
+equality if and only if $o(u,\cdot)=0$ $\mu_v$-almost everywhere. Therefore
+$\Jvu^{\mathrm{KL}}(s)\ge I(u;v)-\E_{\mu_v}\gamma+\log Z_\gamma=I(u;v)+\KL{\mu_v}{e^{\gamma}\mu_v/Z_\gamma}$,
+and the last term vanishes if and only if $\gamma$ is constant.
+\qed
+
 \paragraph{Reproducibility.}
 \Cref{tab:infoloss,tab:fixedscore} are produced by
 \texttt{test\_bed/theory/misspecification.py}; \Cref{tab:plateau} and
@@ -2871,6 +3272,18 @@ W.~Hoeffding.
 \newblock The strong law of large numbers for $U$-statistics.
 \newblock Institute of Statistics Mimeograph Series 302, University of North
  Carolina, 1961.
+
+\bibitem{calsaverini2009information}
+R.~S. Calsaverini and R.~Vicente.
+\newblock An information-theoretic approach to statistical dependence: Copula
+ information.
+\newblock \emph{Europhysics Letters}, 88(6):68003, 2009.
+
+\bibitem{arellano2013shannon}
+R.~B. Arellano-Valle, J.~E. Contreras-Reyes, and M.~G. Genton.
+\newblock Shannon entropy and mutual information for multivariate
+ skew-elliptical distributions.
+\newblock \emph{Scandinavian Journal of Statistics}, 40(1):42--62, 2013.
 
 \end{thebibliography}
 

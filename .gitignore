@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 data/
 test_bed/results/tail_sweep/models/
+test_bed/results/*/logs/
+test_bed/results/*/runner.log
