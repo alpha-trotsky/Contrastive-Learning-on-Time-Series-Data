@@ -1,0 +1,52 @@
+# config_weather.yaml -- goal 3, real data: Jena Weather 2020 (modalities/weather.py)
+# Setup A: past day of every variable group -> next 6 h of temperature.
+# MLP encoders + L2 joint loss; analysis/weather_sweep.py varies groups / model / loss.
+
+experiment:
+  name: weather_A_l2_joint_mlp
+  output_dir: results/weather/A_l2_joint_mlp_s0
+  seed: 0
+
+# no `signal:` section: real data
+modality:
+  type: weather
+  u_groups: [temperature, moisture, pressure, wind, radiation, rain]
+  v_groups: [temperature]
+  past_len: 144             # 1 day of 10-min steps ...
+  past_stride: 3            # ... every 3rd step (30 min): dim_u = 12 columns x 48 = 576
+  future_len: 36            # next 6 h, every step: dim_v = 36
+  fractions: [0.7, 0.1, 0.2]  # chronological train / val / test (test = late Oct - Dec)
+  bank: heldout             # every 4th week of the training period is held out as the bank
+  bank_block: 1008          # 1 week
+  bank_every: 4
+
+model:
+  type: mlp_clip
+  embed_dim: 100
+  hidden: 256
+  depth: 2
+  skip: true
+  init_logit_scale: 2.659
+
+loss:
+  type: joint
+  inner_product: false
+  normalize: false
+
+training:
+  batch_size: 256
+  num_steps: 10000         # MLPs over-fit within a few thousand steps (validation curves)
+  lr: 3.0e-4                # chosen on the validation period (1e-3 over-fits faster)
+  optimizer: adam
+  early_stopping: true      # keep the step with the best validation energy score
+
+logging:
+  log_every: 100
+  theory_match_every: 500   # linear models only
+  blackbox_every: 250       # validation energy score (and early-stopping check)
+
+blackbox:
+  n_test: 300               # validation queries during training
+  n_test_final: 1000        # test queries at the end
+  bank: 20000               # capped at the bank size (all held-out windows)
+  M: 300
