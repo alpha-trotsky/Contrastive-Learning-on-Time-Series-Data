@@ -1877,7 +1877,9 @@ admissibility results of \Cref{sec:tails},
 \Cref{ssec:amplification,ssec:logtail,ssec:energytraining} test the results
 on saturating scores of \Cref{ssec:saturation},
 \Cref{ssec:realheavy} repeats the tail experiments on real heavy-tailed
-series, and \Cref{ssec:finite} discusses finite data.
+series, \Cref{ssec:dimsweep} tests the results on the embedding dimension and
+the correlation of \Cref{ssec:dimension}, and \Cref{ssec:finite} discusses
+finite data.
 
 \subsection{Setup}
 \label{ssec:setup}
@@ -2017,7 +2019,10 @@ that saturates high, and no turnaround for coercive and logarithmic scores.
 The unbounded inner product is best at a small bank and then deteriorates
 steadily, by orders of magnitude with linear encoders, as
 \Cref{cor:collapsecost} predicts. The inner product with a $\tanh$ future
-encoder exists as a model and is far better, but it also turns around. The
+encoder exists as a model and is far better. With linear encoders it also
+turns around, from $+28\%$ at $N=100$ to $+84\%$ at $N=200{,}000$. With MLP
+encoders it stops improving at about $+6\%$, ten times the error of the best
+models. The
 normalized cosine with MLP encoders, joint $L^2$, and both logarithmic scores
 improve monotonically and level off. On the Gaussian control the unbounded
 and the $\tanh$ inner products also improve and level off
@@ -2034,32 +2039,37 @@ not by the score alone.
   \midrule
   \multicolumn{8}{l}{\emph{MLP encoders}} \\
 %%BEGIN:banksweep_mlp
-  inner product & 1 & $+31.8$ & $\mathbf{+11.4}$ & $+22.6$ & $+24.3$ & $+34.7$ & $+44.9$ \\
-  inner product, $\tanh$ future & 1 & $+37.1$ & $+13.7$ & $+7.2$ & $\mathbf{+6.7}$ & $+7.0$ & $+9.3$ \\
-  normalized cosine & 1 & $+40.1$ & $+9.2$ & $+1.7$ & $+1.1$ & $+0.9$ & $+0.8$ \\
-  $L^2$ one-way & 1 & $+35.4$ & $+16.2$ & $+9.5$ & $+7.8$ & $\mathbf{+6.9}$ & $+7.7$ \\
-  $L^2$ joint & 1 & $+34.2$ & $+8.8$ & $+1.8$ & $+1.1$ & $+0.6$ & $+0.5$ \\
-  Student-$t$ kernel, one-way & 1 & $+34.7$ & $+11.2$ & $+3.1$ & $+1.5$ & $+0.9$ & $+0.7$ \\
-  Student-$t$ kernel, joint & 1 & $+29.3$ & $+7.9$ & $+2.2$ & $+1.7$ & $+1.0$ & $+0.8$ \\
+  inner product & 5 & $+31.7$ & $\mathbf{+18.1}$ & $+35.6$ & $+52.6$ & $+77.2$ & $+93.0$ \\
+  inner product, $\tanh$ future & 5 & $+35.2$ & $+13.2$ & $+6.8$ & $+6.0$ & $+5.8$ & $+6.0$ \\
+  normalized cosine & 5 & $+38.3$ & $+9.2$ & $+1.7$ & $+1.1$ & $+0.9$ & $+0.8$ \\
+  $L^2$ one-way & 5 & $+34.1$ & $+13.5$ & $+7.2$ & $+6.2$ & $+5.2$ & $+5.3$ \\
+  $L^2$ joint & 5 & $+29.7$ & $+8.0$ & $+2.9$ & $+2.1$ & $+1.9$ & $+1.6$ \\
+  Student-$t$ kernel, one-way & 5 & $+33.9$ & $+10.6$ & $+2.9$ & $+1.6$ & $+0.8$ & $+0.6$ \\
+  Student-$t$ kernel, joint & 5 & $+28.9$ & $+8.0$ & $+2.6$ & $+1.9$ & $+1.1$ & $+1.0$ \\
+  log-quadratic, one-way & 3 & $+36.6$ & $+12.4$ & $+3.5$ & $+1.8$ & $+0.9$ & $+0.7$ \\
   \midrule
-  inner product $+$ bank energy & 1 & $+21.6$ & $\mathbf{+4.5}$ & $+9.4$ & $+8.4$ & $+16.6$ & $+15.6$ \\
-  $\tanh$ future $+$ bank energy & 1 & $+22.7$ & $+3.2$ & $+1.1$ & $+1.0$ & $+0.9$ & $+0.9$ \\
-  normalized cosine $+$ bank energy & 1 & $+27.0$ & $+3.6$ & $+1.1$ & $+1.0$ & $+0.9$ & $+0.8$ \\
-  inner product, bank energy only & 1 & $+11.2$ & $+3.1$ & $+2.0$ & $+1.9$ & $+1.9$ & $+1.9$ \\
+  inner product $+$ bank energy & 5 & $+21.7$ & $\mathbf{+5.0}$ & $+7.0$ & $+10.6$ & $+17.0$ & $+23.9$ \\
+  $\tanh$ future $+$ bank energy & 5 & $+22.9$ & $+3.6$ & $+1.6$ & $+1.4$ & $+1.4$ & $+1.3$ \\
+  normalized cosine $+$ bank energy & 3 & $+26.2$ & $+4.2$ & $+2.0$ & $+1.9$ & $+1.9$ & $+1.8$ \\
+  $L^2$ one-way $+$ bank energy & 3 & $+23.9$ & $+4.7$ & $+2.1$ & $+1.9$ & $+1.8$ & $+2.0$ \\
+  inner product, bank energy only & 3 & $+14.8$ & $+6.5$ & $+4.9$ & $+4.9$ & $+5.0$ & $+5.2$ \\
+  $\tanh$ future, bank energy only & 3 & $+13.1$ & $+3.9$ & $+3.1$ & $+3.0$ & $+3.0$ & $+3.0$ \\
 %%END:banksweep_mlp
   \midrule
   \multicolumn{8}{l}{\emph{linear encoders}} \\
 %%BEGIN:banksweep_linear
-  inner product & 1 & $+31.8$ & $\mathbf{+31.8}$ & $+281.4$ & $+1{,}077$ & $+2{,}857$ & $+4{,}830$ \\
-  inner product, $\tanh$ future & 1 & $+26.3$ & $\mathbf{+23.1}$ & $+24.5$ & $+28.1$ & $+31.3$ & $+31.2$ \\
-  normalized cosine & 1 & $+25.1$ & $+23.2$ & $+22.9$ & $+22.9$ & $+22.7$ & $+22.8$ \\
-  $L^2$ one-way & 1 & $+21.1$ & $+8.9$ & $+5.8$ & $\mathbf{+5.4}$ & $+5.8$ & $+6.4$ \\
-  $L^2$ joint & 1 & $+19.6$ & $+8.2$ & $+5.7$ & $+5.4$ & $+5.2$ & $+5.3$ \\
-  Student-$t$ kernel, one-way & 1 & $+17.2$ & $+6.7$ & $+5.1$ & $+4.9$ & $+4.9$ & $+4.9$ \\
-  Student-$t$ kernel, joint & 1 & $+18.3$ & $+8.2$ & $+5.6$ & $+5.2$ & $+5.0$ & $+5.0$ \\
+  inner product & 5 & $\mathbf{+42.8}$ & $+255.1$ & $+619.9$ & $+1{,}595$ & $+2{,}744$ & $+4{,}170$ \\
+  inner product, $\tanh$ future & 5 & $\mathbf{+27.9}$ & $+32.9$ & $+39.4$ & $+52.6$ & $+65.7$ & $+83.5$ \\
+  normalized cosine & 5 & $+27.7$ & $+25.1$ & $+24.9$ & $+24.8$ & $+24.8$ & $+24.7$ \\
+  $L^2$ one-way & 5 & $+21.0$ & $+9.4$ & $+5.8$ & $+5.5$ & $+5.3$ & $+5.4$ \\
+  $L^2$ joint & 5 & $+20.2$ & $+9.0$ & $+5.3$ & $+4.8$ & $+4.5$ & $+4.3$ \\
+  Student-$t$ kernel, one-way & 5 & $+18.0$ & $+6.6$ & $+4.1$ & $+3.9$ & $+3.8$ & $+3.7$ \\
+  Student-$t$ kernel, joint & 5 & $+19.8$ & $+8.5$ & $+5.5$ & $+4.8$ & $+4.4$ & $+4.3$ \\
+  log-quadratic, one-way & 5 & $+34.0$ & $+9.9$ & $+2.2$ & $+1.0$ & $+0.4$ & $+0.3$ \\
+  log-quadratic, joint & 5 & $+21.7$ & $+5.6$ & $+1.5$ & $+1.0$ & $+0.7$ & $+0.6$ \\
   \midrule
-  inner product $+$ bank energy & 1 & $+33.3$ & $\mathbf{+30.8}$ & $+123.1$ & $+751.5$ & $+1{,}962$ & $+3{,}252$ \\
-  $\tanh$ future $+$ bank energy & 1 & $+23.5$ & $+14.5$ & $+13.3$ & $\mathbf{+13.1}$ & $+14.7$ & $+15.2$ \\
+  inner product $+$ bank energy & 5 & $\mathbf{+41.4}$ & $+63.7$ & $+153.2$ & $+677.6$ & $+1{,}302$ & $+2{,}229$ \\
+  $\tanh$ future $+$ bank energy & 5 & $+24.4$ & $+16.7$ & $+15.8$ & $+15.7$ & $+15.9$ & $+16.0$ \\
 %%END:banksweep_linear
   \bottomrule
  \end{tabular}
@@ -2080,7 +2090,10 @@ not by the score alone.
   model & $n$ & $N=100$ & 1k & 10k & 30k & 100k & 200k \\
   \midrule
 %%BEGIN:gaussian
-
+  MLP, inner product & 2 & $+12.3$ & $+2.5$ & $+1.0$ & $+1.2$ & $+1.1$ & $+1.0$ \\
+  MLP, inner product, $\tanh$ future & 2 & $+13.3$ & $+2.1$ & $+0.5$ & $+0.4$ & $+0.4$ & $+0.3$ \\
+  linear, inner product & 2 & $+9.9$ & $+6.5$ & $+5.4$ & $+5.5$ & $+5.4$ & $+5.4$ \\
+  linear, inner product, $\tanh$ future & 2 & $+8.8$ & $+6.2$ & $+5.9$ & $+5.8$ & $+5.9$ & $+5.8$ \\
 %%END:gaussian
   \bottomrule
  \end{tabular}
@@ -2126,34 +2139,39 @@ bank, and average over the directions to obtain $\bar A(u)$ of
   \midrule
   \multicolumn{10}{l}{\emph{MLP encoders}} \\
 %%BEGIN:overforecast_mlp
-  inner product & 0.00 & 0.00 & 8.61 & 11.4 & 12.3 & 15.2 & 0.04 & $<-99$ & $<-99$ \\
-  inner product, $\tanh$ future & 0.00 & 0.00 & 1.01 & 1.83 & 2.74 & 2.81 & 0.02 & $-17.8$ & $-7.8$ \\
-  normalized cosine & 0.00 & 0.00 & 0.41 & 0.37 & 0.38 & 0.38 & 0.01 & $-35.0$ & $-14.7$ \\
-  $L^2$ one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $<-99$ & $<-99$ \\
-  $L^2$ joint & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $<-99$ & $<-99$ \\
-  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.01 & 0.01 & 0.01 & 0.00 & $-77.5$ & $-68.0$ \\
-  Student-$t$ kernel, joint & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $-19.0$ & $-18.9$ \\
-  inner product $+$ bank energy & 0.00 & 0.00 & 5.03 & 4.05 & 7.29 & 8.41 & 0.02 & $<-99$ & $<-99$ \\
-  $\tanh$ future $+$ bank energy & 0.00 & 0.15 & 0.51 & 0.47 & 0.53 & 0.54 & 0.04 & $-14.6$ & $-2.2$ \\
-  normalized cosine $+$ bank energy & 0.00 & 0.13 & 0.53 & 0.52 & 0.51 & 0.51 & 0.03 & $-18.3$ & $-3.1$ \\
-  inner product, bank energy only & 0.00 & 0.12 & 0.10 & 0.07 & 0.08 & 0.08 & 0.14 & $<-99$ & $16.8$ \\
+  inner product & 0.36 & 3.19 & 10.8 & 15.0 & 18.5 & 19.9 & 0.05 & $<-99$ & $<-99$ \\
+  inner product, $\tanh$ future & 0.33 & 2.06 & 2.80 & 3.17 & 3.52 & 3.56 & 0.02 & $-18.4$ & $-9.7$ \\
+  normalized cosine & 0.09 & 1.40 & 0.78 & 0.86 & 0.80 & 0.80 & 0.01 & $-36.5$ & $-18.6$ \\
+  $L^2$ one-way & 0.00 & 0.79 & 0.84 & 0.80 & 0.80 & 0.80 & 0.00 & $<-99$ & $<-99$ \\
+  $L^2$ joint & 0.00 & 0.40 & 0.30 & 0.62 & 0.64 & 0.74 & 0.00 & $<-99$ & $<-99$ \\
+  Student-$t$ kernel, one-way & 0.00 & 0.62 & 0.79 & 0.85 & 0.84 & 0.84 & 0.00 & $-78.0$ & $-70.3$ \\
+  Student-$t$ kernel, joint & 0.00 & 0.79 & 0.78 & 0.80 & 0.80 & 0.80 & 0.00 & $-19.7$ & $-19.6$ \\
+  log-quadratic, one-way & 0.00 & 1.49 & 1.23 & 1.44 & 1.39 & 1.41 & 0.00 & $-50.9$ & $-44.4$ \\
+  inner product $+$ bank energy & 0.00 & 0.85 & 2.80 & 3.10 & 4.12 & 4.32 & 0.16 & $<-99$ & $158.5$ \\
+  $\tanh$ future $+$ bank energy & 0.09 & 0.70 & 0.49 & 0.49 & 0.50 & 0.50 & 0.03 & $-15.3$ & $-3.6$ \\
+  normalized cosine $+$ bank energy & 0.26 & 0.68 & 0.49 & 0.49 & 0.46 & 0.46 & 0.02 & $-20.2$ & $-4.8$ \\
+  $L^2$ one-way $+$ bank energy & 0.00 & 0.69 & 1.13 & 1.21 & 1.33 & 1.34 & 0.00 & $<-99$ & $<-99$ \\
+  inner product, bank energy only & 0.00 & 0.04 & 0.04 & 0.03 & 0.03 & 0.03 & 0.05 & $<-99$ & $<-99$ \\
+  $\tanh$ future, bank energy only & 0.73 & 1.12 & 1.13 & 1.09 & 1.06 & 1.05 & 0.12 & $-1.9$ & $0.2$ \\
   \midrule
-  oracle forecast & \multicolumn{6}{c}{0.011} & & & \\
+  oracle forecast & \multicolumn{6}{c}{0.802} & & & \\
 %%END:overforecast_mlp
   \midrule
   \multicolumn{10}{l}{\emph{linear encoders}} \\
 %%BEGIN:overforecast_linear
-  inner product & 0.00 & 6.83 & 107 & 164 & 299 & 428 & 1.00 & $463.7$ & $1595.3$ \\
-  inner product, $\tanh$ future & 0.00 & 0.46 & 3.91 & 4.98 & 7.18 & 7.87 & 1.00 & $0.5$ & $2.2$ \\
-  normalized cosine & 0.00 & 0.35 & 1.36 & 1.23 & 1.23 & 1.23 & 0.58 & $0.0$ & $0.0$ \\
-  $L^2$ one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $<-99$ & $<-99$ \\
-  $L^2$ joint & 0.00 & 0.00 & 0.19 & 0.18 & 0.13 & 0.13 & 0.00 & $-14.0$ & $-8.6$ \\
-  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & $-34.5$ & $-28.8$ \\
-  Student-$t$ kernel, joint & 0.00 & 0.00 & 0.15 & 0.16 & 0.12 & 0.12 & 0.00 & $-6.8$ & $-6.0$ \\
-  inner product $+$ bank energy & 0.00 & 2.15 & 45.2 & 105 & 207 & 300 & 1.00 & $297.3$ & $990.0$ \\
-  $\tanh$ future $+$ bank energy & 0.00 & 0.56 & 2.51 & 2.64 & 3.32 & 3.72 & 1.00 & $0.2$ & $1.0$ \\
+  inner product & 4.30 & 69.8 & 152 & 229 & 304 & 380 & 1.00 & $598.8$ & $1994.2$ \\
+  inner product, $\tanh$ future & 1.15 & 8.03 & 10.6 & 12.0 & 13.3 & 14.4 & 1.00 & $0.6$ & $2.5$ \\
+  normalized cosine & 0.94 & 1.63 & 1.45 & 1.39 & 1.33 & 1.33 & 0.53 & $0.0$ & $0.0$ \\
+  $L^2$ one-way & 0.00 & 0.40 & 0.65 & 0.74 & 0.99 & 1.19 & 0.00 & $<-99$ & $<-99$ \\
+  $L^2$ joint & 0.00 & 0.56 & 0.73 & 0.71 & 0.78 & 0.79 & 0.00 & $-24.0$ & $-14.7$ \\
+  Student-$t$ kernel, one-way & 0.00 & 0.38 & 0.43 & 0.45 & 0.44 & 0.44 & 0.00 & $-34.7$ & $-29.6$ \\
+  Student-$t$ kernel, joint & 0.00 & 0.29 & 0.51 & 0.64 & 0.73 & 0.75 & 0.00 & $-5.8$ & $-5.1$ \\
+  log-quadratic, one-way & 0.00 & 0.89 & 0.76 & 0.78 & 0.79 & 0.79 & 0.00 & $<-99$ & $<-99$ \\
+  log-quadratic, joint & 0.01 & 0.93 & 0.86 & 0.90 & 0.88 & 0.88 & 0.00 & $-14.1$ & $-11.6$ \\
+  inner product $+$ bank energy & 2.24 & 13.3 & 38.7 & 75.3 & 119 & 175 & 1.00 & $240.0$ & $765.1$ \\
+  $\tanh$ future $+$ bank energy & 1.44 & 2.58 & 2.76 & 2.59 & 2.68 & 2.82 & 1.00 & $0.2$ & $0.9$ \\
   \midrule
-  oracle forecast & \multicolumn{6}{c}{0.011} & & & \\
+  oracle forecast & \multicolumn{6}{c}{0.802} & & & \\
 %%END:overforecast_linear
   \bottomrule
  \end{tabular}
@@ -2171,9 +2189,10 @@ The left half of \Cref{tab:overforecast} and the bottom row of
 unbounded inner product the factor keeps growing with the bank. For the
 $\tanh$ inner product it grows and then bends over. For the normalized cosine
 it settles near or below one. For $L^2$ and for the logarithmic scores it
-stays near the value of the oracle forecast, far below one: on a typical
-past, the event is far less likely than it is a priori, which is
-\Cref{lem:tprocess}. The right half shows where the regimes come from. With
+stays between about $0.3$ and $1.4$, around the value $0.80$ of the oracle
+forecast on the same pasts. The oracle value is below one because the event
+is concentrated on few pasts: on the calmer half of the pasts the oracle
+gives it essentially no weight, which is \Cref{lem:tprocess}. The right half shows where the regimes come from. With
 linear encoders every past has $\bar A(u)>1$ under the inner product and its
 $\tanh$ version, in line with \Cref{prop:linearsat}(ii), the linear normalized
 cosine has $\bar A(u)=1$ up to sampling error, which is
@@ -2226,7 +2245,7 @@ right tail it no longer needs the regularizing effect of the joint loss
 discussed in \Cref{ssec:finite}. The learned exponents are finite and of the
 order of the dimension of the past
 %%BEGIN:exponents
-($b\approx28$ for the one-way Student-$t$ kernel with MLP encoders, against $d_u=50$),
+($b\approx29$ for the one-way Student-$t$ kernel with MLP encoders and $b-b_v\approx68$ for the one-way log-quadratic family with linear encoders, against $d_u=50$),
 %%END:exponents
 so the models choose a polynomial, not a Gaussian, tail.
 
@@ -2240,10 +2259,10 @@ at every step, in units of the climatological spread
 $\E\abs{v-v'}$, with $\lambda=10$. Nothing else changes. The lower rows of
 each block of \Cref{tab:banksweep,tab:overforecast} give the result.
 
-For the $\tanh$ inner product with MLP encoders the turnaround disappears:
-the model now improves monotonically with the bank and ends within about a
-point of the oracle, next to the best models, and its over-forecast factor
-drops below one. The loss has taught the encoders to place extreme futures
+For the $\tanh$ inner product with MLP encoders the plateau drops from
+$+6.0\%$ to $+1.3\%$: the model now improves monotonically with the bank and
+ends within about a point of the oracle, next to the best models, and its
+over-forecast factor drops from $3.6$ to $0.5$. The loss has taught the encoders to place extreme futures
 low. With linear encoders the improvement is partial, as it must be: by
 \Cref{prop:linearsat}(ii) and \Cref{rem:corners} no parameter of that family
 places them low for every past. The same holds for the unbounded inner
@@ -2254,7 +2273,9 @@ admissible informative member (\Cref{prop:relu}). Training with the bank
 energy loss alone, without the contrastive term, also removes the turnaround
 but gives a flatter forecast that levels off slightly higher, as anticipated
 after \Cref{prop:bankenergy}. For scores that already have a harmless tail
-the added term changes little.
+the added term matters less: it costs the MLP normalized cosine about a point
+($+0.8\%$ to $+1.8\%$) and helps one-way $L^2$, which over-fits
+(\Cref{ssec:finite}), from $+5.3\%$ to $+2.0\%$.
 
 \subsection{Real Heavy-Tailed Data}
 \label{ssec:realheavy}
@@ -2284,17 +2305,67 @@ the training and bank periods.
   \midrule
   \multicolumn{8}{l}{\emph{BTC/USDT one-minute returns} (bank of $118$k futures)} \\
 %%BEGIN:real_btc
-
+  MLP & inner product & $-2.1$ & $-2.6$ & $+1.7$ & 0.28 & 2.78 & 0.84 \\
+  MLP & inner product, $\tanh$ future & $-1.6$ & $-2.4$ & $-2.3$ & 0.67 & 0.94 & 0.05 \\
+  MLP & normalized cosine & $-1.3$ & $-2.8$ & $-3.0$ & 0.34 & 0.15 & 0.01 \\
+  MLP & $L^2$ one-way & $-2.1$ & $-2.6$ & $-3.0$ & 0.07 & 0.25 & 0.00 \\
+  MLP & $L^2$ joint & $-3.1$ & $-3.6$ & $-3.7$ & 0.12 & 0.08 & 0.00 \\
+  MLP & Student-$t$ kernel, one-way & $-1.4$ & $-2.8$ & $-3.1$ & 0.03 & 0.02 & 0.00 \\
+  MLP & log-quadratic, one-way & $-1.3$ & $-2.6$ & $-2.8$ & 0.09 & 0.07 & 0.00 \\
+  MLP & inner product $+$ bank energy & $-2.4$ & $-2.7$ & $-2.5$ & 0.00 & 0.34 & 0.00 \\
+  MLP & $\tanh$ future $+$ bank energy & $-3.3$ & $-3.7$ & $-3.7$ & 0.20 & 0.10 & 0.04 \\
+  \midrule
+  linear & inner product & $+0.5$ & $+0.1$ & $+1.2$ & 1.75 & 1.54 & 1.00 \\
+  linear & inner product, $\tanh$ future & $+0.1$ & $-0.0$ & $+0.1$ & 1.06 & 0.80 & 1.00 \\
+  linear & normalized cosine & $+0.1$ & $+0.0$ & $+0.0$ & 0.59 & 0.25 & 0.62 \\
+  linear & $L^2$ one-way & $+0.1$ & $+0.1$ & $+0.2$ & 0.17 & 0.11 & 0.00 \\
+  linear & $L^2$ joint & $+0.1$ & $+0.1$ & $+0.0$ & 0.08 & 0.07 & 0.00 \\
+  linear & Student-$t$ kernel, one-way & $+0.1$ & $-0.1$ & $-0.1$ & 0.00 & 0.00 & 0.00 \\
+  linear & log-quadratic, one-way & $-3.4$ & $-3.8$ & $-3.8$ & 0.13 & 0.09 & 0.00 \\
+  linear & inner product $+$ bank energy & $+0.1$ & $-0.0$ & $-0.0$ & 0.68 & 0.41 & 1.00 \\
+  linear & $\tanh$ future $+$ bank energy & $+0.1$ & $-0.1$ & $-0.0$ & 0.69 & 0.31 & 1.00 \\
 %%END:real_btc
   \midrule
   \multicolumn{8}{l}{\emph{Jena ten-minute rainfall} (bank of $87$k futures)} \\
 %%BEGIN:real_rain
-
+  MLP & inner product & $+44.0$ & $+193.0$ & $+330.0$ & 6.02 & 36.8 & 0.48 \\
+  MLP & inner product, $\tanh$ future & $+4.2$ & $-0.1$ & $-0.6$ & 1.67 & 1.84 & 0.43 \\
+  MLP & normalized cosine & $-3.7$ & $-7.0$ & $-7.5$ & 0.88 & 0.64 & 0.46 \\
+  MLP & $L^2$ one-way & $+11.3$ & $+16.1$ & $+24.1$ & 2.45 & 2.91 & 0.12 \\
+  MLP & $L^2$ joint & $-7.6$ & $-8.5$ & $-8.5$ & 2.62 & 0.48 & 0.07 \\
+  MLP & Student-$t$ kernel, one-way & $-1.9$ & $-5.4$ & $-5.7$ & 0.67 & 0.47 & 0.17 \\
+  MLP & log-quadratic, one-way & $-0.1$ & $-3.0$ & $-3.7$ & 1.19 & 0.37 & 0.14 \\
+  MLP & inner product $+$ bank energy & $-6.2$ & $-6.6$ & $-6.6$ & 0.00 & 0.00 & 0.05 \\
+  MLP & $\tanh$ future $+$ bank energy & $-6.5$ & $-7.2$ & $-7.1$ & 0.57 & 0.43 & 0.23 \\
+  \midrule
+  linear & inner product & $+317.3$ & $+580.5$ & $+853.9$ & 31.8 & 91.4 & 0.95 \\
+  linear & inner product, $\tanh$ future & $-2.0$ & $-2.9$ & $-3.3$ & 2.24 & 2.38 & 0.77 \\
+  linear & normalized cosine & $-6.0$ & $-6.4$ & $-6.3$ & 1.12 & 0.84 & 0.78 \\
+  linear & $L^2$ one-way & $+6.6$ & $+9.2$ & $+9.6$ & 0.50 & 1.65 & 0.00 \\
+  linear & $L^2$ joint & $-0.1$ & $-0.1$ & $-0.3$ & 0.11 & 0.08 & 0.00 \\
+  linear & Student-$t$ kernel, one-way & $-4.1$ & $-4.9$ & $-5.2$ & 0.11 & 0.12 & 0.00 \\
+  linear & log-quadratic, one-way & $-5.3$ & $-6.7$ & $-7.0$ & 1.00 & 0.88 & 0.01 \\
 %%END:real_rain
   \midrule
   \multicolumn{8}{l}{\emph{Peachtree Creek fifteen-minute discharge} (bank of $95$k futures)} \\
 %%BEGIN:real_flow
-
+  MLP & inner product & $-61.6$ & $-60.1$ & $-52.1$ & 1.53 & 2.01 & 0.41 \\
+  MLP & inner product, $\tanh$ future & $-51.8$ & $-32.3$ & $+38.1$ & 1.26 & 0.06 & 0.07 \\
+  MLP & normalized cosine & $-55.6$ & $-63.9$ & $-64.2$ & 1.57 & 1.01 & 0.02 \\
+  MLP & $L^2$ one-way & $-52.7$ & $-59.5$ & $-58.2$ & 1.50 & 2.98 & 0.00 \\
+  MLP & $L^2$ joint & $-55.7$ & $-64.6$ & $-67.0$ & 0.91 & 1.09 & 0.00 \\
+  MLP & Student-$t$ kernel, one-way & $-57.7$ & $-65.1$ & $-66.3$ & 0.66 & 0.96 & 0.00 \\
+  MLP & log-quadratic, one-way & $-58.2$ & $-67.9$ & $-68.9$ & 1.76 & 1.37 & 0.00 \\
+  MLP & inner product $+$ bank energy & $-57.2$ & $-57.7$ & $-56.1$ & 2.40 & 3.24 & 0.05 \\
+  MLP & $\tanh$ future $+$ bank energy & $-60.8$ & $-63.3$ & $-63.8$ & 1.53 & 1.60 & 0.01 \\
+  \midrule
+  linear & inner product & $+4.8$ & $+16.5$ & $+14.8$ & 4.55 & 6.87 & 0.99 \\
+  linear & inner product, $\tanh$ future & $-14.5$ & $-8.1$ & $-8.7$ & 3.58 & 4.72 & 0.14 \\
+  linear & normalized cosine & $-11.1$ & $-10.2$ & $-10.6$ & 0.62 & 0.53 & 0.18 \\
+  linear & $L^2$ one-way & $-30.9$ & $-34.0$ & $-33.3$ & 1.25 & 3.10 & 0.00 \\
+  linear & $L^2$ joint & $-29.7$ & $-33.5$ & $-34.2$ & 1.27 & 1.33 & 0.00 \\
+  linear & Student-$t$ kernel, one-way & $-32.8$ & $-38.7$ & $-40.6$ & 1.66 & 2.87 & 0.00 \\
+  linear & log-quadratic, one-way & $-35.4$ & $-41.3$ & $-42.4$ & 2.09 & 2.08 & 0.02 \\
 %%END:real_flow
   \bottomrule
  \end{tabular}
@@ -2307,7 +2378,181 @@ the training and bank periods.
 \end{table}
 
 %%BEGIN:realtext
+\Cref{tab:real} gives the result, averaged over $3$ seeds for the returns
+and $2$ for rain and discharge. It repeats the synthetic picture on all
+three series, with three additions.
+
+\emph{The unbounded inner product fails, and the bank-energy loss repairs
+it.} On rain the unbounded inner product is the worst model by far
+($+330\%$ with MLP and $+854\%$ with linear encoders at the full bank), and it
+puts $37$ to $91$ times the marginal weight on the extreme event. With the
+bank energy loss added, the same MLP model beats climatology by $6.6\%$. On
+the returns and on discharge it is among the best models at $N=1{,}000$ and
+then turns around as the bank grows.
+
+\emph{Saturating scores can fail suddenly.} On discharge the MLP $\tanh$
+inner product is close to the best models at $N=1{,}000$ ($-52\%$), but in
+one of the two seeds it degrades past climatology as the bank grows, so the
+mean at the full bank is $+38\%$. Trained with the bank energy loss, the same
+model improves monotonically in both seeds, to $-64\%$. This is the failure
+that \Cref{thm:exposure} describes: it is invisible at the bank size used in
+training and appears only when the bank is enlarged.
+
+\emph{With linear encoders, only the logarithmic scores learn the scale.}
+One-minute returns are nearly uncorrelated with their past. What the past
+predicts is the size of the next moves (volatility clustering), not their
+direction. To the extent that the conditional law of the returns is symmetric,
+\Cref{prop:odd} says that the inner product, its $\tanh$ version, the
+normalized cosine and linear $L^2$ cannot use this information with linear
+encoders. All of
+them are within $0.2\%$ of climatology. The linear log-quadratic family
+contains an interaction in $\abs{v}^2$, and it beats climatology by $3.8\%$,
+as well as the best MLP models do. On discharge, the linear logarithmic scores
+are also the best linear models by a wide margin ($-41\%$ and $-42\%$, against
+$-34\%$ for $L^2$ and $-11\%$ or worse for the bounded scores).
+
+With MLP encoders the coercive and logarithmic scores are close to each other
+on all three series. The best MLP model is joint $L^2$ on the returns and on
+rain and the log-quadratic family on discharge, and the differences between
+these models are within about two standard errors. As in
+\Cref{ssec:finite}, one-way $L^2$ over-fits on rain ($+24\%$). The one-way
+Student-$t$ kernel trained with the same loss does not over-fit ($-5.7\%$).
 %%END:realtext
+
+\subsection{Embedding Dimension and Correlation}
+\label{ssec:dimsweep}
+
+We test predictions \ref{D1}--\ref{D3} of \Cref{ssec:dimension} with two
+families of data. The first is the heavy-tailed domain used above ($\nu=3$),
+which has one dominant canonical correlation ($\rho_1=0.98$, $\rho_2=0.03$).
+The second is the AR(1) Student-$t$ series of \Cref{ex:ar} with $\nu=3$ and
+lag-one correlation $\phi\in\{0,0.3,0.6,0.9,0.99\}$, which has exactly one
+non-zero canonical correlation, $\rho_1=\phi$. Both use $50$-point windows.
+Each model is trained as in \Cref{ssec:banksweep}, with the embedding
+dimension $d_z$ varied from $1$ to $50$ (heavy-tailed domain) or $200$ (AR
+series), one seed per configuration. Besides the energy score we report the
+information the model captures,
+$\E\bigl[s(u,v)-\log Z(u)\bigr]$, estimated on $4{,}000$ fresh pairs with
+$Z(u)$ from a bank of $50{,}000$ futures. For the one-way loss this equals $I(u;v)$ minus the
+population loss, so it is at most $I(u;v)$, and a negative value means that
+the model is worse than climatology. The available information is computed
+exactly from \Cref{prop:infosplit}: $2.83$ nats on the heavy-tailed domain, of
+which the shared scale contributes $c_3(50,50)=1.20$ nats in every case.
+
+\begin{table}[ht]
+ \centering
+ \footnotesize
+ \setlength{\tabcolsep}{4pt}
+ \begin{tabular}{lrrrrrrr}
+  \toprule
+  $d_z$ & 1 & 2 & 4 & 8 & 16 & 32 & 50 \\
+  \midrule
+  \multicolumn{8}{l}{\emph{information captured (nats); available: $2.83$}} \\
+  ceiling for linear encoders, \eqref{eq:dimfloor} & 1.67 & 1.74 & 1.87 & 2.07 & 2.33 & 2.63 & 2.83 \\
+  linear, inner product, $\tanh$ future & 0.31 & 0.31 & 0.31 & 0.31 & 0.31 & 0.31 & 0.31 \\
+  linear, $L^2$ one-way & 1.46 & 1.45 & 1.45 & 1.45 & 1.44 & 1.44 & 1.43 \\
+  linear, Student-$t$ kernel, one-way & 1.61 & 1.64 & 1.69 & 1.72 & 1.76 & 1.81 & 1.83 \\
+  MLP, Student-$t$ kernel, one-way & 1.57 & 2.64 & 2.73 & 2.68 & -- & 2.60 & -- \\
+  \midrule
+  \multicolumn{8}{l}{\emph{energy score above the oracle (\%), $N=200{,}000$}} \\
+  linear, inner product, $\tanh$ future & 20.9 & 20.7 & 20.9 & 23.3 & 27.2 & 28.5 & 33.0 \\
+  linear, Student-$t$ kernel, one-way & 5.1 & 4.9 & 5.0 & 4.9 & 4.9 & 4.9 & 4.9 \\
+  MLP, Student-$t$ kernel, one-way & 5.2 & 1.4 & 0.4 & 0.4 & -- & 0.6 & -- \\
+  \midrule
+  \multicolumn{8}{l}{\emph{over-forecast factor, $p=10^{-4}$, $N=200{,}000$}} \\
+  linear, inner product, $\tanh$ future & 2.3 & 2.7 & 7.4 & 17.5 & 24.7 & 34.8 & 47.3 \\
+  \bottomrule
+ \end{tabular}
+ \caption{Heavy tails ($\nu=3$): effect of the embedding dimension $d_z$,
+  one seed. The ceiling row is the information that a score with linear past
+  and future encoders of rank $d_z$ can capture at best,
+  $I(u;v)$ minus the right-hand side of \eqref{eq:dimfloor} with
+  $c_\nu(d_z,d_z)$. Dashes: not run.}
+ \label{tab:dimsweep}
+\end{table}
+
+\begin{table}[ht]
+ \centering
+ \footnotesize
+ \setlength{\tabcolsep}{4pt}
+ \begin{tabular}{lrrrrr}
+  \toprule
+  lag-one correlation $\phi$ & 0 & 0.3 & 0.6 & 0.9 & 0.99 \\
+  \midrule
+  available, $I(u;v)$ & 1.20 & 1.25 & 1.43 & 2.03 & 3.16 \\
+  \quad of which correlation & 0.00 & 0.05 & 0.22 & 0.83 & 1.96 \\
+  \midrule
+  linear, inner product, $\tanh$ future & $-0.05$ & 0.01 & 0.10 & 0.21 & 0.28 \\
+  linear, normalized cosine & $-0.01$ & 0.03 & 0.15 & 0.44 & 0.62 \\
+  linear, $L^2$ one-way & $-0.47$ & $-0.11$ & 0.03 & 0.54 & 1.80 \\
+  linear, Student-$t$ kernel, one-way & 0.14 & 0.17 & 0.34 & 0.98 & 2.16 \\
+  linear, log-quadratic, joint & 1.09 & 1.11 & 1.24 & 1.65 & 2.51 \\
+  MLP, inner product, $\tanh$ future & 0.74 & 0.83 & 1.11 & 1.74 & 2.52 \\
+  MLP, Student-$t$ kernel, one-way & 0.77 & 0.82 & 1.06 & 1.79 & 2.74 \\
+  \bottomrule
+ \end{tabular}
+ \caption{AR(1) Student-$t$ series ($\nu=3$): information captured (nats) as
+  the lag-one correlation varies, embedding dimension $d_z=100$, one seed.
+  The first two rows are exact (\Cref{prop:infosplit}).}
+ \label{tab:arsweep}
+\end{table}
+
+\paragraph{Odd interactions (\ref{D1}).} The linear inner product with a
+$\tanh$ future, the linear normalized cosine and linear $L^2$ do not improve
+with the embedding dimension: their information is constant in $d_z$ to two
+decimals on the heavy-tailed domain (\Cref{tab:dimsweep}). On the AR series
+with $\phi=0.6$ the $\tanh$ inner product and $L^2$ vary by less than $0.1$
+nats from $d_z=1$ to $d_z=200$; the normalized cosine rises from $0$ at
+$d_z=1$, where its score takes only the values $\pm\kappa$, to $0.16$ nats.
+On the AR series they capture at most the correlation part of the
+information and lose the scale part, $1.20$ nats, entirely
+(\Cref{tab:arsweep}). At $\phi=0$, where only the scale is available,
+they capture nothing, as \Cref{prop:odd} requires; one-way $L^2$ is even
+worse than climatology, because it over-fits as in \Cref{ssec:finite}. The
+linear log-quadratic family, whose interaction is not odd, captures $1.09$ of
+the $1.20$ nats at $\phi=0$ with the same linear encoders.
+
+\paragraph{Linear encoders that can use the scale (\ref{D2}).} The linear
+Student-$t$ kernel improves steadily with $d_z$, as predicted, but much more
+slowly than the ceiling allows. At $d_z=1$ and $d_z=2$ it is within $0.1$
+nats of the ceiling. At $d_z=50$ it is $1.0$ nats below it, and the energy
+score does not move. The model that attains the ceiling is the conditional law of
+$Hv$ given $Gu$, which is again elliptical and has the log-quadratic form
+\eqref{eq:logquadfamily}, with separate exponents for the past and the
+future. The Student-$t$ kernel has a single exponent, so with linear
+encoders it can only represent the scale term approximately, and in practice
+it learns little of it. The second half of \ref{D2}, that a narrow linear
+embedding over-forecasts extremes (\Cref{thm:tailcap}), is not visible at
+the thresholds we can measure. Even at $p=10^{-4}$ the linear Student-$t$
+kernel and $L^2$ models put less than the marginal weight on the event at
+every $d_z$. \Cref{thm:tailcap} is a statement about the limit of large
+thresholds, and its constant is evidently small at $p=10^{-4}$.
+
+\paragraph{Nonlinear encoders (\ref{D3}).} With MLP encoders, $d_z=2=k+1$ is
+enough, as \Cref{cor:tdimension}(ii) predicts. The Student-$t$ kernel
+captures $1.57$ nats at $d_z=1$ and $2.64$ at $d_z=2$, against $2.83$
+available, and gains nothing beyond. Its energy score drops from $+5.2\%$ to
+$+0.4\%$ over the same range. On the AR series with $\phi=0.6$ the MLP
+$\tanh$ inner product follows the same pattern ($0.54$, $1.12$ and $1.27$ nats
+at $d_z=1,2,4$, against $1.43$ available). Apart from the linear log-quadratic family, the MLP models are the only ones
+that capture a substantial part of the scale information: $0.74$ to $1.09$ of
+the $1.20$ nats at $\phi=0$ (\Cref{tab:arsweep}).
+
+\paragraph{A wider embedding can hurt a saturating score.} For the linear
+$\tanh$ inner product, increasing $d_z$ does not change the information
+captured but makes the tail worse. The over-forecast factor at $p=10^{-4}$
+grows from $2.3$ at $d_z=1$ to $47$ at $d_z=50$, and the energy score from
+$+21\%$ to $+33\%$ (\Cref{tab:dimsweep}). The MLP version on the AR series
+shows the same effect beyond $d_z=4$: its information falls from $1.27$ to
+$1.11$ nats at $d_z=100$, its energy score rises from $+0.1\%$ to $+4.2\%$,
+and its over-forecast factor at $p=10^{-4}$ from $3.2$ to $12$.
+\Cref{rem:corners}(iv) explains why. An extreme future lands on a vertex of
+the cube $[-1,1]^{d_z}$, where the score can reach $\kappa\abs{f(u)}_{1}$.
+For a past embedding of a given Euclidean length, $\abs{f(u)}_{1}$ can be as
+large as $\sqrt{d_z}\,\abs{f(u)}_{2}$. Each added dimension is one more
+coordinate in which an extreme future can saturate, so the amplification of
+\Cref{thm:exposure} grows with the embedding dimension. Choosing a small
+embedding dimension, or a score with a logarithmic tail, avoids this.
 
 \subsection{Finite Data: the Loss Matters Again}
 \label{ssec:finite}
