@@ -147,13 +147,6 @@ generating function finite, so the tail problem never shows up.
 ## Open items before sending
 
 - Fill in the author block in `main.tex`.
-- Related work: add the literature found in the targeted search:
-  - Erol et al. 2026 (WEINCE);
-  - Czyż et al. 2023 and the PMI-profiles paper;
-  - best-of-N papers;
-  - temperature-free InfoNCE;
-  - I-Con;
-  - gallery-size scaling.
 - More seeds for the dimension sweep (currently 1), and on the real series.
 - Optional proposition: tail amplification of the tanh score grows with d_z
   (the ℓ1 versus ℓ2 argument of Rem 4.19, currently in the text of Sec 5.9).

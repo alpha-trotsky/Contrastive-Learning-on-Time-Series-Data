@@ -201,7 +201,40 @@ sharp \cite{chen2020simclr,wang2020understanding}, and negative squared
 Euclidean distance logits are used in practice and match or exceed cosine
 CLIP \cite{chou2024embedding}. To our knowledge none of these works ties
 boundedness to the \emph{existence} of the model, or to the behaviour of a
-reweighted bank.
+reweighted bank. Kim and Kim \cite{kim2025temperature} replace the
+temperature of the cosine logit by the inverse hyperbolic tangent, and
+Uchiyama et al.\ \cite{uchiyama2025clip} use trained CLIP-type models
+explicitly as density ratio estimators, the view taken here.
+
+\paragraph{Heavy tails in contrastive learning and mutual information.}
+Erol et al.\ \cite{erol2026softmax} use extreme value theory to study the
+top-scoring negatives in the InfoNCE softmax with normalized embeddings, and
+propose a corrected training loss. Their object is the batch of negatives
+during training. Ours is the tilted model itself and the bank of futures used
+at prediction time, whose size we vary after training. Czy\.z et al.\
+\cite{czyz2023beyond} show that neural mutual-information estimators degrade
+on long-tailed distributions, including the multivariate Student-$t$, and
+\cite{czyz2023pmi} use the distribution of the pointwise mutual information
+to study the behaviour of neural critics. The mutual information of the
+multivariate Student-$t$ distribution is known in closed form
+\cite{calsaverini2009information,arellano2013shannon}.
+\Cref{prop:infosplit} splits it into a correlation part and a scale part and
+uses the split to count the embedding dimensions that a score needs.
+
+\paragraph{Selecting among more candidates.}
+In best-of-$N$ sampling, keeping the highest-scoring of $N$ candidates under
+an imperfect reward can get worse as $N$ grows
+\cite{huang2025bestofn,jinnai2024regularized,yu2026curiosity}. Yano et al.\
+\cite{yano2026tail} explain both the gains and the degradation with extreme
+value theory, as a competition between the reward tails of correct and
+incorrect candidates. The bank forecast is a soft version of this selection:
+it weights all $N$ candidates by $e^{s}$ instead of keeping the best one, and
+\Cref{thm:exposure} gives the corresponding $\min(N,A)$ law for the weights.
+In retrieval, the dependence of accuracy on the size of the gallery is a
+known evaluation issue \cite{meivar2026webscale,argueta2026lineups}, and
+hubness, where a few gallery items are near neighbours of many queries, is
+corrected by normalizing the scores over a bank of queries
+\cite{bogolin2022qbnorm,wang2023balance}.
 
 \paragraph{Tails under exponential tilting, and training with scoring rules.}
 How regular variation transforms under multiplication and tilting is
@@ -213,7 +246,9 @@ the clipped log density ratio is also the population optimum of the
 contrastive loss over bounded scores. Heavy-tailed, Cauchy-type similarity
 kernels are used in neighbour embeddings and in their contrastive variants
 \cite{maaten2008tsne,bohm2023unsupervised}, for geometric rather than
-distributional reasons. Training generative forecasters by minimizing the
+distributional reasons, and the I-Con framework \cite{alshammari2025icon}
+writes many representation-learning losses, including these, as KL
+divergences between neighbourhood distributions. Training generative forecasters by minimizing the
 energy score is established practice
 \cite{gneiting2007strictly,pacchiardi2024probabilistic,shen2024engression};
 here the object being trained is a set of weights on observed futures rather
@@ -291,13 +326,28 @@ organization:
        mass times distance (\Cref{prop:klvsenergy}), which motivates a
        training loss built from the bank forecast itself
        (\Cref{prop:bankenergy}).
+ \item \emph{Embedding dimension and correlation} (\Cref{ssec:dimension}).
+       For elliptical Student-$t$ series the mutual information splits
+       exactly into a correlation part and a part carried by the shared scale
+       (\Cref{prop:infosplit}). A nonlinear encoder needs $k+1$ embedding
+       dimensions, where $k$ is the number of non-zero canonical
+       correlations, whereas a linear encoder needs the full dimension
+       (\Cref{thm:bottleneck,cor:tdimension}). A linear embedding of rank
+       $d_z$ caps the tail index of the forecast at $\nu+d_z$
+       (\Cref{thm:tailcap}). Scores whose interaction is odd in the future,
+       which include the inner product, its $\tanh$ version, the normalized
+       cosine and $L^2$ with linear encoders, cannot use the scale part at
+       all, and learn nothing when the correlation is zero
+       (\Cref{prop:odd}).
  \item \emph{Numerical experiments} (\Cref{sec:experiments}).
        On synthetic Gaussian, heavy-tailed, warped and bimodal processes, and
        on real weather and financial data, we confirm the loss invariance for
        flexible encoders, the failure of unbounded scores on heavy tails, the
        $\min(N,A)$ law and the turnaround of saturating scores as the bank
-       grows, the benefit of scores with a logarithmic tail, and the effect
-       of training with the bank energy loss.
+       grows, the benefit of scores with a logarithmic tail, the effect
+       of training with the bank energy loss, and the predictions on the
+       embedding dimension and the correlation. We also find that a wider
+       embedding makes a saturating score over-weight extremes more.
 \end{enumerate}
 \Cref{sec:conclusion} concludes and discusses open directions.
 Proofs are collected in \Cref{app:proofs}.
@@ -3529,6 +3579,87 @@ R.~B. Arellano-Valle, J.~E. Contreras-Reyes, and M.~G. Genton.
 \newblock Shannon entropy and mutual information for multivariate
  skew-elliptical distributions.
 \newblock \emph{Scandinavian Journal of Statistics}, 40(1):42--62, 2013.
+
+\bibitem{erol2026softmax}
+M.~Erol, S.~Evren, O.~Ozel, A.~Morgan, J.~J. Ryu, and L.~Zheng.
+\newblock When softmax fails at the top: extreme value corrections for
+ {InfoNCE}.
+\newblock \emph{arXiv preprint arXiv:2606.00262}, 2026.
+
+\bibitem{czyz2023beyond}
+P.~Czy\.z, F.~Grabowski, J.~E. Vogt, N.~Beerenwinkel, and A.~Marx.
+\newblock Beyond normal: on the evaluation of mutual information estimators.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+
+\bibitem{czyz2023pmi}
+P.~Czy\.z, F.~Grabowski, J.~E. Vogt, N.~Beerenwinkel, and A.~Marx.
+\newblock On the properties and estimation of pointwise mutual information
+ profiles.
+\newblock \emph{arXiv preprint arXiv:2310.10240}, 2023.
+
+\bibitem{huang2025bestofn}
+A.~Huang, A.~Block, Q.~Liu, N.~Jiang, A.~Krishnamurthy, and D.~J. Foster.
+\newblock Is best-of-{N} the best of them? {C}overage, scaling, and
+ optimality in inference-time alignment.
+\newblock \emph{arXiv preprint arXiv:2503.21878}, 2025.
+
+\bibitem{jinnai2024regularized}
+Y.~Jinnai, T.~Morimura, K.~Ariu, and K.~Abe.
+\newblock Regularized best-of-{N} sampling with minimum {B}ayes risk objective
+ for language model alignment.
+\newblock \emph{arXiv preprint arXiv:2404.01054}, 2024.
+
+\bibitem{yu2026curiosity}
+Z.~Yu, Z.~S. Wu, and A.~Block.
+\newblock From curiosity to caution: mitigating reward hacking for best-of-{N}
+ with pessimism.
+\newblock \emph{arXiv preprint arXiv:2604.04648}, 2026.
+
+\bibitem{yano2026tail}
+T.~Yano, Y.~Ishibashi, and M.~Oyamada.
+\newblock Tail competition explains scaling in best-of-{N} sampling for
+ verifiable problems.
+\newblock \emph{arXiv preprint arXiv:2610.19362}, 2026.
+
+\bibitem{meivar2026webscale}
+B.~Meivar and S.~Avidan.
+\newblock Web scale on a budget: tail-aware retrieval evaluation.
+\newblock \emph{arXiv preprint arXiv:2610.17986}, 2026.
+
+\bibitem{argueta2026lineups}
+G.~Argueta, K.~W. Bowyer, M.~King, and J.~Dhar.
+\newblock What happens to accuracy when photo lineups contain non-mated
+ rank-one images from large galleries?
+\newblock \emph{arXiv preprint arXiv:2607.21792}, 2026.
+
+\bibitem{bogolin2022qbnorm}
+S.-V. Bogolin, I.~Croitoru, H.~Jin, Y.~Liu, and S.~Albanie.
+\newblock Cross modal retrieval with querybank normalisation.
+\newblock In \emph{IEEE/CVF Conference on Computer Vision and Pattern
+ Recognition}, 2022.
+
+\bibitem{wang2023balance}
+Y.~Wang, X.~Jian, and B.~Xue.
+\newblock Balance act: mitigating hubness in cross-modal retrieval with query
+ and gallery banks.
+\newblock \emph{arXiv preprint arXiv:2310.11612}, 2023.
+
+\bibitem{alshammari2025icon}
+S.~Alshammari, J.~Hershey, A.~Feldmann, W.~T. Freeman, and M.~Hamilton.
+\newblock {I-Con}: a unifying framework for representation learning.
+\newblock In \emph{International Conference on Learning Representations},
+ 2025.
+
+\bibitem{kim2025temperature}
+B.~J. Kim and S.~W. Kim.
+\newblock Temperature-free loss function for contrastive learning.
+\newblock \emph{arXiv preprint arXiv:2501.17683}, 2025.
+
+\bibitem{uchiyama2025clip}
+F.~Uchiyama, R.~Yanagi, S.~Taniguchi, S.~Takashiro, M.~Suzuki, H.~Kataoka,
+ Y.~Iwasawa, and Y.~Matsuo.
+\newblock {CLIP}-like model as a foundational density ratio estimator.
+\newblock \emph{arXiv preprint arXiv:2506.22881}, 2025.
 
 \end{thebibliography}
 
