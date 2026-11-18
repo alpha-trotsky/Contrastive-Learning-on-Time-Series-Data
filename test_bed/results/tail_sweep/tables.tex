@@ -1,61 +1,276 @@
+%% ---- btc, linear: energy excess (%) by bank size [100, 1000, 10000, 30000, 100000]
+  inner product (unbounded) & $+1.8$ & $+0.5$ & $+0.1$ & $+0.9$ & $+1.3$ \\
+  inner product, $\tanh$ future & $+1.1$ & $+0.1$ & $-0.0$ & $+0.2$ & $+0.2$ \\
+  normalized cosine & $+1.1$ & $+0.1$ & $+0.0$ & $+0.0$ & $+0.0$ \\
+  $L^2$ one-way & $+1.0$ & $+0.1$ & $+0.1$ & $+0.1$ & $+0.1$ \\
+  $L^2$ joint & $+1.0$ & $+0.1$ & $+0.1$ & $-0.0$ & $+0.1$ \\
+  Student-$t$ kernel, one-way & $+0.8$ & $+0.1$ & $-0.1$ & $-0.1$ & $-0.1$ \\
+  log-quadratic, one-way & $-0.6$ & $-3.4$ & $-3.8$ & $-3.9$ & $-3.8$ \\
+  inner product + bank energy & $+1.1$ & $+0.1$ & $-0.0$ & $-0.0$ & $-0.0$ \\
+  $\tanh$ future + bank energy & $+1.1$ & $+0.1$ & $-0.1$ & $-0.1$ & $-0.0$ \\
+%% ---- btc, linear: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000]; oracle nan
+  inner product (unbounded) & 3.15 & 1.75 & 0.90 & 1.25 & 1.63 \\
+  inner product, $\tanh$ future & 1.09 & 1.06 & 0.71 & 0.80 & 0.84 \\
+  normalized cosine & 0.83 & 0.59 & 0.28 & 0.26 & 0.26 \\
+  $L^2$ one-way & 0.05 & 0.17 & 0.18 & 0.13 & 0.11 \\
+  $L^2$ joint & 0.28 & 0.08 & 0.06 & 0.07 & 0.08 \\
+  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
+  log-quadratic, one-way & 0.00 & 0.13 & 0.08 & 0.08 & 0.08 \\
+  inner product + bank energy & 1.07 & 0.68 & 0.46 & 0.39 & 0.43 \\
+  $\tanh$ future + bank energy & 0.85 & 0.69 & 0.31 & 0.31 & 0.31 \\
+%% ---- btc, linear: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 1.00 & $217.2$ & $393.7$ & $12.0$ \\
+  inner product, $\tanh$ future & 1.00 & $0.7$ & $1.4$ & $4.2$ \\
+  normalized cosine & 0.62 & $0.0$ & $0.0$ & $0.0$ \\
+  $L^2$ one-way & 0.00 & $-8.3$ & $-7.3$ & $-5.3$ \\
+  $L^2$ joint & 0.00 & $-5.8$ & $-5.4$ & $-5.6$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-10.0$ & $-7.2$ & $-6.0$ \\
+  log-quadratic, one-way & 0.00 & $-9.1$ & $-6.9$ & $-5.1$ \\
+  inner product + bank energy & 1.00 & $130.3$ & $234.7$ & $12.0$ \\
+  $\tanh$ future + bank energy & 1.00 & $0.1$ & $0.3$ & $0.2$ \\
+
+%% ---- btc, mlp: energy excess (%) by bank size [100, 1000, 10000, 30000, 100000]
+  inner product (unbounded) & $+0.8$ & $-2.1$ & $-2.6$ & $-1.2$ & $-0.1$ \\
+  inner product, $\tanh$ future & $+1.4$ & $-1.6$ & $-2.4$ & $-2.6$ & $-2.4$ \\
+  normalized cosine & $+5.4$ & $-1.3$ & $-2.8$ & $-2.9$ & $-3.0$ \\
+  $L^2$ one-way & $+1.1$ & $-2.1$ & $-2.6$ & $-2.4$ & $-2.9$ \\
+  $L^2$ joint & $+1.0$ & $-3.1$ & $-3.6$ & $-3.7$ & $-3.6$ \\
+  Student-$t$ kernel, one-way & $+5.1$ & $-1.4$ & $-2.8$ & $-3.0$ & $-3.1$ \\
+  log-quadratic, one-way & $+5.2$ & $-1.3$ & $-2.6$ & $-2.7$ & $-2.8$ \\
+  inner product + bank energy & $-0.5$ & $-2.4$ & $-2.7$ & $-2.7$ & $-2.8$ \\
+  $\tanh$ future + bank energy & $-0.4$ & $-3.3$ & $-3.7$ & $-3.7$ & $-3.7$ \\
+%% ---- btc, mlp: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000]; oracle nan
+  inner product (unbounded) & 0.26 & 0.28 & 0.54 & 1.11 & 2.30 \\
+  inner product, $\tanh$ future & 0.02 & 0.67 & 0.50 & 0.56 & 0.91 \\
+  normalized cosine & 0.04 & 0.34 & 0.15 & 0.15 & 0.15 \\
+  $L^2$ one-way & 0.00 & 0.07 & 0.16 & 0.19 & 0.27 \\
+  $L^2$ joint & 0.00 & 0.12 & 0.06 & 0.10 & 0.09 \\
+  Student-$t$ kernel, one-way & 0.00 & 0.03 & 0.04 & 0.02 & 0.02 \\
+  log-quadratic, one-way & 0.00 & 0.09 & 0.04 & 0.07 & 0.07 \\
+  inner product + bank energy & 0.00 & 0.00 & 0.01 & 0.01 & 0.01 \\
+  $\tanh$ future + bank energy & 0.26 & 0.20 & 0.11 & 0.11 & 0.11 \\
+%% ---- btc, mlp: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 0.84 & $91.5$ & $284.0$ & $11.9$ \\
+  inner product, $\tanh$ future & 0.05 & $-1.5$ & $-0.5$ & $1.3$ \\
+  normalized cosine & 0.01 & $-2.7$ & $-1.9$ & $-0.8$ \\
+  $L^2$ one-way & 0.00 & $-49.6$ & $-44.3$ & $-36.2$ \\
+  $L^2$ joint & 0.00 & $-14.2$ & $-12.2$ & $-11.6$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-15.5$ & $-13.0$ & $-11.9$ \\
+  log-quadratic, one-way & 0.00 & $-11.2$ & $-9.6$ & $-7.6$ \\
+  inner product + bank energy & 0.00 & $-39.9$ & $-18.5$ & $2.0$ \\
+  $\tanh$ future + bank energy & 0.04 & $-1.5$ & $-0.5$ & $-0.5$ \\
+
+%% ---- flow, linear: energy excess (%) by bank size [100, 1000, 10000, 30000]
+  inner product (unbounded) & $-7.5$ & $+4.8$ & $+16.5$ & $+16.8$ \\
+  inner product, $\tanh$ future & $-24.9$ & $-14.5$ & $-8.1$ & $-9.1$ \\
+  normalized cosine & $-10.6$ & $-11.1$ & $-10.2$ & $-10.3$ \\
+  $L^2$ one-way & $-22.2$ & $-30.9$ & $-34.0$ & $-33.6$ \\
+  $L^2$ joint & $-21.2$ & $-29.7$ & $-33.5$ & $-34.1$ \\
+  Student-$t$ kernel, one-way & $-24.3$ & $-32.8$ & $-38.7$ & $-40.1$ \\
+  log-quadratic, one-way & $-26.8$ & $-35.4$ & $-41.3$ & $-41.9$ \\
+%% ---- flow, linear: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000]; oracle nan
+  inner product (unbounded) & 0.00 & 4.55 & 7.42 & 6.97 \\
+  inner product, $\tanh$ future & 0.00 & 3.58 & 4.36 & 4.60 \\
+  normalized cosine & 0.00 & 0.62 & 0.55 & 0.54 \\
+  $L^2$ one-way & 0.00 & 1.25 & 2.33 & 3.08 \\
+  $L^2$ joint & 0.00 & 1.27 & 1.10 & 1.32 \\
+  Student-$t$ kernel, one-way & 0.00 & 1.66 & 2.48 & 2.77 \\
+  log-quadratic, one-way & 0.00 & 2.09 & 2.03 & 2.00 \\
+%% ---- flow, linear: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 0.99 & $41.6$ & $161.3$ & $11.9$ \\
+  inner product, $\tanh$ future & 0.14 & $-0.5$ & $0.3$ & $7.4$ \\
+  normalized cosine & 0.18 & $-0.0$ & $0.0$ & $-0.0$ \\
+  $L^2$ one-way & 0.00 & $-161.3$ & $-148.0$ & $3.6$ \\
+  $L^2$ joint & 0.00 & $-90.0$ & $-82.9$ & $3.2$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-57.8$ & $-55.2$ & $0.8$ \\
+  log-quadratic, one-way & 0.02 & $-4.0$ & $-1.8$ & $-0.1$ \\
+
+%% ---- flow, mlp: energy excess (%) by bank size [100, 1000, 10000, 30000]
+  inner product (unbounded) & $-45.3$ & $-61.6$ & $-60.1$ & $-54.6$ \\
+  inner product, $\tanh$ future & $-40.8$ & $-51.8$ & $-32.3$ & $+11.7$ \\
+  normalized cosine & $-42.1$ & $-55.6$ & $-63.9$ & $-64.0$ \\
+  $L^2$ one-way & $-43.1$ & $-52.7$ & $-59.5$ & $-57.9$ \\
+  $L^2$ joint & $-42.6$ & $-55.7$ & $-64.6$ & $-66.4$ \\
+  Student-$t$ kernel, one-way & $-38.1$ & $-57.7$ & $-65.1$ & $-66.2$ \\
+  log-quadratic, one-way & $-37.9$ & $-58.2$ & $-67.9$ & $-68.6$ \\
+  inner product + bank energy & $-49.3$ & $-57.2$ & $-57.7$ & $-56.3$ \\
+  $\tanh$ future + bank energy & $-48.4$ & $-60.8$ & $-63.3$ & $-63.6$ \\
+%% ---- flow, mlp: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000]; oracle nan
+  inner product (unbounded) & 0.00 & 1.53 & 2.01 & 2.01 \\
+  inner product, $\tanh$ future & 0.00 & 1.26 & 1.26 & 0.72 \\
+  normalized cosine & 0.00 & 1.57 & 1.11 & 1.00 \\
+  $L^2$ one-way & 0.00 & 1.50 & 1.50 & 2.23 \\
+  $L^2$ joint & 0.00 & 0.91 & 1.07 & 1.14 \\
+  Student-$t$ kernel, one-way & 0.00 & 0.66 & 0.83 & 0.98 \\
+  log-quadratic, one-way & 0.00 & 1.76 & 1.29 & 1.39 \\
+  inner product + bank energy & 0.00 & 2.40 & 2.55 & 3.08 \\
+  $\tanh$ future + bank energy & 0.00 & 1.53 & 1.63 & 1.56 \\
+%% ---- flow, mlp: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 0.41 & $10.5$ & $910.3$ & $11.6$ \\
+  inner product, $\tanh$ future & 0.07 & $-25.2$ & $-11.5$ & $3.3$ \\
+  normalized cosine & 0.02 & $-22.8$ & $-11.8$ & $0.1$ \\
+  $L^2$ one-way & 0.00 & $-670.6$ & $-606.4$ & $2.0$ \\
+  $L^2$ joint & 0.00 & $-589.0$ & $-349.3$ & $2.8$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-17.1$ & $-12.3$ & $-0.9$ \\
+  log-quadratic, one-way & 0.00 & $-5.7$ & $-3.7$ & $-0.3$ \\
+  inner product + bank energy & 0.05 & $-17.7$ & $-10.1$ & $10.4$ \\
+  $\tanh$ future + bank energy & 0.01 & $-9.7$ & $-6.8$ & $4.9$ \\
+
+%% ---- rain, linear: energy excess (%) by bank size [100, 1000, 10000, 30000]
+  inner product (unbounded) & $+432.6$ & $+317.3$ & $+580.5$ & $+924.8$ \\
+  inner product, $\tanh$ future & $+7.8$ & $-2.0$ & $-2.9$ & $-2.8$ \\
+  normalized cosine & $-0.6$ & $-6.0$ & $-6.4$ & $-6.2$ \\
+  $L^2$ one-way & $+10.1$ & $+6.6$ & $+9.2$ & $+9.5$ \\
+  $L^2$ joint & $+0.5$ & $-0.1$ & $-0.1$ & $-0.3$ \\
+  Student-$t$ kernel, one-way & $-0.8$ & $-4.1$ & $-4.9$ & $-5.2$ \\
+  log-quadratic, one-way & $+10.1$ & $-5.3$ & $-6.7$ & $-6.6$ \\
+%% ---- rain, linear: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000]; oracle nan
+  inner product (unbounded) & 29.8 & 31.8 & 63.6 & 86.6 \\
+  inner product, $\tanh$ future & 2.35 & 2.24 & 2.19 & 2.33 \\
+  normalized cosine & 1.36 & 1.12 & 0.81 & 0.86 \\
+  $L^2$ one-way & 0.25 & 0.50 & 0.95 & 1.34 \\
+  $L^2$ joint & 0.00 & 0.11 & 0.07 & 0.09 \\
+  Student-$t$ kernel, one-way & 0.00 & 0.11 & 0.10 & 0.12 \\
+  log-quadratic, one-way & 1.12 & 1.00 & 0.82 & 0.89 \\
+%% ---- rain, linear: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 0.95 & $117.4$ & $1238.0$ & $11.9$ \\
+  inner product, $\tanh$ future & 0.77 & $0.0$ & $0.1$ & $0.2$ \\
+  normalized cosine & 0.78 & $0.0$ & $0.0$ & $0.0$ \\
+  $L^2$ one-way & 0.00 & $-0.0$ & $-0.0$ & $-0.0$ \\
+  $L^2$ joint & 0.00 & $-0.0$ & $-0.0$ & $-0.0$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-0.0$ & $-0.0$ & $-0.0$ \\
+  log-quadratic, one-way & 0.01 & $-0.0$ & $-0.0$ & $-0.0$ \\
+
+%% ---- rain, mlp: energy excess (%) by bank size [100, 1000, 10000, 30000]
+  inner product (unbounded) & $+0.1$ & $+44.0$ & $+193.0$ & $+318.0$ \\
+  inner product, $\tanh$ future & $+5.1$ & $+4.2$ & $-0.1$ & $-0.3$ \\
+  normalized cosine & $+10.7$ & $-3.7$ & $-7.0$ & $-7.3$ \\
+  $L^2$ one-way & $+2.9$ & $+11.3$ & $+16.1$ & $+23.9$ \\
+  $L^2$ joint & $-1.6$ & $-7.6$ & $-8.5$ & $-8.6$ \\
+  Student-$t$ kernel, one-way & $+6.9$ & $-1.9$ & $-5.4$ & $-5.8$ \\
+  log-quadratic, one-way & $+7.1$ & $-0.1$ & $-3.0$ & $-3.5$ \\
+  inner product + bank energy & $-2.8$ & $-6.2$ & $-6.6$ & $-6.7$ \\
+  $\tanh$ future + bank energy & $+1.4$ & $-6.5$ & $-7.2$ & $-7.0$ \\
+%% ---- rain, mlp: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000]; oracle nan
+  inner product (unbounded) & 0.00 & 6.02 & 20.6 & 34.6 \\
+  inner product, $\tanh$ future & 0.46 & 1.67 & 1.54 & 1.81 \\
+  normalized cosine & 1.21 & 0.88 & 0.60 & 0.65 \\
+  $L^2$ one-way & 0.00 & 2.45 & 1.82 & 2.59 \\
+  $L^2$ joint & 0.00 & 2.62 & 0.56 & 0.62 \\
+  Student-$t$ kernel, one-way & 0.11 & 0.67 & 0.43 & 0.48 \\
+  log-quadratic, one-way & 0.01 & 1.19 & 0.42 & 0.38 \\
+  inner product + bank energy & 0.00 & 0.00 & 0.00 & 0.00 \\
+  $\tanh$ future + bank energy & 0.83 & 0.57 & 0.41 & 0.44 \\
+%% ---- rain, mlp: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 0.48 & $-0.0$ & $164.1$ & $11.6$ \\
+  inner product, $\tanh$ future & 0.43 & $-0.0$ & $0.1$ & $0.3$ \\
+  normalized cosine & 0.46 & $-0.0$ & $0.0$ & $-0.0$ \\
+  $L^2$ one-way & 0.12 & $-0.0$ & $0.0$ & $-0.0$ \\
+  $L^2$ joint & 0.07 & $-0.0$ & $-0.0$ & $-0.0$ \\
+  Student-$t$ kernel, one-way & 0.17 & $-0.0$ & $0.0$ & $-0.1$ \\
+  log-quadratic, one-way & 0.14 & $-0.0$ & $0.0$ & $-0.0$ \\
+  inner product + bank energy & 0.05 & $-0.0$ & $-0.0$ & $4.8$ \\
+  $\tanh$ future + bank energy & 0.23 & $-0.0$ & $0.0$ & $-0.0$ \\
+
 %% ---- t3, linear: energy excess (%) by bank size [100, 1000, 10000, 30000, 100000, 200000]
-  inner product (unbounded) & $+31.8$ & $+31.8$ & $+281.4$ & $+1077$ & $+2857$ & $+4830$ \\
-  inner product, $\tanh$ future & $+26.3$ & $+23.1$ & $+24.5$ & $+28.1$ & $+31.3$ & $+31.2$ \\
-  normalized cosine & $+25.1$ & $+23.2$ & $+22.9$ & $+22.9$ & $+22.7$ & $+22.8$ \\
-  $L^2$ one-way & $+21.1$ & $+8.9$ & $+5.8$ & $+5.4$ & $+5.8$ & $+6.4$ \\
-  $L^2$ joint & $+19.6$ & $+8.2$ & $+5.7$ & $+5.4$ & $+5.2$ & $+5.3$ \\
-  Student-$t$ kernel, one-way & $+17.2$ & $+6.7$ & $+5.1$ & $+4.9$ & $+4.9$ & $+4.9$ \\
-  Student-$t$ kernel, joint & $+18.3$ & $+8.2$ & $+5.6$ & $+5.2$ & $+5.0$ & $+5.0$ \\
-  inner product + bank energy & $+33.3$ & $+30.8$ & $+123.1$ & $+751.5$ & $+1962$ & $+3252$ \\
-  $\tanh$ future + bank energy & $+23.5$ & $+14.5$ & $+13.3$ & $+13.1$ & $+14.7$ & $+15.2$ \\
-%% ---- t3, linear: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000, 200000]; oracle 0.01
-  inner product (unbounded) & 0.00 & 6.83 & 107 & 164 & 299 & 428 \\
-  inner product, $\tanh$ future & 0.00 & 0.46 & 3.91 & 4.98 & 7.18 & 7.87 \\
-  normalized cosine & 0.00 & 0.35 & 1.36 & 1.23 & 1.23 & 1.23 \\
-  $L^2$ one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
-  $L^2$ joint & 0.00 & 0.00 & 0.19 & 0.18 & 0.13 & 0.13 \\
-  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
-  Student-$t$ kernel, joint & 0.00 & 0.00 & 0.15 & 0.16 & 0.12 & 0.12 \\
-  inner product + bank energy & 0.00 & 2.15 & 45.2 & 105 & 207 & 300 \\
-  $\tanh$ future + bank energy & 0.00 & 0.56 & 2.51 & 2.64 & 3.32 & 3.72 \\
+  inner product (unbounded) & $+42.8$ & $+255.1$ & $+619.9$ & $+1595$ & $+2744$ & $+4170$ \\
+  inner product, $\tanh$ future & $+27.9$ & $+32.9$ & $+39.4$ & $+52.6$ & $+65.7$ & $+83.5$ \\
+  normalized cosine & $+27.7$ & $+25.1$ & $+24.9$ & $+24.8$ & $+24.8$ & $+24.7$ \\
+  $L^2$ one-way & $+21.0$ & $+9.4$ & $+5.8$ & $+5.5$ & $+5.3$ & $+5.4$ \\
+  $L^2$ joint & $+20.2$ & $+9.0$ & $+5.3$ & $+4.8$ & $+4.5$ & $+4.3$ \\
+  Student-$t$ kernel, one-way & $+18.0$ & $+6.6$ & $+4.1$ & $+3.9$ & $+3.8$ & $+3.7$ \\
+  Student-$t$ kernel, joint & $+19.8$ & $+8.5$ & $+5.5$ & $+4.8$ & $+4.4$ & $+4.3$ \\
+  log-quadratic, one-way & $+34.0$ & $+9.9$ & $+2.2$ & $+1.0$ & $+0.4$ & $+0.3$ \\
+  log-quadratic, joint & $+21.7$ & $+5.6$ & $+1.5$ & $+1.0$ & $+0.7$ & $+0.6$ \\
+  inner product + bank energy & $+41.4$ & $+63.7$ & $+153.2$ & $+677.6$ & $+1302$ & $+2229$ \\
+  $\tanh$ future + bank energy & $+24.4$ & $+16.7$ & $+15.8$ & $+15.7$ & $+15.9$ & $+16.0$ \\
+%% ---- t3, linear: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000, 200000]; oracle 0.80
+  inner product (unbounded) & 4.30 & 69.8 & 152 & 229 & 304 & 380 \\
+  inner product, $\tanh$ future & 1.15 & 8.03 & 10.6 & 12.0 & 13.3 & 14.4 \\
+  normalized cosine & 0.94 & 1.63 & 1.45 & 1.39 & 1.33 & 1.33 \\
+  $L^2$ one-way & 0.00 & 0.40 & 0.65 & 0.74 & 0.99 & 1.19 \\
+  $L^2$ joint & 0.00 & 0.56 & 0.73 & 0.71 & 0.78 & 0.79 \\
+  Student-$t$ kernel, one-way & 0.00 & 0.38 & 0.43 & 0.45 & 0.44 & 0.44 \\
+  Student-$t$ kernel, joint & 0.00 & 0.29 & 0.51 & 0.64 & 0.73 & 0.75 \\
+  log-quadratic, one-way & 0.00 & 0.89 & 0.76 & 0.78 & 0.79 & 0.79 \\
+  log-quadratic, joint & 0.01 & 0.93 & 0.86 & 0.90 & 0.88 & 0.88 \\
+  inner product + bank energy & 2.24 & 13.3 & 38.7 & 75.3 & 119 & 175 \\
+  $\tanh$ future + bank energy & 1.44 & 2.58 & 2.76 & 2.59 & 2.68 & 2.82 \\
 %% ---- t3, linear: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
-  inner product (unbounded) & 1.00 & $463.7$ & $1595.3$ & $12.0$ \\
-  inner product, $\tanh$ future & 1.00 & $0.5$ & $2.2$ & $9.4$ \\
-  normalized cosine & 0.58 & $0.0$ & $0.0$ & $0.0$ \\
-  $L^2$ one-way & 0.00 & $-2194.3$ & $-2180.6$ & $-300.0$ \\
-  $L^2$ joint & 0.00 & $-14.0$ & $-8.6$ & $-8.4$ \\
-  Student-$t$ kernel, one-way & 0.00 & $-34.5$ & $-28.8$ & $-20.9$ \\
-  Student-$t$ kernel, joint & 0.00 & $-6.8$ & $-6.0$ & $-5.7$ \\
-  inner product + bank energy & 1.00 & $297.3$ & $990.0$ & $12.0$ \\
-  $\tanh$ future + bank energy & 1.00 & $0.2$ & $1.0$ & $5.0$ \\
+  inner product (unbounded) & 1.00 & $598.8$ & $1994.2$ & $12.0$ \\
+  inner product, $\tanh$ future & 1.00 & $0.6$ & $2.5$ & $7.9$ \\
+  normalized cosine & 0.53 & $0.0$ & $0.0$ & $0.0$ \\
+  $L^2$ one-way & 0.00 & $-2301.9$ & $-2266.8$ & $-300.0$ \\
+  $L^2$ joint & 0.00 & $-24.0$ & $-14.7$ & $-7.7$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-34.7$ & $-29.6$ & $-21.6$ \\
+  Student-$t$ kernel, joint & 0.00 & $-5.8$ & $-5.1$ & $-4.6$ \\
+  log-quadratic, one-way & 0.00 & $-149.8$ & $-129.9$ & $-91.3$ \\
+  log-quadratic, joint & 0.00 & $-14.1$ & $-11.6$ & $-9.0$ \\
+  inner product + bank energy & 1.00 & $240.0$ & $765.1$ & $12.0$ \\
+  $\tanh$ future + bank energy & 1.00 & $0.2$ & $0.9$ & $5.5$ \\
 
 %% ---- t3, mlp: energy excess (%) by bank size [100, 1000, 10000, 30000, 100000, 200000]
-  inner product (unbounded) & $+31.8$ & $+11.4$ & $+22.6$ & $+24.3$ & $+34.7$ & $+44.9$ \\
-  inner product, $\tanh$ future & $+37.1$ & $+13.7$ & $+7.2$ & $+6.7$ & $+7.0$ & $+9.3$ \\
-  normalized cosine & $+40.1$ & $+9.2$ & $+1.7$ & $+1.1$ & $+0.9$ & $+0.8$ \\
-  $L^2$ one-way & $+35.4$ & $+16.2$ & $+9.5$ & $+7.8$ & $+6.9$ & $+7.7$ \\
-  $L^2$ joint & $+34.2$ & $+8.8$ & $+1.8$ & $+1.1$ & $+0.6$ & $+0.5$ \\
-  Student-$t$ kernel, one-way & $+34.7$ & $+11.2$ & $+3.1$ & $+1.5$ & $+0.9$ & $+0.7$ \\
-  Student-$t$ kernel, joint & $+29.3$ & $+7.9$ & $+2.2$ & $+1.7$ & $+1.0$ & $+0.8$ \\
-  inner product + bank energy & $+21.6$ & $+4.5$ & $+9.4$ & $+8.4$ & $+16.6$ & $+15.6$ \\
-  $\tanh$ future + bank energy & $+22.7$ & $+3.2$ & $+1.1$ & $+1.0$ & $+0.9$ & $+0.9$ \\
-%% ---- t3, mlp: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000, 200000]; oracle 0.01
-  inner product (unbounded) & 0.00 & 0.00 & 8.61 & 11.4 & 12.3 & 15.2 \\
-  inner product, $\tanh$ future & 0.00 & 0.00 & 1.01 & 1.83 & 2.74 & 2.81 \\
-  normalized cosine & 0.00 & 0.00 & 0.41 & 0.37 & 0.38 & 0.38 \\
-  $L^2$ one-way & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
-  $L^2$ joint & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
-  Student-$t$ kernel, one-way & 0.00 & 0.00 & 0.00 & 0.01 & 0.01 & 0.01 \\
-  Student-$t$ kernel, joint & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 & 0.00 \\
-  inner product + bank energy & 0.00 & 0.00 & 5.03 & 4.05 & 7.29 & 8.41 \\
-  $\tanh$ future + bank energy & 0.00 & 0.15 & 0.51 & 0.47 & 0.53 & 0.54 \\
+  inner product (unbounded) & $+31.7$ & $+18.1$ & $+35.6$ & $+52.6$ & $+77.2$ & $+93.0$ \\
+  inner product, $\tanh$ future & $+35.2$ & $+13.2$ & $+6.8$ & $+6.0$ & $+5.8$ & $+6.0$ \\
+  normalized cosine & $+38.3$ & $+9.2$ & $+1.7$ & $+1.1$ & $+0.9$ & $+0.8$ \\
+  $L^2$ one-way & $+34.1$ & $+13.5$ & $+7.2$ & $+6.2$ & $+5.2$ & $+5.3$ \\
+  $L^2$ joint & $+29.7$ & $+8.0$ & $+2.9$ & $+2.1$ & $+1.9$ & $+1.6$ \\
+  Student-$t$ kernel, one-way & $+33.9$ & $+10.6$ & $+2.9$ & $+1.6$ & $+0.8$ & $+0.6$ \\
+  Student-$t$ kernel, joint & $+28.9$ & $+8.0$ & $+2.6$ & $+1.9$ & $+1.1$ & $+1.0$ \\
+  log-quadratic, one-way & $+36.6$ & $+12.4$ & $+3.5$ & $+1.8$ & $+0.9$ & $+0.7$ \\
+  inner product + bank energy & $+21.7$ & $+5.0$ & $+7.0$ & $+10.6$ & $+17.0$ & $+23.9$ \\
+  $\tanh$ future + bank energy & $+22.9$ & $+3.6$ & $+1.6$ & $+1.4$ & $+1.4$ & $+1.3$ \\
+  normalized cosine + bank energy & $+26.2$ & $+4.2$ & $+2.0$ & $+1.9$ & $+1.9$ & $+1.8$ \\
+  $L^2$ one-way + bank energy & $+23.9$ & $+4.7$ & $+2.1$ & $+1.9$ & $+1.8$ & $+2.0$ \\
+  inner product, bank energy only & $+14.8$ & $+6.5$ & $+4.9$ & $+4.9$ & $+5.0$ & $+5.2$ \\
+  $\tanh$ future, bank energy only & $+13.1$ & $+3.9$ & $+3.1$ & $+3.0$ & $+3.0$ & $+3.0$ \\
+%% ---- t3, mlp: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000, 200000]; oracle 0.80
+  inner product (unbounded) & 0.36 & 3.19 & 10.8 & 15.0 & 18.5 & 19.9 \\
+  inner product, $\tanh$ future & 0.33 & 2.06 & 2.80 & 3.17 & 3.52 & 3.56 \\
+  normalized cosine & 0.09 & 1.40 & 0.78 & 0.86 & 0.80 & 0.80 \\
+  $L^2$ one-way & 0.00 & 0.79 & 0.84 & 0.80 & 0.80 & 0.80 \\
+  $L^2$ joint & 0.00 & 0.40 & 0.30 & 0.62 & 0.64 & 0.74 \\
+  Student-$t$ kernel, one-way & 0.00 & 0.62 & 0.79 & 0.85 & 0.84 & 0.84 \\
+  Student-$t$ kernel, joint & 0.00 & 0.79 & 0.78 & 0.80 & 0.80 & 0.80 \\
+  log-quadratic, one-way & 0.00 & 1.49 & 1.23 & 1.44 & 1.39 & 1.41 \\
+  inner product + bank energy & 0.00 & 0.85 & 2.80 & 3.10 & 4.12 & 4.32 \\
+  $\tanh$ future + bank energy & 0.09 & 0.70 & 0.49 & 0.49 & 0.50 & 0.50 \\
+  normalized cosine + bank energy & 0.26 & 0.68 & 0.49 & 0.49 & 0.46 & 0.46 \\
+  $L^2$ one-way + bank energy & 0.00 & 0.69 & 1.13 & 1.21 & 1.33 & 1.34 \\
+  inner product, bank energy only & 0.00 & 0.04 & 0.04 & 0.03 & 0.03 & 0.03 \\
+  $\tanh$ future, bank energy only & 0.73 & 1.12 & 1.13 & 1.09 & 1.06 & 1.05 \\
 %% ---- t3, mlp: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
-  inner product (unbounded) & 0.04 & $-1121.4$ & $-536.6$ & $10.6$ \\
-  inner product, $\tanh$ future & 0.02 & $-17.8$ & $-7.8$ & $3.4$ \\
-  normalized cosine & 0.01 & $-35.0$ & $-14.7$ & $-0.5$ \\
-  $L^2$ one-way & 0.00 & $-266865.0$ & $-264528.9$ & $-300.0$ \\
-  $L^2$ joint & 0.00 & $-9702.0$ & $-9488.7$ & $-300.0$ \\
-  Student-$t$ kernel, one-way & 0.00 & $-77.5$ & $-68.0$ & $-49.6$ \\
-  Student-$t$ kernel, joint & 0.00 & $-19.0$ & $-18.9$ & $-18.9$ \\
-  inner product + bank energy & 0.02 & $-895.1$ & $-384.5$ & $10.1$ \\
-  $\tanh$ future + bank energy & 0.04 & $-14.6$ & $-2.2$ & $-0.1$ \\
+  inner product (unbounded) & 0.05 & $-1029.7$ & $-418.7$ & $10.7$ \\
+  inner product, $\tanh$ future & 0.02 & $-18.4$ & $-9.7$ & $2.9$ \\
+  normalized cosine & 0.01 & $-36.5$ & $-18.6$ & $-0.7$ \\
+  $L^2$ one-way & 0.00 & $-206056.0$ & $-204211.6$ & $-300.0$ \\
+  $L^2$ joint & 0.00 & $-13657.1$ & $-13475.4$ & $-300.0$ \\
+  Student-$t$ kernel, one-way & 0.00 & $-78.0$ & $-70.3$ & $-53.5$ \\
+  Student-$t$ kernel, joint & 0.00 & $-19.7$ & $-19.6$ & $-18.8$ \\
+  log-quadratic, one-way & 0.00 & $-50.9$ & $-44.4$ & $-32.4$ \\
+  inner product + bank energy & 0.16 & $-616.7$ & $158.5$ & $10.6$ \\
+  $\tanh$ future + bank energy & 0.03 & $-15.3$ & $-3.6$ & $-0.5$ \\
+  normalized cosine + bank energy & 0.02 & $-20.2$ & $-4.8$ & $-0.7$ \\
+  $L^2$ one-way + bank energy & 0.00 & $-3509.3$ & $-3440.7$ & $-300.0$ \\
+  inner product, bank energy only & 0.05 & $-408.5$ & $-233.8$ & $-191.4$ \\
+  $\tanh$ future, bank energy only & 0.12 & $-1.9$ & $0.2$ & $-0.1$ \\
+
+%% ---- tinf, linear: energy excess (%) by bank size [100, 1000, 10000, 30000, 100000, 200000]
+  inner product (unbounded) & $+9.9$ & $+6.5$ & $+5.4$ & $+5.5$ & $+5.4$ & $+5.4$ \\
+  inner product, $\tanh$ future & $+8.8$ & $+6.2$ & $+5.9$ & $+5.8$ & $+5.9$ & $+5.8$ \\
+%% ---- tinf, linear: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000, 200000]; oracle 1.85
+  inner product (unbounded) & 0.00 & 19.2 & 19.5 & 24.0 & 25.5 & 25.6 \\
+  inner product, $\tanh$ future & 0.00 & 3.32 & 2.46 & 2.91 & 2.97 & 2.97 \\
+%% ---- tinf, linear: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 1.00 & $909.3$ & $2366.9$ & $12.0$ \\
+  inner product, $\tanh$ future & 1.00 & $2.4$ & $3.4$ & $3.3$ \\
+
+%% ---- tinf, mlp: energy excess (%) by bank size [100, 1000, 10000, 30000, 100000, 200000]
+  inner product (unbounded) & $+12.3$ & $+2.5$ & $+1.0$ & $+1.2$ & $+1.1$ & $+1.0$ \\
+  inner product, $\tanh$ future & $+13.3$ & $+2.1$ & $+0.5$ & $+0.4$ & $+0.4$ & $+0.3$ \\
+%% ---- tinf, mlp: over-forecast factor p=1e-3 by bank size [100, 1000, 10000, 30000, 100000, 200000]; oracle 1.85
+  inner product (unbounded) & 0.00 & 3.38 & 6.65 & 9.04 & 10.00 & 10.1 \\
+  inner product, $\tanh$ future & 0.00 & 2.47 & 3.53 & 3.77 & 3.88 & 3.89 \\
+%% ---- tinf, mlp: ray probe: share amp>1, median log10 amp, q90 log10 amp, log10 mean amp (capped)
+  inner product (unbounded) & 0.72 & $687.2$ & $2363.9$ & $11.9$ \\
+  inner product, $\tanh$ future & 0.23 & $-2.1$ & $6.0$ & $10.8$ \\

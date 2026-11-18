@@ -65,21 +65,61 @@ Rebuild the PDF with `pdflatex main.tex` (run it twice).
 - **Prop 4.4.** Bounded scores have a price: they can be *exact* only when r is
   bounded. They can still approximate in KL.
 
+### Saturating scores and the embedding dimension (Secs. 4.3–4.4)
+
+- **min(N, A) law (Thm 4.21).** A bounded score that saturates *high* along
+  extreme futures over-weights them by a tail amplification A. A bank of N
+  futures exposes the over-weighting up to min(N, A). Larger banks expose
+  more of it.
+- **Logarithmic tails.** The Student-t kernel and log-quadratic scores have
+  the right tail for elliptical heavy-tailed data. The log-quadratic family
+  contains the truth with *linear* encoders (Prop 4.16).
+- **Bank energy loss.** Adding the energy score of a bank forecast to
+  training places extreme futures low. It sees amplification only up to the
+  training bank size K (Thm 4.23).
+- **Information split (Prop 4.28).** For a Student-t series the information
+  splits exactly into a correlation part and a shared-scale part. The scale
+  part is 1.20 nats for ν = 3 and 50/50 windows.
+- **Dimension (Thm 4.30, Cor 4.31, Thm 4.32).** A nonlinear encoder needs k + 1
+  embedding dimensions (k = number of canonical correlations). A linear
+  encoder needs the full dimension. A rank-d_z linear embedding caps the tail
+  index at ν + d_z.
+- **Odd interactions (Prop 4.33).** The standard linear scores (inner
+  product, tanh, normalized cosine, L²) cannot use the scale at all. At zero
+  correlation they learn nothing.
+
 ### Experiments (Sec. 5)
 
-- **Loss variants.** With linear encoders the loss and the score both matter.
-  With MLPs the gap between loss variants shrinks (bent GP: 14.8 → 5.3).
-- **Heavy tails.** Every catastrophic failure is the unbounded dot product on
-  heavy tails.
-- **Bank sweep.** On heavy tails the dot product gets *worse* as the bank
-  grows (MLP +7% → +46%; linear +33% → +3358%). Bounded scores improve and
-  level off.
-- **tanh ceiling.** Much better than the raw dot product, but it still
-  degrades with bank size. The refinement (empirical, not proved): the score
-  must also not *reward* extreme futures.
-- **Finite data.** On weather data the joint L² loss beats one-way L². This
-  is a hypothesis about over-fitting, not a contradiction of the infinite-data
-  theory.
+Run from `test_bed`:
+- `python -m analysis.summarize_tail_sweep` produces `results/tail_sweep/summary.md`.
+- `python -m analysis.summarize_dim_sweep` produces `results/dim_sweep/summary.md`.
+- `python -m analysis.paper_assets` regenerates the figures and the generated table blocks of `main.tex`.
+
+Results:
+- **Bank sweep, ν = 3 (5 seeds).**
+  - The unbounded inner product turns around and degrades by orders of magnitude.
+  - Linear tanh goes from +28% to +84%.
+  - The logarithmic scores level off near the oracle:
+    - linear log-quadratic: +0.3%;
+    - MLP Student-t kernel: +0.6%.
+- **min(N, A) in trained models.** The ray probe of A predicts the
+  over-forecast factor past by past, with rank correlation 0.96.
+- **Bank energy loss.**
+  - The MLP tanh plateau drops from +6.0% to +1.3%.
+  - Its over-forecast factor drops from 3.6 to 0.5.
+- **Real data (BTC, 3 seeds; Jena rain and Peachtree Creek discharge, 2 seeds).**
+  - On rain the unbounded inner product fails (+330% to +850%).
+  - With the bank energy loss the same MLP beats climatology by 6.6%.
+  - On discharge the MLP tanh fails at large banks in one of two seeds.
+  - On BTC only the linear log-quadratic beats climatology among linear models (−3.8%), as the odd-interaction result predicts.
+- **Embedding dimension and correlation (1 seed).**
+  - D1 holds: the odd-interaction linear scores are flat in d_z and capture nothing at φ = 0.
+  - D3 holds: MLPs saturate at d_z = 2.
+  - D2 holds only partly: linear Student-t improves slowly, far below the ceiling.
+  - The tail cap is not visible at p = 10⁻⁴.
+  - New finding: for the linear tanh score, the over-forecast at p = 10⁻⁴ grows with d_z, from 2.3 to 47.
+- **Finite data.** On weather data the joint L² loss beats one-way L², by
+  over-fitting, not by population bias.
 
 ## Relation to the two reference papers
 
@@ -107,12 +147,7 @@ generating function finite, so the tail problem never shows up.
 ## Open items before sending
 
 - Fill in the author block in `main.tex`.
-- Check Thm 3.4, Prop 4.4 and the opening of Sec. 4. These are new relative
-  to the original note.
-- The scripts cited in the reproducibility paragraph are not in this repo:
-  - `test_bed/theory/misspecification.py`
-  - `test_bed/analysis/bank_sweep.py`
-  - `test_bed/results/bank_sweep/summary.md`
-- Untested: the divergence half (train with energy distance), the
-  "don't reward extremity" refinement as a theorem, and the bank sweep on
-  rain.
+- More seeds for the dimension sweep (currently 1), and on the real series.
+- Optional proposition: tail amplification of the tanh score grows with d_z
+  (the ℓ1 versus ℓ2 argument of Rem 4.19, currently in the text of Sec 5.9).
+- Finite-sample guarantees are deliberately deferred.
