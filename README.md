@@ -1,2 +1,2 @@
 # Contrastive-Learning-on-Time-Series-Data
-Exploring contrastive learning applications to time series data with Prof. Ricardo Baptista. 
+Extending the probabilistic view on contrastive learning to non-linear encoders and varying underlying distributions and modalities with Prof. Baptista. 
