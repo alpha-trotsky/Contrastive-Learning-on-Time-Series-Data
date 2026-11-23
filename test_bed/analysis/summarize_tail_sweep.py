@@ -45,7 +45,10 @@ def load():
 
 
 def ms(xs):
-    """mean and standard error over seeds."""
+    """mean and standard error over seeds (non-finite values, e.g. a zero tail count, are skipped)."""
+    xs = [x for x in xs if x is not None and math.isfinite(x)]
+    if not xs:
+        return float('nan'), float('nan')
     m = st.mean(xs)
     return m, (st.stdev(xs) / math.sqrt(len(xs)) if len(xs) > 1 else float('nan'))
 
